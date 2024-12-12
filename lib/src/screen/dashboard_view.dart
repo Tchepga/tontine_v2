@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:tontine_v2/src/screen/cashflow_view.dart';
+import 'package:tontine_v2/src/screen/casflow/cashflow_view.dart';
 import 'package:tontine_v2/src/screen/rapport_view.dart';
 import 'package:tontine_v2/src/widgets/half_circle_histogram_widget.dart';
 import 'package:tontine_v2/src/widgets/menu_widget.dart';
@@ -149,7 +149,7 @@ class DashboardView extends StatelessWidget {
                         ),
                       ),
                       onPressed: () {
-                        print('Cash Flow');
+                        navigateToView(context, CashflowView.routeName);
                       },
                       child: const Padding(
                           padding: EdgeInsets.symmetric(

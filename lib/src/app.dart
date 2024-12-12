@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:tontine_v2/src/screen/cashflow_view.dart';
+import 'package:tontine_v2/src/screen/casflow/cashflow_view.dart';
 import 'package:tontine_v2/src/screen/dashboard_view.dart';
 import 'package:tontine_v2/src/screen/login_view.dart';
 import 'package:tontine_v2/src/screen/splash_view.dart';

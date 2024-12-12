@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tontine_v2/src/screen/casflow/edit_mouvement.dart';
 import 'package:tontine_v2/src/widgets/menu_widget.dart';
 
 class CashflowView extends StatelessWidget {
@@ -298,6 +299,18 @@ class CashflowView extends StatelessWidget {
         ],
       ),
       bottomNavigationBar: const MenuWidget(),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          
+          showDialog(
+            context: context, 
+            builder: (BuildContext context){
+              return EditMouvement();
+            }
+          );
+        },
+        child: const Icon(Icons.add),
+      ),
     );
   }
 }

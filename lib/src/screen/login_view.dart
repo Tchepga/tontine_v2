@@ -4,7 +4,7 @@ import 'package:tontine_v2/src/screen/dashboard_view.dart';
 class LoginView extends StatelessWidget {
   const LoginView({super.key});
   static const routeName = '/login';
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -14,7 +14,8 @@ class LoginView extends StatelessWidget {
           builder: (context) => Column(
             children: [
               const SizedBox(height: 100),
-              Text('Connectez-vous',
+              Text(
+                'Connectez-vous',
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -22,7 +23,8 @@ class LoginView extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 20),
-              Image.asset('assets/images/logo.png',
+              Image.asset(
+                'assets/images/logo.png',
                 width: 200,
                 height: 200,
               ),
@@ -41,29 +43,32 @@ class LoginView extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 40),
-
-              ElevatedButton(
-
-               style: ElevatedButton.styleFrom(
-                 backgroundColor: Colors.indigoAccent,
-                 padding: const EdgeInsets.symmetric(horizontal: 100, vertical: 10),
-                ),
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Login successful'),
-                    ),
-                  );
-                  Navigator.pushNamed(context, DashboardView.routeName);
-                },
-                child: const Text('Connectez-vous',
-                  style: TextStyle(
-                    color: Colors.white,
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.indigoAccent,
-                    fontSize: 18,
+                  ),
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                        behavior: SnackBarBehavior.floating,
+                        backgroundColor: Colors.green,
+                        content: Text('Connexion réussie'),
+                      ),
+                    );
+                    Navigator.pushNamed(context, DashboardView.routeName);
+                  },
+                  child: const Text(
+                    'Connectez-vous',
+                    style: TextStyle(
+                      color: Colors.white,
+                      backgroundColor: Colors.indigoAccent,
+                      fontSize: 18,
+                    ),
                   ),
                 ),
-              ),
+              )
             ],
           ),
         ),
