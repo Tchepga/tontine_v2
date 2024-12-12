@@ -14,12 +14,17 @@ class LoginView extends StatelessWidget {
           builder: (context) => Column(
             children: [
               const SizedBox(height: 100),
-              const Text('Connectez-vous',
+              Text('Connectez-vous',
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: Colors.indigoAccent
+                  color: Theme.of(context).primaryColor,
                 ),
+              ),
+              const SizedBox(height: 20),
+              Image.asset('assets/images/logo.png',
+                width: 200,
+                height: 200,
               ),
               const SizedBox(height: 20),
               const TextField(
@@ -28,17 +33,21 @@ class LoginView extends StatelessWidget {
                   labelText: 'Nom d\'utilisateur',
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 40),
               const TextField(
                 decoration: InputDecoration(
                   border: OutlineInputBorder(),
                   labelText: 'Mot de passe',
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 40),
 
               ElevatedButton(
 
+               style: ElevatedButton.styleFrom(
+                 backgroundColor: Colors.indigoAccent,
+                 padding: const EdgeInsets.symmetric(horizontal: 100, vertical: 10),
+                ),
                 onPressed: () {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
@@ -47,9 +56,11 @@ class LoginView extends StatelessWidget {
                   );
                   Navigator.pushNamed(context, DashboardView.routeName);
                 },
-                child: const Text('Login',
+                child: const Text('Connectez-vous',
                   style: TextStyle(
                     color: Colors.white,
+                    backgroundColor: Colors.indigoAccent,
+                    fontSize: 18,
                   ),
                 ),
               ),

@@ -33,6 +33,7 @@ class MyApp extends StatelessWidget {
           // returns to the app after it has been killed while running in the
           // background.
           restorationScopeId: 'app',
+          
 
           // Provide the generated AppLocalizations to the MaterialApp. This
           // allows descendant Widgets to display the correct translations
@@ -60,6 +61,24 @@ class MyApp extends StatelessWidget {
           // SettingsController to display the correct theme.
           theme: ThemeData(
             primarySwatch: Colors.blue,
+            primaryColor: Colors.blue[400],
+            primaryColorDark: Colors.blue[700],
+            primaryColorLight: Colors.blue[200],
+            colorScheme: ColorScheme.fromSwatch().copyWith(
+              secondary: Colors.deepOrangeAccent,
+              primary: Colors.blue,
+              tertiary: Colors.green[300],
+              error: Colors.red,
+            ),
+            textTheme: const TextTheme(
+              displayLarge: TextStyle(fontSize: 34.0),
+              displayMedium: TextStyle(fontSize: 24.0),
+              displaySmall: TextStyle(fontSize: 20.0),
+              bodyLarge: TextStyle(fontSize: 16.0),
+              bodyMedium: TextStyle(fontSize: 14.0),
+              bodySmall: TextStyle(fontSize: 12.0),
+            ),
+            
             scaffoldBackgroundColor: Colors.white,
             secondaryHeaderColor: Colors.deepOrangeAccent,
             elevatedButtonTheme: ElevatedButtonThemeData(
@@ -72,7 +91,7 @@ class MyApp extends StatelessWidget {
               ),
             ),
           ),
-          darkTheme: ThemeData.dark(),
+          darkTheme: ThemeData.light(),
           themeMode: settingsController.themeMode,
 
           // Define a function to handle named routes in order to support
