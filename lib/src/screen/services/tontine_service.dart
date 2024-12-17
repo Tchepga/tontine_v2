@@ -1,0 +1,183 @@
+import 'dart:convert';
+import 'package:get_storage/get_storage.dart';
+import '../../models/tontine.dart';
+import '../../models/event.dart';
+import '../../models/sanction.dart';
+import '../../models/rapport_meeting.dart';
+import 'middleware/interceptor_http.dart';
+import 'dto/tontine_dto.dart';
+import 'dto/deposit_dto.dart';
+import 'dto/rapport_dto.dart';
+import 'dto/sanction_dto.dart';
+
+class TontineService {
+  final client = ApiClient.client;
+  final storage = GetStorage();
+  final String urlApi = "https://b35d-2a01-e0a-da0-8120-51c0-b549-4700-a09a.ngrok-free.app/api";
+
+  // Tontine CRUD
+  Future<List<Tontine>> getTontines() async {
+    try {
+      final response = await client.get(Uri.parse('$urlApi/tontine/member/${storage.read('username')}'));
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        return data.map((json) => Tontine.fromJson(json)).toList();
+      }
+      return [];
+    } catch (e) {
+      print('Error getting tontines: $e');
+      return [];
+    }
+  }
+
+  Future<Tontine?> getTontine(int id) async {
+    try {
+      final response = await client.get(Uri.parse('$urlApi/tontine/$id'));
+      if (response.statusCode == 200) {
+        return Tontine.fromJson(jsonDecode(response.body));
+      }
+      return null;
+    } catch (e) {
+      print('Error getting tontine: $e');
+      return null;
+    }
+  }
+
+  Future<Tontine> createTontine(CreateTontineDto tontineDto) async {
+    final response = await client.post(
+      Uri.parse('$urlApi/tontine'),
+      body: jsonEncode(tontineDto.toJson()),
+    );
+    if (response.statusCode == 201) {
+      return Tontine.fromJson(jsonDecode(response.body));
+    }
+    throw Exception('Failed to create tontine');
+  }
+
+  Future<void> updateTontine(int id, CreateTontineDto tontineDto) async {
+    final response = await client.patch(
+      Uri.parse('$urlApi/tontine/$id'),
+      body: jsonEncode(tontineDto.toJson()),
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to update tontine');
+    }
+  }
+
+  // Rapports
+  Future<RapportMeeting> createRapport(int tontineId, CreateMeetingRapportDto rapportDto) async {
+    final response = await client.post(
+      Uri.parse('$urlApi/tontine/$tontineId/rapport'),
+      body: jsonEncode(rapportDto.toJson()),
+    );
+    if (response.statusCode == 201) {
+      return RapportMeeting.fromJson(jsonDecode(response.body));
+    }
+    throw Exception('Failed to create rapport');
+  }
+
+  Future<List<RapportMeeting>> getRapports(int tontineId) async {
+    final response = await client.get(Uri.parse('$urlApi/tontine/$tontineId/rapport'));
+    if (response.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(response.body);
+      return data.map((json) => RapportMeeting.fromJson(json)).toList();
+    }
+    return [];
+  }
+
+  Future<void> updateRapport(int tontineId, CreateMeetingRapportDto rapportDto) async {
+    final response = await client.patch(
+      Uri.parse('$urlApi/tontine/$tontineId/rapport'),
+      body: jsonEncode(rapportDto.toJson()),
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to update rapport');
+    }
+  }
+
+  // Sanctions
+  Future<Sanction> createSanction(int tontineId, CreateSanctionDto sanctionDto) async {
+    final response = await client.post(
+      Uri.parse('$urlApi/tontine/$tontineId/sanction'),
+      body: jsonEncode(sanctionDto.toJson()),
+    );
+    if (response.statusCode == 201) {
+      return Sanction.fromJson(jsonDecode(response.body));
+    }
+    throw Exception('Failed to create sanction');
+  }
+
+  Future<List<Sanction>> getSanctions(int tontineId) async {
+    final response = await client.get(Uri.parse('$urlApi/tontine/$tontineId/sanction'));
+    if (response.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(response.body);
+      return data.map((json) => Sanction.fromJson(json)).toList();
+    }
+    return [];
+  }
+
+  Future<void> updateSanction(
+    int tontineId, 
+    int sanctionId, 
+    CreateSanctionDto sanctionDto
+  ) async {
+    final response = await client.patch(
+      Uri.parse('$urlApi/tontine/$tontineId/sanction/$sanctionId'),
+      body: jsonEncode(sanctionDto.toJson()),
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to update sanction');
+    }
+  }
+
+  // Events
+  Future<Event> createEvent(int tontineId, Event event) async {
+    final response = await client.post(
+      Uri.parse('$urlApi/tontine/$tontineId/event'),
+      body: jsonEncode(event),
+    );
+    if (response.statusCode == 201) {
+      return Event.fromJson(jsonDecode(response.body));
+    }
+    throw Exception('Failed to create event');
+  }
+
+  Future<List<Event>> getEvents(int tontineId) async {
+    final response = await client.get(Uri.parse('$urlApi/tontine/$tontineId/event'));
+    if (response.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(response.body);
+      return data.map((json) => Event.fromJson(json)).toList();
+    }
+    return [];
+  }
+
+  // Deposits
+  Future<void> createDeposit(int tontineId, CreateDepositDto depositDto) async {
+    final response = await client.post(
+      Uri.parse('$urlApi/tontine/$tontineId/deposit'),
+      body: jsonEncode(depositDto.toJson()),
+    );
+    if (response.statusCode != 201) {
+      throw Exception('Failed to create deposit');
+    }
+  }
+
+  Future<void> updateDeposit(int tontineId, int depositId, CreateDepositDto depositDto) async {
+    final response = await client.patch(
+      Uri.parse('$urlApi/tontine/$tontineId/deposit/$depositId'),
+      body: jsonEncode(depositDto.toJson()),
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to update deposit');
+    }
+  }
+
+  Future<void> deleteDeposit(int tontineId, int depositId) async {
+    final response = await client.delete(
+      Uri.parse('$urlApi/tontine/$tontineId/deposit/$depositId'),
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to delete deposit');
+    }
+  }
+} 

@@ -1,0 +1,30 @@
+enum StatusDeposit { PENDING, APPROVED, REJECTED }
+
+class CreateDepositDto {
+  final double amount;
+  final Currency currency;
+  final int memberId;
+  final StatusDeposit status;
+  final int cashFlowId;
+  final String? reasons;
+
+  CreateDepositDto({
+    required this.amount,
+    required this.currency,
+    required this.memberId,
+    required this.status,
+    required this.cashFlowId,
+    this.reasons,
+  });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'amount': amount,
+      'currency': currency.toString().split('.').last,
+      'memberId': memberId,
+      'status': status.toString().split('.').last,
+      'cashFlowId': cashFlowId,
+      if (reasons != null) 'reasons': reasons,
+    };
+  }
+} 
