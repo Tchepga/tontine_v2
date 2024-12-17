@@ -1,13 +1,54 @@
 import 'package:flutter/material.dart';
 import 'package:tontine_v2/src/screen/casflow/cashflow_view.dart';
 import 'package:tontine_v2/src/screen/rapport_view.dart';
-import 'package:tontine_v2/src/widgets/half_circle_histogram_widget.dart';
 import 'package:tontine_v2/src/widgets/menu_widget.dart';
 
-class DashboardView extends StatelessWidget {
+import '../models/member.dart';
+import 'services/member_service.dart';
+
+class DashboardView extends StatefulWidget {
   const DashboardView({super.key});
   static const routeName = '/dashboard';
   static const withBlock = 180.0;
+  @override
+  State<DashboardView> createState() => _DashboardViewState();
+}
+
+class _DashboardViewState extends State<DashboardView> {
+  final _memberService = MemberService();
+  Member? _profile;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+  }
+
+  Future<void> _loadProfile() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final profile = await _memberService.getProfile();
+      print(profile);
+      setState(() {
+        _profile = profile;
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Erreur lors du chargement du profil'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
 
   void navigateToView(context, String route) {
     Navigator.pushNamed(context, route);
@@ -42,6 +83,14 @@ class DashboardView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,

@@ -4,6 +4,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:tontine_v2/src/screen/casflow/cashflow_view.dart';
 import 'package:tontine_v2/src/screen/dashboard_view.dart';
 import 'package:tontine_v2/src/screen/login_view.dart';
+import 'package:tontine_v2/src/screen/member/account_view.dart';
 import 'package:tontine_v2/src/screen/splash_view.dart';
 
 import 'settings/settings_controller.dart';
@@ -109,6 +110,8 @@ class MyApp extends StatelessWidget {
                     return const DashboardView();
                   case CashflowView.routeName:
                     return const CashflowView();
+                  case AccountView.routeName:
+                    return const AccountView();
                   default:
                     return const SplashView();
                 }
