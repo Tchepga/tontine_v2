@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:tontine_v2/src/screen/login_view.dart';
+
+import 'selected_language_view.dart';
 
 class SplashView extends StatefulWidget {
   const SplashView({super.key});
@@ -12,7 +13,7 @@ class _SplashViewState extends State<SplashView> {
   void initState() {
     super.initState();
     Future.delayed(const Duration(seconds: 4), () {
-      Navigator.of(context).pushReplacementNamed(LoginView.routeName);
+      Navigator.of(context).pushReplacementNamed(SelectedLanguageView.routeName);
     });
   }
 

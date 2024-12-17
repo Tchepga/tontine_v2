@@ -1,6 +1,9 @@
-enum Currency { FCFA, USD, EUR }
-enum MovementType { ROTATIVE, CUMULATIVE }
-enum LoopPeriod { DAILY, WEEKLY, MONTHLY }
+
+
+
+import '../../../models/enum/currency.dart';
+import '../../../models/enum/loop_period.dart';
+import '../../../models/enum/type_mouvement.dart';
 
 class CreateConfigTontineDto {
   final double defaultLoanRate;

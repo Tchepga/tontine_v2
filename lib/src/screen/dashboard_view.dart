@@ -4,6 +4,7 @@ import 'package:tontine_v2/src/screen/rapport_view.dart';
 import 'package:tontine_v2/src/widgets/menu_widget.dart';
 
 import '../models/member.dart';
+import 'login_view.dart';
 import 'services/member_service.dart';
 
 class DashboardView extends StatefulWidget {
@@ -37,12 +38,16 @@ class _DashboardViewState extends State<DashboardView> {
         _profile = profile;
       });
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Erreur lors du chargement du profil'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Erreur lors du chargement du profil'),
+            backgroundColor: Colors.red,
+          ),
+        );
+
+        Navigator.of(context).pushReplacementNamed(LoginView.routeName);
+      }
     } finally {
       setState(() {
         _isLoading = false;
@@ -78,7 +83,7 @@ class _DashboardViewState extends State<DashboardView> {
   ];
 
   static const cashFlowAmout = 50000.0;
-  
+
   get firstDate => null;
 
   @override
@@ -218,12 +223,11 @@ class _DashboardViewState extends State<DashboardView> {
                                       color: Colors.white)),
                             ],
                           ))),
-
                   const SizedBox(height: 30.0),
                   CalendarDatePicker(
-                    initialDate: DateTime.now(), 
-                    firstDate: DateTime.now(), 
-                    lastDate: DateTime(2200), 
+                    initialDate: DateTime.now(),
+                    firstDate: DateTime.now(),
+                    lastDate: DateTime(2200),
                     onDateChanged: (date) {
                       print(date);
                     },

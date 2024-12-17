@@ -2,15 +2,19 @@ import 'package:get_storage/get_storage.dart';
 import 'package:tontine_v2/src/models/member.dart';
 import 'dart:convert';
 import 'middleware/interceptor_http.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:logging/logging.dart';
 
 class MemberService {
   final client = ApiClient.client;
   final storage = GetStorage();
-  final String urlApi =
-      "https://b35d-2a01-e0a-da0-8120-51c0-b549-4700-a09a.ngrok-free.app/api";
+  final String urlApi = '${dotenv.env['API_URL']}/api';
+  final _logger = Logger('MemberService');
 
   Future<void> init() async {
-    await GetStorage.init();
+    if(urlApi.isEmpty){
+      throw Exception('API_URL is not set in .env file');
+    }
   }
 
   Future<bool> login(String username, String password) async {
@@ -22,8 +26,7 @@ class MemberService {
           'password': password,
         },
       );
-
-      print('Response: ${response.body}'); 
+ 
       if (response.statusCode == 201) {
         final data = jsonDecode(response.body);
         if (data['token'] != null) {
@@ -33,7 +36,7 @@ class MemberService {
       }
       return false;
     } catch (e) {
-      print('Error: $e');
+      _logger.severe('Error: $e');
       return false;
     }
   }
@@ -56,7 +59,7 @@ class MemberService {
       }
       return null;
     } catch (e) {
-      print('Error getting profile: $e');
+      _logger.severe('Error getting profile: $e');
       return null;
     }
   }

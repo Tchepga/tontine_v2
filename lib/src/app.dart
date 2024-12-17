@@ -7,6 +7,7 @@ import 'package:tontine_v2/src/screen/login_view.dart';
 import 'package:tontine_v2/src/screen/member/account_view.dart';
 import 'package:tontine_v2/src/screen/splash_view.dart';
 
+import 'screen/selected_language_view.dart';
 import 'settings/settings_controller.dart';
 import 'settings/settings_view.dart';
 
@@ -112,6 +113,8 @@ class MyApp extends StatelessWidget {
                     return const CashflowView();
                   case AccountView.routeName:
                     return const AccountView();
+                  case SelectedLanguageView.routeName:
+                    return SelectedLanguageView();
                   default:
                     return const SplashView();
                 }

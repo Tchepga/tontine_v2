@@ -1,0 +1,6 @@
+enum TypeSanction {
+  FINANCIAL,
+  SUSPENSION,
+  WARNING,
+  EXCLUSION
+}

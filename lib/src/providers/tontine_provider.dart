@@ -1,9 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:logging/logging.dart';
+import 'package:tontine_v2/src/screen/services/dto/event_dto.dart';
+import '../models/event.dart';
+import '../models/sanction.dart';
 import '../models/tontine.dart';
+import '../screen/services/dto/rapport_dto.dart';
+import '../screen/services/dto/sanction_dto.dart';
+import '../screen/services/dto/tontine_dto.dart';
 import '../screen/services/tontine_service.dart';
+import '../models/rapport_meeting.dart';
 
 class TontineProvider extends ChangeNotifier {
   final _tontineService = TontineService();
+  final _logger = Logger('TontineProvider');
   List<Tontine> _tontines = [];
   Tontine? _currentTontine;
   bool _isLoading = false;
@@ -23,7 +32,7 @@ class TontineProvider extends ChangeNotifier {
         _currentTontine = tontines.first;
       }
     } catch (e) {
-      print('Error loading tontines: $e');
+      _logger.severe('Error loading tontines: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -35,46 +44,49 @@ class TontineProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> createTontine(Tontine tontine) async {
+  Future<void> createTontine(CreateTontineDto tontine) async {
     try {
       final newTontine = await _tontineService.createTontine(tontine);
       _tontines.add(newTontine);
       notifyListeners();
     } catch (e) {
-      print('Error creating tontine: $e');
+      _logger.severe('Error creating tontine: $e');
       rethrow;
     }
   }
 
-  Future<void> updateTontine(Tontine tontine) async {
+  Future<void> updateTontine(int tontineId, CreateTontineDto tontineDto) async {
     try {
-      await _tontineService.updateTontine(tontine);
-      final index = _tontines.indexWhere((t) => t.id == tontine.id);
+      final tontine =
+          await _tontineService.updateTontine(tontineId, tontineDto);
+      final index = _tontines.indexWhere((t) => t.id == tontineId);
       if (index != -1) {
         _tontines[index] = tontine;
         notifyListeners();
       }
     } catch (e) {
-      print('Error updating tontine: $e');
+      _logger.severe('Error updating tontine: $e');
       rethrow;
     }
   }
 
-  Future<void> addEvent(Event event) async {
+  Future<void> addEvent(int tontineId, CreateEventDto eventDto) async {
     try {
-      final newEvent = await _tontineService.createEvent(event);
-      final tontineIndex = _tontines.indexWhere((t) => t.id == event.tontine.id);
+      await _tontineService.createEvent(tontineId, eventDto);
+      final tontineIndex = _tontines.indexWhere((t) => t.id == tontineId);
       if (tontineIndex != -1) {
         // Mise à jour de la liste des événements de la tontine
-        final updatedTontine = await _tontineService.getTontine(event.tontine.id);
-        _tontines[tontineIndex] = updatedTontine;
-        if (_currentTontine?.id == event.tontine.id) {
-          _currentTontine = updatedTontine;
+        final updatedTontine = await _tontineService.getTontine(tontineId);
+        if (updatedTontine != null) {
+          _tontines[tontineIndex] = updatedTontine;
+          if (_currentTontine?.id == tontineId) {
+            _currentTontine = updatedTontine;
+          }
+          notifyListeners();
         }
-        notifyListeners();
       }
     } catch (e) {
-      print('Error creating event: $e');
+      _logger.severe('Error creating event: $e');
       rethrow;
     }
   }
@@ -83,26 +95,29 @@ class TontineProvider extends ChangeNotifier {
     try {
       return await _tontineService.getEvents(tontineId);
     } catch (e) {
-      print('Error getting events: $e');
+      _logger.severe('Error getting events: $e');
       return [];
     }
   }
 
-  Future<void> addRapport(RapportMeeting rapport) async {
+  Future<void> addRapport(
+      int tontineId, CreateMeetingRapportDto rapportDto) async {
     try {
-      final newRapport = await _tontineService.createRapport(rapport);
-      final tontineIndex = _tontines.indexWhere((t) => t.id == rapport.tontine.id);
+      _tontineService.createRapport(tontineId, rapportDto);
+      final tontineIndex = _tontines.indexWhere((t) => t.id == tontineId);
       if (tontineIndex != -1) {
         // Mise à jour de la liste des rapports de la tontine
-        final updatedTontine = await _tontineService.getTontine(rapport.tontine.id);
-        _tontines[tontineIndex] = updatedTontine;
-        if (_currentTontine?.id == rapport.tontine.id) {
-          _currentTontine = updatedTontine;
+        final updatedTontine = await _tontineService.getTontine(tontineId);
+        if (updatedTontine != null) {
+          _tontines[tontineIndex] = updatedTontine;
+          if (_currentTontine?.id == tontineId) {
+            _currentTontine = updatedTontine;
+          }
+          notifyListeners();
         }
-        notifyListeners();
       }
     } catch (e) {
-      print('Error creating rapport: $e');
+      _logger.severe('Error creating rapport: $e');
       rethrow;
     }
   }
@@ -111,43 +126,50 @@ class TontineProvider extends ChangeNotifier {
     try {
       return await _tontineService.getRapports(tontineId);
     } catch (e) {
-      print('Error getting rapports: $e');
+      _logger.severe('Error getting rapports: $e');
       return [];
     }
   }
 
-  Future<void> updateRapport(RapportMeeting rapport) async {
+  Future<void> updateRapport(
+      int tontineId, CreateMeetingRapportDto rapportDto) async {
     try {
-      await _tontineService.updateRapport(rapport);
-      final tontineIndex = _tontines.indexWhere((t) => t.id == rapport.tontine.id);
+      await _tontineService.updateRapport(tontineId, rapportDto);
+      final tontineIndex = _tontines.indexWhere((t) => t.id == tontineId);
       if (tontineIndex != -1) {
-        final updatedTontine = await _tontineService.getTontine(rapport.tontine.id);
-        _tontines[tontineIndex] = updatedTontine;
-        if (_currentTontine?.id == rapport.tontine.id) {
-          _currentTontine = updatedTontine;
+        final updatedTontine = await _tontineService.getTontine(tontineId);
+        if (updatedTontine != null) {
+          _tontines[tontineIndex] = updatedTontine;
+          if (_currentTontine?.id == tontineId) {
+            _currentTontine = updatedTontine;
+          }
+          notifyListeners();
         }
         notifyListeners();
       }
     } catch (e) {
-      print('Error updating rapport: $e');
+      _logger.severe('Error updating rapport: $e');
       rethrow;
     }
   }
 
-  Future<void> addSanction(Sanction sanction) async {
+  Future<void> addSanction(int tontineId, CreateSanctionDto sanctionDto) async {
     try {
-      final newSanction = await _tontineService.createSanction(sanction);
-      final tontineIndex = _tontines.indexWhere((t) => t.id == sanction.tontine.id);
+      await _tontineService.createSanction(tontineId, sanctionDto);
+      final tontineIndex = _tontines.indexWhere((t) => t.id == tontineId);
       if (tontineIndex != -1) {
-        final updatedTontine = await _tontineService.getTontine(sanction.tontine.id);
-        _tontines[tontineIndex] = updatedTontine;
-        if (_currentTontine?.id == sanction.tontine.id) {
-          _currentTontine = updatedTontine;
+        final updatedTontine = await _tontineService.getTontine(tontineId);
+        if (updatedTontine != null) {
+          _tontines[tontineIndex] = updatedTontine;
+          if (_currentTontine?.id == tontineId) {
+            _currentTontine = updatedTontine;
+          }
+          notifyListeners();
         }
         notifyListeners();
       }
     } catch (e) {
-      print('Error creating sanction: $e');
+      _logger.severe('Error creating sanction: $e');
       rethrow;
     }
   }
@@ -156,26 +178,29 @@ class TontineProvider extends ChangeNotifier {
     try {
       return await _tontineService.getSanctions(tontineId);
     } catch (e) {
-      print('Error getting sanctions: $e');
+      _logger.severe('Error getting sanctions: $e');
       return [];
     }
   }
 
-  Future<void> updateSanction(Sanction sanction) async {
+  Future<void> updateSanction(
+      int tontineId, int sanctionId, CreateSanctionDto sanctionDto) async {
     try {
-      await _tontineService.updateSanction(sanction);
-      final tontineIndex = _tontines.indexWhere((t) => t.id == sanction.tontine.id);
+      await _tontineService.updateSanction(tontineId, sanctionId, sanctionDto);
+      final tontineIndex = _tontines.indexWhere((t) => t.id == tontineId);
       if (tontineIndex != -1) {
-        final updatedTontine = await _tontineService.getTontine(sanction.tontine.id);
-        _tontines[tontineIndex] = updatedTontine;
-        if (_currentTontine?.id == sanction.tontine.id) {
-          _currentTontine = updatedTontine;
+        final updatedTontine = await _tontineService.getTontine(tontineId);
+        if (updatedTontine != null) {
+          _tontines[tontineIndex] = updatedTontine;
+          if (_currentTontine?.id == tontineId) {
+            _currentTontine = updatedTontine;
+          }
+          notifyListeners();
         }
-        notifyListeners();
       }
     } catch (e) {
-      print('Error updating sanction: $e');
+      _logger.severe('Error updating sanction: $e');
       rethrow;
     }
   }
-} 
+}

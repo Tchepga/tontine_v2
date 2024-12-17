@@ -1,0 +1,4 @@
+enum AvailableLanguage {
+  fr,
+  en,
+}

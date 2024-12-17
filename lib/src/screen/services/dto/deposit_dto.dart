@@ -1,4 +1,7 @@
-enum StatusDeposit { PENDING, APPROVED, REJECTED }
+import '../../../models/enum/currency.dart';
+import '../../../models/enum/status_deposit.dart';
+
+
 
 class CreateDepositDto {
   final double amount;
@@ -27,4 +30,4 @@ class CreateDepositDto {
       if (reasons != null) 'reasons': reasons,
     };
   }
-} 
+}

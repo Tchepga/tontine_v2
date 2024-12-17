@@ -76,6 +76,7 @@ class _LoginViewState extends State<LoginView> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            Image.asset('assets/images/welcome.webp'),
             TextField(
               controller: _usernameController,
               decoration: const InputDecoration(

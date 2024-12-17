@@ -9,11 +9,15 @@ import 'dto/tontine_dto.dart';
 import 'dto/deposit_dto.dart';
 import 'dto/rapport_dto.dart';
 import 'dto/sanction_dto.dart';
+import 'package:logging/logging.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'dto/event_dto.dart';
 
 class TontineService {
+  static final _logger = Logger('TontineService');
   final client = ApiClient.client;
   final storage = GetStorage();
-  final String urlApi = "https://b35d-2a01-e0a-da0-8120-51c0-b549-4700-a09a.ngrok-free.app/api";
+  final String urlApi = '${dotenv.env['API_URL']}/api';
 
   // Tontine CRUD
   Future<List<Tontine>> getTontines() async {
@@ -25,7 +29,7 @@ class TontineService {
       }
       return [];
     } catch (e) {
-      print('Error getting tontines: $e');
+      _logger.severe('Error getting tontines: $e');
       return [];
     }
   }
@@ -38,7 +42,7 @@ class TontineService {
       }
       return null;
     } catch (e) {
-      print('Error getting tontine: $e');
+      _logger.severe('Error getting tontine: $e');
       return null;
     }
   }
@@ -54,7 +58,7 @@ class TontineService {
     throw Exception('Failed to create tontine');
   }
 
-  Future<void> updateTontine(int id, CreateTontineDto tontineDto) async {
+  Future<Tontine> updateTontine(int id, CreateTontineDto tontineDto) async {
     final response = await client.patch(
       Uri.parse('$urlApi/tontine/$id'),
       body: jsonEncode(tontineDto.toJson()),
@@ -62,6 +66,7 @@ class TontineService {
     if (response.statusCode != 200) {
       throw Exception('Failed to update tontine');
     }
+    return Tontine.fromJson(jsonDecode(response.body));
   }
 
   // Rapports
@@ -131,10 +136,10 @@ class TontineService {
   }
 
   // Events
-  Future<Event> createEvent(int tontineId, Event event) async {
+  Future<Event> createEvent(int tontineId, CreateEventDto eventDto) async {
     final response = await client.post(
       Uri.parse('$urlApi/tontine/$tontineId/event'),
-      body: jsonEncode(event),
+      body: jsonEncode(eventDto.toJson()),
     );
     if (response.statusCode == 201) {
       return Event.fromJson(jsonDecode(response.body));

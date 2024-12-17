@@ -1,29 +1,33 @@
+import '../../../models/enum/event_type.dart';
 
-
-import '../../../models/enum/type_sanction.dart';
-
-class CreateSanctionDto {
-  final TypeSanction type;
+class CreateEventDto {
+  final int tontineId;
+  final String title;
+  final EventType type;
   final String description;
   final DateTime? startDate;
   final DateTime? endDate;
-  final int memberId;
+  final List<int>? participants;
 
-  CreateSanctionDto({
+  CreateEventDto({
+    required this.tontineId,
+    required this.title,
     required this.type,
     required this.description,
     this.startDate,
     this.endDate,
-    required this.memberId,
+    this.participants,
   });
 
   Map<String, dynamic> toJson() {
     return {
+      'tontineId': tontineId,
+      'title': title,
       'type': type.toString().split('.').last,
       'description': description,
       if (startDate != null) 'startDate': startDate!.toIso8601String(),
       if (endDate != null) 'endDate': endDate!.toIso8601String(),
-      'memberId': memberId,
+      if (participants != null) 'participants': participants,
     };
   }
 } 

@@ -1,0 +1,14 @@
+enum EventType {
+  MEETING,
+  BIRTHDAY,
+  WEDDING,
+  PARTY,
+  CONFERENCE,
+  WORKSHOP,
+  SEMINAR,
+  FUNERAL,
+  ILLNESS,
+  NEWBORN,
+  GRIEF,
+  OTHER
+}

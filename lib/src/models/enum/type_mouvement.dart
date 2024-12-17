@@ -1,0 +1,1 @@
+enum MovementType { ROTATIVE, CUMULATIVE }

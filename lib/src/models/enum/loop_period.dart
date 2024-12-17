@@ -1,0 +1,1 @@
+enum LoopPeriod { DAILY, WEEKLY, MONTHLY }
