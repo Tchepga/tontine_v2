@@ -1,16 +1,39 @@
 import 'package:flutter/material.dart';
-
+import 'package:get_storage/get_storage.dart';
 import '../models/enum/available_language.dart';
 import 'login_view.dart';
 import 'services/language_service.dart';
 
-class SelectedLanguageView extends StatelessWidget {
-  SelectedLanguageView({super.key});
-  static const routeName = '/selected-language';
-  final _languageService = LanguageService();
+class SelectedLanguageView extends StatefulWidget {
+  static const routeName = '/';
+  const SelectedLanguageView({super.key});
 
-  void _saveSelectedLanguage(AvailableLanguage languageCode) async {
-    await _languageService.saveSelectedLanguage(languageCode);
+  @override
+  State<SelectedLanguageView> createState() => _SelectedLanguageViewState();
+}
+
+class _SelectedLanguageViewState extends State<SelectedLanguageView> {
+  final _languageService = LanguageService();
+  final _storage = GetStorage();
+
+  @override
+  void initState() {
+    super.initState();
+    _checkLanguage();
+  }
+
+  Future<void> _checkLanguage() async {
+    final hasLanguage = await _storage.read('language') != null;
+    if (hasLanguage && mounted) {
+      Navigator.of(context).pushReplacementNamed(LoginView.routeName);
+    }
+  }
+
+  void _saveSelectedLanguage(AvailableLanguage language) async {
+    await _languageService.saveSelectedLanguage(language);
+    if (mounted) {
+      Navigator.of(context).pushReplacementNamed(LoginView.routeName);
+    }
   }
 
   @override

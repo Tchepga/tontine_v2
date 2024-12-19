@@ -7,6 +7,7 @@ class Member {
   final String? avatar;
   final String? country;
   final User? user;
+  final Object? loans;
   Member({
     this.id,
     required this.email,
@@ -16,18 +17,20 @@ class Member {
     required this.avatar,
     required this.country,
    required this.user,
+   required this.loans,
   });
 
   factory Member.fromJson(Map<String, dynamic> json) {
     return Member(
       id: json['id'],
-      email: json['email'],
+      email: json['email'] ?? '',
       firstName: json['firstName'],
       lastName: json['lastName'],
       phone: json['phone'],
-      avatar: json['avatar'],
-      country: json['country'],
-      user: json['country']
+      avatar: json['avatar'] ?? '',
+      country: json['country'] ?? '',
+      user: json['user'] != null ? User.fromJson(json['user']) : null,
+      loans: json['loans'] ?? ''
     );
   }
 
@@ -53,4 +56,10 @@ class User {
     this.roles,
   });
 
+  factory User.fromJson(Map<String, dynamic> json) {
+    return User(
+      username: json['username'],
+      roles: json['roles'] != null ? List<String>.from(json['roles']) : [],
+    );
+  }
 }

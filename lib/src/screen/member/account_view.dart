@@ -20,6 +20,7 @@ class AccountView extends StatelessWidget {
           );
         }
         final member = authProvider.currentUser;
+        print("member_account: ${member}");
         final bool isPresident = member?.user?.roles?.contains('PRESIDENT') ?? false;
 
         return Scaffold(
@@ -38,6 +39,7 @@ class AccountView extends StatelessWidget {
               ],
             ),
           ),
+        bottomNavigationBar: const MenuWidget(),
         );
       },
     );
@@ -110,7 +112,7 @@ class AccountView extends StatelessWidget {
               },
             ),
 
-            const MenuWidget()
+           
           ],
         ),
       ),

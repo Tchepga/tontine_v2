@@ -16,6 +16,7 @@ class AuthProvider extends ChangeNotifier {
 
     try {
       final profile = await _memberService.getProfile();
+      print('profile-provider: ${profile}');
       _currentUser = profile;
     } catch (e) {
       print('Error loading profile: $e');

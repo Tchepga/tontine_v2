@@ -1,6 +1,6 @@
 import 'package:get_storage/get_storage.dart';
-import 'package:tontine_v2/src/models/member.dart';
 import 'dart:convert';
+import '../../models/member.dart';
 import 'middleware/interceptor_http.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:logging/logging.dart';
@@ -12,7 +12,7 @@ class MemberService {
   final _logger = Logger('MemberService');
 
   Future<void> init() async {
-    if(urlApi.isEmpty){
+    if (urlApi.isEmpty) {
       throw Exception('API_URL is not set in .env file');
     }
   }
@@ -26,7 +26,6 @@ class MemberService {
           'password': password,
         },
       );
- 
       if (response.statusCode == 201) {
         final data = jsonDecode(response.body);
         if (data['token'] != null) {
@@ -43,8 +42,8 @@ class MemberService {
 
   Future<Member?> getProfile() async {
     try {
-      if (!isLoggedIn()) {
-        return null;
+      if (!(await hasValidToken())) {
+        throw Exception('Token invalide');
       }
 
       final response = await client.get(
@@ -53,9 +52,8 @@ class MemberService {
         },
         Uri.parse('$urlApi/member'),
       );
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        return data;
+      if (response.statusCode == 200 && response.body.isNotEmpty ) {
+        return Member.fromJson(jsonDecode(response.body));
       }
       return null;
     } catch (e) {
@@ -81,6 +79,9 @@ class MemberService {
 
   Future<bool> hasValidToken() async {
     final token = await storage.read('token');
-    return token != null && token.isNotEmpty;
+    final response = await client
+        .post(Uri.parse('$urlApi/auth/verify'), body: {'token': token});
+    final decodedResponse = jsonDecode(response.body);
+    return decodedResponse['valid'] == true;
   }
 }

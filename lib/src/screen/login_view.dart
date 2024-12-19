@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-
 import 'dashboard_view.dart';
 import 'services/member_service.dart';
-
 class LoginView extends StatefulWidget {
   static const routeName = '/login';
   const LoginView({super.key});
@@ -23,6 +21,8 @@ class _LoginViewState extends State<LoginView> {
     _memberService.init(); // Initialiser GetStorage
     _checkToken(); // Ajouter la vérification du token
   }
+
+
 
   Future<void> _checkToken() async {
     final hasToken = await _memberService.hasValidToken();
@@ -76,7 +76,7 @@ class _LoginViewState extends State<LoginView> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Image.asset('assets/images/welcome.webp'),
+            Image.asset('assets/images/illustration_login.png'),
             TextField(
               controller: _usernameController,
               decoration: const InputDecoration(
@@ -96,9 +96,13 @@ class _LoginViewState extends State<LoginView> {
                 ? const CircularProgressIndicator()
                 : ElevatedButton(
                     onPressed: _handleLogin,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.lightBlue,
+                      foregroundColor: Colors.white,
+                    ),
                     child: const Text('Se connecter'),
                   ),
-          ],
+          ]
         ),
       ),
     );
