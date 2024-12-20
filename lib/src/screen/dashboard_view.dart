@@ -21,7 +21,7 @@ class DashboardView extends StatefulWidget {
 class _DashboardViewState extends State<DashboardView> {
   final _memberService = MemberService();
   Member? _profile;
-  bool _isLoading = true;
+  final bool _isLoading = true;
 
   @override
   void initState() {
@@ -219,7 +219,7 @@ class _DashboardViewState extends State<DashboardView> {
                                       style: TextStyle(
                                           fontSize: 16.0, color: Colors.white)),
                                   Text('$cashFlowAmout Fcfa',
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                           fontSize: 24.0,
                                           fontWeight: FontWeight.bold,
                                           color: Colors.white)),

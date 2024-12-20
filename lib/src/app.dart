@@ -114,7 +114,7 @@ class MyApp extends StatelessWidget {
                   case AccountView.routeName:
                     return const AccountView();
                   case SelectedLanguageView.routeName:
-                    return SelectedLanguageView();
+                    return const SelectedLanguageView();
                   default:
                     return const SplashView();
                 }

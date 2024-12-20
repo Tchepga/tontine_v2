@@ -28,9 +28,6 @@ class TontineProvider extends ChangeNotifier {
     try {
       final tontines = await _tontineService.getTontines();
       _tontines = tontines;
-      if (tontines.isNotEmpty) {
-        _currentTontine = tontines.first;
-      }
     } catch (e) {
       _logger.severe('Error loading tontines: $e');
     } finally {

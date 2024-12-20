@@ -20,7 +20,7 @@ class AccountView extends StatelessWidget {
           );
         }
         final member = authProvider.currentUser;
-        print("member_account: ${member}");
+        print("member_account: $member");
         final bool isPresident = member?.user?.roles?.contains('PRESIDENT') ?? false;
 
         return Scaffold(

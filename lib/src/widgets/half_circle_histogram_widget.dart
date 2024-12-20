@@ -16,6 +16,7 @@ class HalfCircleHistogramPainter extends CustomPainter {
   
 
   
+  @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
       ..color = color
@@ -34,6 +35,7 @@ class HalfCircleHistogramPainter extends CustomPainter {
     canvas.drawArc(rect, startAngle, sweepAngle, false, paint);
   }
 
+  @override
   bool shouldRepaint(CustomPainter oldDelegate) {
     return true;
   }

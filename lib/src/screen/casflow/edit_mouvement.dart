@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 
   class EditMouvement extends StatefulWidget {
+  const EditMouvement({super.key});
+
     @override
     _EditMouvementState createState() => _EditMouvementState();
   }
@@ -57,7 +59,7 @@ import 'package:flutter/widgets.dart';
                 ),
                 DropdownButtonFormField<String>(
                   value: _selectedAuthor,
-                  decoration: InputDecoration(labelText: 'Author'),
+                  decoration: const InputDecoration(labelText: 'Author'),
                   items: ['Author1', 'Author2', 'Author3']
                       .map((author) => DropdownMenuItem(
                             value: author,
@@ -96,7 +98,7 @@ import 'package:flutter/widgets.dart';
             onPressed: () {
               Navigator.of(context).pop();
             },
-            child: Text('Cancel'),
+            child: const Text('Cancel'),
           ),
           ElevatedButton(
             onPressed: () {
