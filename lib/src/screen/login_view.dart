@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'dashboard_view.dart';
 import 'services/member_service.dart';
+import 'tontine/select_tontine_view.dart';
 class LoginView extends StatefulWidget {
   static const routeName = '/login';
   const LoginView({super.key});
@@ -19,15 +19,23 @@ class _LoginViewState extends State<LoginView> {
   void initState() {
     super.initState();
     _memberService.init(); // Initialiser GetStorage
-    _checkToken(); // Ajouter la vérification du token
+    _memberService.logout();
+    _checkToken(); 
+    _usernameController.value = const TextEditingValue(text: 'president31');
+    _passwordController.value = const TextEditingValue(text: 'changeme');
   }
 
 
 
   Future<void> _checkToken() async {
     final hasToken = await _memberService.hasValidToken();
+    await _memberService.getProfile();
+    final hasConnectedMemberInfo = await _memberService.hasConnectedMemberInfo();
+    if(!hasConnectedMemberInfo) {
+      await _memberService.getProfile();
+    }
     if (hasToken && mounted) {
-      Navigator.of(context).pushReplacementNamed(DashboardView.routeName);
+      Navigator.of(context).pushReplacementNamed(SelectTontineView.routeName);
     }
   }
 
@@ -43,8 +51,9 @@ class _LoginViewState extends State<LoginView> {
       );
 
       if (success) {
+        await _memberService.getProfile();
         // Navigation vers la page principale si la connexion réussit
-        Navigator.of(context).pushReplacementNamed(DashboardView.routeName);
+        Navigator.of(context).pushReplacementNamed(SelectTontineView.routeName);
       } else {
         // Afficher un message d'erreur si la connexion échoue
         ScaffoldMessenger.of(context).showSnackBar(
@@ -79,6 +88,7 @@ class _LoginViewState extends State<LoginView> {
             Image.asset('assets/images/illustration_login.png'),
             TextField(
               controller: _usernameController,
+              
               decoration: const InputDecoration(
                 labelText: 'Nom d\'utilisateur',
               ),
@@ -95,7 +105,9 @@ class _LoginViewState extends State<LoginView> {
             _isLoading
                 ? const CircularProgressIndicator()
                 : ElevatedButton(
-                    onPressed: _handleLogin,
+                    onPressed: () {
+                      _handleLogin();
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.lightBlue,
                       foregroundColor: Colors.white,

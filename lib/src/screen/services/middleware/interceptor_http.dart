@@ -5,10 +5,12 @@ import 'package:get_storage/get_storage.dart';
 
 class AuthInterceptor implements InterceptorContract {
   final storage = GetStorage();
+
   @override
   Future<BaseRequest> interceptRequest({required BaseRequest request}) async {
     final token = storage.read('token');
-    if (token != null) {
+    final authorisationHeader = request.headers['Authorization'];
+    if (token != null && authorisationHeader != 'Bearer $token') {
       request.headers['Authorization'] = 'Bearer $token';
     }
     request.headers['Content-Type'] = 'application/json';
@@ -33,5 +35,6 @@ class AuthInterceptor implements InterceptorContract {
 class ApiClient {
   static final client = InterceptedClient.build(
     interceptors: [AuthInterceptor()],
+    requestTimeout: const Duration(seconds: 30),
   );
 }

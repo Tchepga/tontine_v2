@@ -23,7 +23,7 @@ class _SelectedLanguageViewState extends State<SelectedLanguageView> {
   }
 
   Future<void> _checkLanguage() async {
-    final hasLanguage = await _storage.read('language') != null;
+    final hasLanguage = await _storage.read(LanguageService.languageKey) != null;
     if (hasLanguage && mounted) {
       Navigator.of(context).pushReplacementNamed(LoginView.routeName);
     }

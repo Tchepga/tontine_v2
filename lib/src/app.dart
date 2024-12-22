@@ -8,8 +8,10 @@ import 'package:tontine_v2/src/screen/member/account_view.dart';
 import 'package:tontine_v2/src/screen/splash_view.dart';
 
 import 'screen/selected_language_view.dart';
+import 'screen/tontine/select_tontine_view.dart';
 import 'settings/settings_controller.dart';
 import 'settings/settings_view.dart';
+import 'screen/check_connection_view.dart';
 
 /// The Widget that configures your application.
 class MyApp extends StatelessWidget {
@@ -115,11 +117,20 @@ class MyApp extends StatelessWidget {
                     return const AccountView();
                   case SelectedLanguageView.routeName:
                     return const SelectedLanguageView();
+                  case CheckConnectionView.routeName:
+                    return const CheckConnectionView();
+                  case SelectTontineView.routeName:
+                    return const SelectTontineView();
                   default:
                     return const SplashView();
                 }
               },
             );
+          },
+          initialRoute: CheckConnectionView.routeName,
+          routes: {
+            CheckConnectionView.routeName: (context) => const CheckConnectionView(),
+            SelectedLanguageView.routeName: (context) => const SelectedLanguageView(),
           },
         );
       },

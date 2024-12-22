@@ -1,7 +1,9 @@
+import 'package:tontine_v2/src/models/enum/currency.dart';
+
 class CashFlow {
   final int id;
   final double amount;
-  final String currency;
+  final Currency currency;
   final double dividendes;
   final List<CashFlow> deposits;
 
@@ -17,7 +19,7 @@ class CashFlow {
     return CashFlow(
       id: json['id'],
       amount: json['amount']?.toDouble() ?? 0,
-      currency: json['currency'],
+      currency: currencyFromString(json['currency']),
       dividendes: json['dividendes']?.toDouble() ?? 0,
       deposits: json['deposits'] != null
           ? (json['deposits'] as List)
@@ -25,5 +27,15 @@ class CashFlow {
               .toList()
           : [],
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'amount': amount,
+      'currency': currency.name,
+      'dividendes': dividendes,
+      'deposits': deposits.map((deposit) => deposit.toJson()).toList(),
+    };
   }
 } 

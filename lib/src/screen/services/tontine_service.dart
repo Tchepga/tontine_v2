@@ -1,5 +1,7 @@
 import 'dart:convert';
 import 'package:get_storage/get_storage.dart';
+import 'package:tontine_v2/src/screen/services/member_service.dart';
+import '../../models/deposit.dart';
 import '../../models/tontine.dart';
 import '../../models/event.dart';
 import '../../models/sanction.dart';
@@ -22,7 +24,13 @@ class TontineService {
   // Tontine CRUD
   Future<List<Tontine>> getTontines() async {
     try {
-      final response = await client.get(Uri.parse('$urlApi/tontine/member/${storage.read('username')}'));
+      final memberData = await storage.read(MemberService().KEY_USER_INFO);
+      final username = memberData?['user']['username'];
+      final token = storage.read(MemberService().KEY_TOKEN);
+      final response = await client
+          .get(Uri.parse('$urlApi/tontine/member/$username'), headers: {
+        'Authorization': 'Bearer $token',
+      });
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
         return data.map((json) => Tontine.fromJson(json)).toList();
@@ -70,7 +78,8 @@ class TontineService {
   }
 
   // Rapports
-  Future<RapportMeeting> createRapport(int tontineId, CreateMeetingRapportDto rapportDto) async {
+  Future<RapportMeeting> createRapport(
+      int tontineId, CreateMeetingRapportDto rapportDto) async {
     final response = await client.post(
       Uri.parse('$urlApi/tontine/$tontineId/rapport'),
       body: jsonEncode(rapportDto.toJson()),
@@ -82,7 +91,8 @@ class TontineService {
   }
 
   Future<List<RapportMeeting>> getRapports(int tontineId) async {
-    final response = await client.get(Uri.parse('$urlApi/tontine/$tontineId/rapport'));
+    final response =
+        await client.get(Uri.parse('$urlApi/tontine/$tontineId/rapport'));
     if (response.statusCode == 200) {
       final List<dynamic> data = jsonDecode(response.body);
       return data.map((json) => RapportMeeting.fromJson(json)).toList();
@@ -90,7 +100,8 @@ class TontineService {
     return [];
   }
 
-  Future<void> updateRapport(int tontineId, CreateMeetingRapportDto rapportDto) async {
+  Future<void> updateRapport(
+      int tontineId, CreateMeetingRapportDto rapportDto) async {
     final response = await client.patch(
       Uri.parse('$urlApi/tontine/$tontineId/rapport'),
       body: jsonEncode(rapportDto.toJson()),
@@ -101,7 +112,8 @@ class TontineService {
   }
 
   // Sanctions
-  Future<Sanction> createSanction(int tontineId, CreateSanctionDto sanctionDto) async {
+  Future<Sanction> createSanction(
+      int tontineId, CreateSanctionDto sanctionDto) async {
     final response = await client.post(
       Uri.parse('$urlApi/tontine/$tontineId/sanction'),
       body: jsonEncode(sanctionDto.toJson()),
@@ -113,7 +125,8 @@ class TontineService {
   }
 
   Future<List<Sanction>> getSanctions(int tontineId) async {
-    final response = await client.get(Uri.parse('$urlApi/tontine/$tontineId/sanction'));
+    final response =
+        await client.get(Uri.parse('$urlApi/tontine/$tontineId/sanction'));
     if (response.statusCode == 200) {
       final List<dynamic> data = jsonDecode(response.body);
       return data.map((json) => Sanction.fromJson(json)).toList();
@@ -122,10 +135,7 @@ class TontineService {
   }
 
   Future<void> updateSanction(
-    int tontineId, 
-    int sanctionId, 
-    CreateSanctionDto sanctionDto
-  ) async {
+      int tontineId, int sanctionId, CreateSanctionDto sanctionDto) async {
     final response = await client.patch(
       Uri.parse('$urlApi/tontine/$tontineId/sanction/$sanctionId'),
       body: jsonEncode(sanctionDto.toJson()),
@@ -148,7 +158,8 @@ class TontineService {
   }
 
   Future<List<Event>> getEvents(int tontineId) async {
-    final response = await client.get(Uri.parse('$urlApi/tontine/$tontineId/event'));
+    final response =
+        await client.get(Uri.parse('$urlApi/tontine/$tontineId/event'));
     if (response.statusCode == 200) {
       final List<dynamic> data = jsonDecode(response.body);
       return data.map((json) => Event.fromJson(json)).toList();
@@ -156,20 +167,50 @@ class TontineService {
     return [];
   }
 
+  Future<List<Deposit>> getDeposits(int tontineId) async {
+    final token = storage.read(MemberService().KEY_TOKEN);
+    final response = await client
+        .get(Uri.parse('$urlApi/tontine/$tontineId/deposit'), headers: {
+      'Authorization': 'Bearer $token',
+    });
+    if (response.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(response.body);
+      return data.map((json) => Deposit.fromJson(json)).toList();
+    }
+    return [];
+  }
+
   // Deposits
   Future<void> createDeposit(int tontineId, CreateDepositDto depositDto) async {
-    final response = await client.post(
-      Uri.parse('$urlApi/tontine/$tontineId/deposit'),
-      body: jsonEncode(depositDto.toJson()),
-    );
-    if (response.statusCode != 201) {
+    print("body: ${jsonEncode(depositDto.toJson())}");
+    final token = storage.read(MemberService().KEY_TOKEN);
+    try {
+      final response = await client.post(
+        Uri.parse('$urlApi/tontine/$tontineId/deposit'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(depositDto.toJson()),
+      );
+      if (response.statusCode != 201) {
+        throw Exception('Failed to create deposit');
+      }
+    } catch (e) {
+      _logger.severe('Error creating deposit: $e');
       throw Exception('Failed to create deposit');
     }
   }
 
-  Future<void> updateDeposit(int tontineId, int depositId, CreateDepositDto depositDto) async {
+  Future<void> updateDeposit(
+      int tontineId, int depositId, CreateDepositDto depositDto) async {
+    final token = storage.read(MemberService().KEY_TOKEN);
     final response = await client.patch(
       Uri.parse('$urlApi/tontine/$tontineId/deposit/$depositId'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
       body: jsonEncode(depositDto.toJson()),
     );
     if (response.statusCode != 200) {
@@ -178,11 +219,15 @@ class TontineService {
   }
 
   Future<void> deleteDeposit(int tontineId, int depositId) async {
+    final token = storage.read(MemberService().KEY_TOKEN);
     final response = await client.delete(
       Uri.parse('$urlApi/tontine/$tontineId/deposit/$depositId'),
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
     );
     if (response.statusCode != 200) {
       throw Exception('Failed to delete deposit');
     }
   }
-} 
+}

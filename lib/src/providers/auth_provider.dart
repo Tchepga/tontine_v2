@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:logging/logging.dart';
+import '../models/enum/role.dart';
 import '../models/member.dart';
 import '../screen/services/member_service.dart';
 
@@ -6,6 +8,7 @@ class AuthProvider extends ChangeNotifier {
   final _memberService = MemberService();
   Member? _currentUser;
   bool _isLoading = false;
+  Logger logger = Logger('AuthProvider');
 
   Member? get currentUser => _currentUser;
   bool get isLoading => _isLoading;
@@ -16,10 +19,9 @@ class AuthProvider extends ChangeNotifier {
 
     try {
       final profile = await _memberService.getProfile();
-      print('profile-provider: $profile');
       _currentUser = profile;
     } catch (e) {
-      print('Error loading profile: $e');
+      logger.severe('Error loading profile: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -46,5 +48,9 @@ class AuthProvider extends ChangeNotifier {
     _memberService.logout();
     _currentUser = null;
     notifyListeners();
+  }
+
+  bool isPresident() {
+    return _currentUser?.user?.roles?.contains(Role.PRESIDENT) ?? false;
   }
 } 

@@ -1,24 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 import 'package:tontine_v2/src/screen/services/dto/event_dto.dart';
+import '../models/deposit.dart';
 import '../models/event.dart';
 import '../models/sanction.dart';
 import '../models/tontine.dart';
+import '../screen/services/dto/deposit_dto.dart';
 import '../screen/services/dto/rapport_dto.dart';
 import '../screen/services/dto/sanction_dto.dart';
 import '../screen/services/dto/tontine_dto.dart';
 import '../screen/services/tontine_service.dart';
 import '../models/rapport_meeting.dart';
+import 'package:get_storage/get_storage.dart';
 
 class TontineProvider extends ChangeNotifier {
+  static const KEY_SELECTED_TONTINE_ID = 'selectedTontineId';
+  
   final _tontineService = TontineService();
   final _logger = Logger('TontineProvider');
+  final _storage = GetStorage();
   List<Tontine> _tontines = [];
+  List<Deposit> _deposits = [];
   Tontine? _currentTontine;
   bool _isLoading = false;
 
   List<Tontine> get tontines => _tontines;
   Tontine? get currentTontine => _currentTontine;
+  List<Deposit> get deposits => _deposits;
   bool get isLoading => _isLoading;
 
   Future<void> loadTontines() async {
@@ -28,6 +36,12 @@ class TontineProvider extends ChangeNotifier {
     try {
       final tontines = await _tontineService.getTontines();
       _tontines = tontines;
+      final index = _tontines.indexWhere((t) => t.id == _storage.read(KEY_SELECTED_TONTINE_ID));
+      if(index != -1) {
+        _currentTontine = _tontines[index];
+      } else {
+        throw Exception('La tontine sélectionnée n\'existe pas');
+      }
     } catch (e) {
       _logger.severe('Error loading tontines: $e');
     } finally {
@@ -36,9 +50,26 @@ class TontineProvider extends ChangeNotifier {
     }
   }
 
-  void setCurrentTontine(Tontine tontine) {
-    _currentTontine = tontine;
+  Future<void> loadDeposits(int tontineId) async {
+    _deposits = await _tontineService.getDeposits(tontineId);
     notifyListeners();
+  }
+
+  Future<void> setCurrentTontine(Tontine tontine) async {
+    try {
+      // Mettre à jour la tonetine sélectionnée dans la liste
+      final index = _tontines.indexWhere((t) => t.id == tontine.id);
+      if (index != -1) {
+        _currentTontine = _tontines[index];
+        notifyListeners();
+
+        // Sauvegarder l'ID de la tontine sélectionnée
+        await _storage.write(KEY_SELECTED_TONTINE_ID, tontine.id);
+      }
+    } catch (e) {
+      _logger.severe('Error setting current tontine: $e');
+      rethrow;
+    }
   }
 
   Future<void> createTontine(CreateTontineDto tontine) async {
@@ -199,5 +230,19 @@ class TontineProvider extends ChangeNotifier {
       _logger.severe('Error updating sanction: $e');
       rethrow;
     }
+  }
+
+  Future<void> createDeposit(int tontineId, CreateDepositDto depositDto) async {
+    await _tontineService.createDeposit(tontineId, depositDto);
+  }
+
+  Future<void> deleteDeposit(int tontineId, int depositId) async {
+    await _tontineService.deleteDeposit(tontineId, depositId);
+    await loadDeposits(tontineId);
+  }
+
+  Future<void> updateDeposit(int tontineId, int depositId, CreateDepositDto depositDto) async {
+    await _tontineService.updateDeposit(tontineId, depositId, depositDto);
+    await loadDeposits(tontineId);
   }
 }

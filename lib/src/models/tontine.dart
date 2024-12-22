@@ -54,6 +54,7 @@ class Tontine {
   final List<Event> events;
   final List<RapportMeeting> rapports;
   final List<Sanction> sanctions;
+  final bool isSelected;
 
   Tontine({
     required this.id,
@@ -65,6 +66,7 @@ class Tontine {
     this.events = const [],
     this.rapports = const [],
     this.sanctions = const [],
+    this.isSelected = false,
   });
 
   factory Tontine.fromJson(Map<String, dynamic> json) {
