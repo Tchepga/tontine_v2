@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../models/enum/currency.dart';
+import '../../models/enum/loop_period.dart';
+import '../../models/enum/type_mouvement.dart';
+import '../../providers/auth_provider.dart';
 import '../../providers/tontine_provider.dart';
 import '../dashboard_view.dart';
 import 'package:logging/logging.dart';
+
+import '../services/dto/tontine_dto.dart';
 
 class SelectTontineView extends StatefulWidget {
   static const routeName = '/select-tontine';
@@ -39,6 +45,76 @@ class _SelectTontineViewState extends State<SelectTontineView> {
         );
       }
     }
+  }
+
+  void _showCreateTontineDialog(BuildContext context) {
+    final formKey = GlobalKey<FormState>();
+    final titleController = TextEditingController();
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Nouvelle tontine'),
+        content: Form(
+          key: formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextFormField(
+                controller: titleController,
+                decoration: const InputDecoration(labelText: 'Nom de la tontine'),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Le nom est requis';
+                  }
+                  return null;
+                },
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Annuler'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              if (formKey.currentState!.validate()) {
+                try {
+                  final tontineDto = CreateTontineDto(
+                    title: titleController.text,
+                    memberIds: [Provider.of<AuthProvider>(context, listen: false).currentUser!.id!],
+                    config: CreateConfigTontineDto(
+                      defaultLoanRate: 10,
+                      defaultLoanDuration: 30,
+                      loopPeriod: LoopPeriod.MONTHLY,
+                      minLoanAmount: 100,
+                      countPersonPerMovement: 1,
+                      movementType: MovementType.ROTATIVE,
+                      countMaxMember: 12,
+                    ),
+                    currency: Currency.EURO,
+                  );
+                  await Provider.of<TontineProvider>(context, listen: false)
+                      .createTontine(tontineDto);
+                  if (!context.mounted) return;
+                  Navigator.pop(context);
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Erreur lors de la création'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
+            },
+            child: const Text('Créer'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -99,6 +175,10 @@ class _SelectTontineViewState extends State<SelectTontineView> {
             },
           );
         },
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _showCreateTontineDialog(context),
+        child: const Icon(Icons.add),
       ),
     );
   }

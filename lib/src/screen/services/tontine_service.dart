@@ -24,9 +24,9 @@ class TontineService {
   // Tontine CRUD
   Future<List<Tontine>> getTontines() async {
     try {
-      final memberData = await storage.read(MemberService().KEY_USER_INFO);
+      final memberData = await storage.read(MemberService.KEY_USER_INFO);
       final username = memberData?['user']['username'];
-      final token = storage.read(MemberService().KEY_TOKEN);
+      final token = storage.read(MemberService.KEY_TOKEN);
       final response = await client
           .get(Uri.parse('$urlApi/tontine/member/$username'), headers: {
         'Authorization': 'Bearer $token',
@@ -168,7 +168,7 @@ class TontineService {
   }
 
   Future<List<Deposit>> getDeposits(int tontineId) async {
-    final token = storage.read(MemberService().KEY_TOKEN);
+    final token = storage.read(MemberService.KEY_TOKEN);
     final response = await client
         .get(Uri.parse('$urlApi/tontine/$tontineId/deposit'), headers: {
       'Authorization': 'Bearer $token',
@@ -182,8 +182,7 @@ class TontineService {
 
   // Deposits
   Future<void> createDeposit(int tontineId, CreateDepositDto depositDto) async {
-    print("body: ${jsonEncode(depositDto.toJson())}");
-    final token = storage.read(MemberService().KEY_TOKEN);
+    final token = storage.read(MemberService.KEY_TOKEN);
     try {
       final response = await client.post(
         Uri.parse('$urlApi/tontine/$tontineId/deposit'),
@@ -204,7 +203,7 @@ class TontineService {
 
   Future<void> updateDeposit(
       int tontineId, int depositId, CreateDepositDto depositDto) async {
-    final token = storage.read(MemberService().KEY_TOKEN);
+    final token = storage.read(MemberService.KEY_TOKEN);
     final response = await client.patch(
       Uri.parse('$urlApi/tontine/$tontineId/deposit/$depositId'),
       headers: {
@@ -219,7 +218,7 @@ class TontineService {
   }
 
   Future<void> deleteDeposit(int tontineId, int depositId) async {
-    final token = storage.read(MemberService().KEY_TOKEN);
+    final token = storage.read(MemberService.KEY_TOKEN);
     final response = await client.delete(
       Uri.parse('$urlApi/tontine/$tontineId/deposit/$depositId'),
       headers: {
@@ -228,6 +227,22 @@ class TontineService {
     );
     if (response.statusCode != 200) {
       throw Exception('Failed to delete deposit');
+    }
+  }
+
+  Future<void> updateTontineConfig(
+      int tontineId, CreateConfigTontineDto configDto) async {
+    final token = storage.read(MemberService.KEY_TOKEN);
+    final response = await client.patch(
+      Uri.parse('$urlApi/tontine/$tontineId/config'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode(configDto.toJson()),
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to update tontine config');
     }
   }
 }

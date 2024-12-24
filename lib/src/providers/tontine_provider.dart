@@ -55,6 +55,11 @@ class TontineProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> getCurrentTontine() async {
+    _currentTontine = await _tontineService.getTontine(_currentTontine!.id);
+    notifyListeners();
+  }
+
   Future<void> setCurrentTontine(Tontine tontine) async {
     try {
       // Mettre à jour la tonetine sélectionnée dans la liste
@@ -94,6 +99,15 @@ class TontineProvider extends ChangeNotifier {
       }
     } catch (e) {
       _logger.severe('Error updating tontine: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> updateTontineConfig(int tontineId, CreateConfigTontineDto configDto) async {
+    try {
+      await _tontineService.updateTontineConfig(tontineId, configDto);
+    } catch (e) {
+      _logger.severe('Error updating tontine config: $e');
       rethrow;
     }
   }
@@ -245,4 +259,6 @@ class TontineProvider extends ChangeNotifier {
     await _tontineService.updateDeposit(tontineId, depositId, depositDto);
     await loadDeposits(tontineId);
   }
+
+ 
 }

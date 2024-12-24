@@ -9,6 +9,7 @@ import 'src/settings/settings_controller.dart';
 import 'src/settings/settings_service.dart';
 import 'src/providers/tontine_provider.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'src/providers/loan_provider.dart';
 
 // DotEnv dotenv = DotEnv() is automatically called during import.
 // If you want to load multiple dotenv files or name your dotenv object differently, you can do the following and import the singleton into the relavant files:
@@ -42,6 +43,7 @@ void main() async {
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => TontineProvider()),
+        ChangeNotifierProvider(create: (_) => LoanProvider()),
       ],
       child: MyApp(settingsController: settingsController),
     ),

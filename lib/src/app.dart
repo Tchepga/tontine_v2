@@ -12,6 +12,9 @@ import 'screen/tontine/select_tontine_view.dart';
 import 'settings/settings_controller.dart';
 import 'settings/settings_view.dart';
 import 'screen/check_connection_view.dart';
+import 'screen/loan/loan_view.dart';
+import 'screen/rapport/rapport_view.dart';
+import 'screen/tontine/setting_tontine_view.dart';
 
 /// The Widget that configures your application.
 class MyApp extends StatelessWidget {
@@ -37,7 +40,6 @@ class MyApp extends StatelessWidget {
           // returns to the app after it has been killed while running in the
           // background.
           restorationScopeId: 'app',
-          
 
           // Provide the generated AppLocalizations to the MaterialApp. This
           // allows descendant Widgets to display the correct translations
@@ -69,29 +71,38 @@ class MyApp extends StatelessWidget {
             primaryColorDark: Colors.blue[700],
             primaryColorLight: Colors.blue[200],
             colorScheme: ColorScheme.fromSwatch().copyWith(
-              secondary: Colors.deepOrangeAccent,
+              secondary: Colors.deepOrange,
               primary: Colors.blue,
               tertiary: Colors.green[300],
               error: Colors.red,
             ),
-            textTheme: const TextTheme(
-              displayLarge: TextStyle(fontSize: 34.0),
-              displayMedium: TextStyle(fontSize: 24.0),
-              displaySmall: TextStyle(fontSize: 20.0),
-              bodyLarge: TextStyle(fontSize: 16.0),
-              bodyMedium: TextStyle(fontSize: 14.0),
-              bodySmall: TextStyle(fontSize: 12.0),
+            filledButtonTheme: const FilledButtonThemeData(
+              style: ButtonStyle(
+                backgroundColor: WidgetStatePropertyAll<Color>(Colors.orange),
+                foregroundColor: WidgetStatePropertyAll<Color>(Colors.white),
+              ),
             ),
-            
-            scaffoldBackgroundColor: Colors.white,
-            secondaryHeaderColor: Colors.deepOrangeAccent,
+            outlinedButtonTheme: const OutlinedButtonThemeData(
+              style: ButtonStyle(
+                side: WidgetStatePropertyAll<BorderSide>(
+                  BorderSide(color: Colors.orange),
+                ),
+                foregroundColor: WidgetStatePropertyAll<Color>(Colors.indigo),
+              ),
+            ),
             elevatedButtonTheme: ElevatedButtonThemeData(
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.deepOrangeAccent,
+                backgroundColor: Colors.deepOrange,
+                foregroundColor: Colors.white,
                 minimumSize: const Size.fromHeight(50),
-                textStyle: const TextStyle(
-                  color: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
                 ),
+              ),
+            ),
+            textButtonTheme: TextButtonThemeData(
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.deepOrange,
               ),
             ),
           ),
@@ -121,6 +132,12 @@ class MyApp extends StatelessWidget {
                     return const CheckConnectionView();
                   case SelectTontineView.routeName:
                     return const SelectTontineView();
+                  case LoanView.routeName:
+                    return const LoanView();
+                  case RapportView.routeName:
+                    return const RapportView();
+                  case SettingTontineView.routeName:
+                    return const SettingTontineView();
                   default:
                     return const SplashView();
                 }
@@ -129,8 +146,10 @@ class MyApp extends StatelessWidget {
           },
           initialRoute: CheckConnectionView.routeName,
           routes: {
-            CheckConnectionView.routeName: (context) => const CheckConnectionView(),
-            SelectedLanguageView.routeName: (context) => const SelectedLanguageView(),
+            CheckConnectionView.routeName: (context) =>
+                const CheckConnectionView(),
+            SelectedLanguageView.routeName: (context) =>
+                const SelectedLanguageView(),
           },
         );
       },

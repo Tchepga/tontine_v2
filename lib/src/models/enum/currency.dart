@@ -1,4 +1,8 @@
-enum Currency { FCFA, USD, EUR }
+enum Currency {
+  EURO,
+  FCFA,
+  USD
+}
 
 Currency currencyFromString(String currency) {
   return Currency.values.firstWhere((e) => e.toString().split('.').last == currency);
@@ -10,7 +14,14 @@ String currencyToString(Currency currency) {
 
 extension CurrencyExtension on Currency {
   String get displayName {
-    return toString().split('.').last;
+    switch (this) {
+      case Currency.EURO:
+        return '€';
+      case Currency.FCFA:
+        return 'FCFA';
+      case Currency.USD:
+        return '\$';
+    }
   }
 }
 

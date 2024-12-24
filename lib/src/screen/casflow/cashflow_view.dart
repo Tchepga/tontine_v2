@@ -36,18 +36,18 @@ class _CashflowViewState extends State<CashflowView> {
           tontineProvider.loadDeposits(currentTontine!.id);
         }
 
-        return Scaffold(
-          appBar: AppBar(
-            title: const Text('Trésorerie'),
-            actions: [
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Trésorerie'),
+        actions: [
               IconButton(
                 icon: const Icon(Icons.filter_list),
                 onPressed: () async {
                   final DateTimeRange? pickedDateRange =
                       await showDateRangePicker(
                     context: context,
-                    firstDate: DateTime(2000),
-                    lastDate: DateTime(2101),
+                          firstDate: DateTime(2000),
+                          lastDate: DateTime(2101),
                     initialDateRange: DateTimeRange(
                       start: DateTime.now().subtract(const Duration(days: 7)),
                       end: DateTime.now(),
@@ -57,12 +57,12 @@ class _CashflowViewState extends State<CashflowView> {
                     // Filtrer les dépôts par date
                   }
                 },
-              ),
-            ],
           ),
-          body: ListView(
+        ],
+      ),
+      body: ListView(
             padding: const EdgeInsets.all(16),
-            children: [
+        children: [
               Card(
                 child: Container(
                   decoration: const BoxDecoration(
@@ -70,20 +70,20 @@ class _CashflowViewState extends State<CashflowView> {
                     borderRadius: BorderRadius.all(Radius.circular(16)),
                   ),
                   padding: const EdgeInsets.all(16),
-                  child: Column(
-                    children: [
-                      Text(
+              child: Column(
+                children: [
+                  Text(
                         '${currentTontine?.cashFlow.amount ?? 0} ${currentTontine?.cashFlow.currency.name ?? ''}',
                         style: const TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white),
-                      ),
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white),
+                  ),
                       const Text(
                         'Solde actuel',
                         style: TextStyle(
                           color: Colors.white,
-                        ),
+                      ),
                       ),
                     ],
                   ),
@@ -210,14 +210,14 @@ class _CashflowViewState extends State<CashflowView> {
                                             FilledButton(
                                               onPressed: () {
                                                 Navigator.of(context).pop();
-                                                showDialog(
-                                                  context: context,
-                                                  builder: (BuildContext context) {
-                                                    return AlertDialog(
+                showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
                                                       title: const Text('Confirmation'),
                                                       content: const Text('Voulez-vous vraiment supprimer ce mouvement ?'),
-                                                      actions: [
-                                                        TextButton(
+                      actions: [
+                        TextButton(
                                                           onPressed: () => Navigator.of(context).pop(),
                                                           child: const Text('Annuler'),
                                                         ),
@@ -240,7 +240,7 @@ class _CashflowViewState extends State<CashflowView> {
                                                               tontineProvider.loadDeposits(currentTontine.id);
                                                             } catch (e) {
                                                               if (!mounted) return;
-                                                              Navigator.of(context).pop();
+                            Navigator.of(context).pop();
                                                               ScaffoldMessenger.of(context).showSnackBar(
                                                                 const SnackBar(
                                                                   content: Text('Erreur lors de la suppression'),
@@ -253,12 +253,12 @@ class _CashflowViewState extends State<CashflowView> {
                                                             backgroundColor: Colors.red,
                                                           ),
                                                           child: const Text('Supprimer'),
-                                                        ),
-                                                      ],
-                                                    );
-                                                  },
-                                                );
-                                              },
+                        ),
+                      ],
+                    );
+                  },
+                );
+              },
                                               style: FilledButton.styleFrom(
                                                 backgroundColor: Colors.orange,
                                               ),
@@ -300,16 +300,16 @@ class _CashflowViewState extends State<CashflowView> {
                           color:
                               deposit.amount >= 0 ? Colors.green : Colors.red,
                           fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  )),
-            ],
+              ),
+            ),
           ),
-          floatingActionButton: FloatingActionButton(
-            onPressed: () {
-              showDialog(
-                context: context,
+                  )),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          showDialog(
+            context: context, 
                 builder: (BuildContext context) {
                   return const EditMouvement();
                 },
@@ -317,9 +317,9 @@ class _CashflowViewState extends State<CashflowView> {
                 tontineProvider.loadTontines();
                 tontineProvider.loadDeposits(currentTontine!.id);
               });
-            },
-            child: const Icon(Icons.add),
-          ),
+        },
+        child: const Icon(Icons.add),
+      ),
         );
       },
     );

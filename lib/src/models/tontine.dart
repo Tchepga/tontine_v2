@@ -1,17 +1,49 @@
+import 'enum/loop_period.dart';
+import 'enum/type_mouvement.dart';
 import 'member.dart';
 import 'cashflow.dart';
 import 'event.dart';
 import 'rapport_meeting.dart';
 import 'sanction.dart';
 
-enum MovementType { ROTATIVE, CUMULATIVE }
-enum LoopPeriod { DAILY, WEEKLY, MONTHLY }
+class RateMap {
+  final int id;
+  final double minAmount;
+  final double maxAmount;
+  final double rate;
+
+  RateMap({
+    required this.id,
+    required this.minAmount,
+    required this.maxAmount,
+    required this.rate,
+  });
+
+  factory RateMap.fromJson(Map<String, dynamic> json) {
+    return RateMap(
+      id: json['id'],
+      minAmount: json['minAmount'],
+      maxAmount: json['maxAmount'],
+      rate: json['rate'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'minAmount': minAmount,
+      'maxAmount': maxAmount,
+      'rate': rate,
+    };
+  }
+}
 
 class ConfigTontine {
   final int id;
   final double defaultLoanRate;
   final int? defaultLoanDuration;
   final LoopPeriod loopPeriod;
+  final List<RateMap> rateMaps;
   final double minLoanAmount;
   final int countPersonPerMovement;
   final MovementType movementType;
@@ -26,6 +58,7 @@ class ConfigTontine {
     this.countPersonPerMovement = 1,
     this.movementType = MovementType.ROTATIVE,
     this.countMaxMember = 12,
+    this.rateMaps = const [],
   });
 
   factory ConfigTontine.fromJson(Map<String, dynamic> json) {
@@ -40,7 +73,26 @@ class ConfigTontine {
       movementType: MovementType.values.firstWhere(
           (e) => e.toString() == 'MovementType.${json['movementType']}'),
       countMaxMember: json['countMaxMember'] ?? 12,
+      rateMaps: json['rateMaps'] != null
+          ? (json['rateMaps'] as List)
+              .map((rateMap) => RateMap.fromJson(rateMap))
+              .toList()
+          : [],
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'defaultLoanRate': defaultLoanRate,
+      'defaultLoanDuration': defaultLoanDuration,
+      'loopPeriod': loopPeriod.toString(),
+      'rateMaps': rateMaps.map((rateMap) => rateMap.toJson()).toList(),
+      'minLoanAmount': minLoanAmount,
+      'countPersonPerMovement': countPersonPerMovement,
+      'movementType': movementType.toString(),
+      'countMaxMember': countMaxMember,
+    };
   }
 }
 

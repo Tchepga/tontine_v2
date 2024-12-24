@@ -21,8 +21,6 @@ extension StatusDepositExtension on StatusDeposit {
         return 'Validé';
       case StatusDeposit.REJECTED:
         return 'Rejeté';
-      default:
-        return '';
-    }
+      }
   }
 }

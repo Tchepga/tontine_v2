@@ -11,8 +11,8 @@ class MemberService {
   final storage = GetStorage();
   final String urlApi = '${dotenv.env['API_URL']}/api';
   final _logger = Logger('MemberService');
-  final String KEY_USER_INFO = 'userInfo';
-  final String KEY_TOKEN = 'token';
+  static const String KEY_USER_INFO = 'userInfo';
+  static const String KEY_TOKEN = 'token';
 
   Future<void> init() async {
     if (urlApi.isEmpty) {

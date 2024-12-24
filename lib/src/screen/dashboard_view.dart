@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:get_storage/get_storage.dart';
-import 'package:logging/logging.dart';
-import 'package:tontine_v2/src/models/enum/currency.dart';
-import 'package:tontine_v2/src/screen/casflow/cashflow_view.dart';
-import 'package:tontine_v2/src/screen/rapport_view.dart';
-import 'package:tontine_v2/src/widgets/menu_widget.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:table_calendar/table_calendar.dart';
+import 'package:tontine_v2/src/models/enum/currency.dart';
 
-import '../models/member.dart';
-import 'login_view.dart';
-import 'services/member_service.dart';
+import '../models/enum/event_type.dart';
+import '../models/tontine.dart';
 import '../providers/auth_provider.dart';
 import '../providers/tontine_provider.dart';
+import '../widgets/menu_widget.dart';
+import 'casflow/cashflow_view.dart';
+import 'loan/loan_view.dart';
+import 'login_view.dart';
+import 'rapport/rapport_view.dart';
+import 'tontine/setting_tontine_view.dart';
 
 class DashboardView extends StatefulWidget {
   const DashboardView({super.key});
@@ -22,15 +24,14 @@ class DashboardView extends StatefulWidget {
 }
 
 class _DashboardViewState extends State<DashboardView> {
-  final _storage = GetStorage();
-  final bool _isLoading = true;
-  final _logger = Logger('DashboardView');
 
   @override
   void initState() {
     super.initState();
     Future.microtask(() => _loadData());
   }
+
+  DateTime? _selectedDay;
 
   Future<void> _loadData() async {
     try {
@@ -83,7 +84,6 @@ class _DashboardViewState extends State<DashboardView> {
     },
   ];
 
-
   @override
   Widget build(BuildContext context) {
     return Consumer2<AuthProvider, TontineProvider>(
@@ -118,6 +118,14 @@ class _DashboardViewState extends State<DashboardView> {
                   icon: const Icon(Icons.notifications),
                   onPressed: () {
                     print('Notifications');
+                  },
+                ),
+                IconButton(
+                  iconSize: 30.0, // Increase the size of the button
+                  icon: const Icon(Icons.settings),
+                  color: Colors.white,
+                  onPressed: () {
+                    Navigator.pushNamed(context, SettingTontineView.routeName);
                   },
                 ),
                 IconButton(
@@ -224,12 +232,12 @@ class _DashboardViewState extends State<DashboardView> {
                                 vertical: 20.0,
                               ),
                               child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   const Text('Solde actuel',
                                       style: TextStyle(
-                                          fontSize: 16.0,
-                                          color: Colors.white)),
+                                          fontSize: 16.0, color: Colors.white)),
                                   Text('$cashFlowAmount $currency',
                                       style: const TextStyle(
                                           fontSize: 24.0,
@@ -239,14 +247,69 @@ class _DashboardViewState extends State<DashboardView> {
                               ),
                             )),
                         const SizedBox(height: 30.0),
-                        CalendarDatePicker(
-                          initialDate: DateTime.now(),
-                          firstDate: DateTime.now(),
-                          lastDate: DateTime(2200),
-                          onDateChanged: (date) {
-                            print(date);
+                        Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              FilledButton(
+                                style: ButtonStyle(
+                                  minimumSize: WidgetStatePropertyAll<Size>(
+                                    Size(
+                                        MediaQuery.of(context).size.width * 0.4,
+                                        60),
+                                  ),
+                                  backgroundColor:
+                                      const WidgetStatePropertyAll<Color>(
+                                          Colors.orangeAccent),
+                                  shape: WidgetStatePropertyAll<
+                                      RoundedRectangleBorder>(
+                                    RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10.0),
+                                    ),
+                                  ),
+                                ),
+                                onPressed: () {
+                                  navigateToView(context, LoanView.routeName);
+                                },
+                                child: const Text('Prêts'),
+                              ),
+                              FilledButton(
+                                style: ButtonStyle(
+                                  minimumSize: WidgetStatePropertyAll<Size>(
+                                    Size(
+                                        MediaQuery.of(context).size.width * 0.4,
+                                        60),
+                                  ),
+                                  shape: WidgetStatePropertyAll<
+                                      RoundedRectangleBorder>(
+                                    RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10.0),
+                                    ),
+                                  ),
+                                ),
+                                onPressed: () {
+                                  navigateToView(
+                                      context, RapportView.routeName);
+                                },
+                                child: const Text('Rapports'),
+                              ),
+                            ]),
+                        const SizedBox(width: 10.0),
+                        TableCalendar(
+                          focusedDay: DateTime.now(),
+                          firstDay: DateTime.now(),
+                          lastDay: DateTime(2200),
+                          onDaySelected: (selectedDay, focusedDay) {
+                            setState(() {
+                              _selectedDay = selectedDay;
+                            });
+                            _showEventDialog(selectedDay, tontineProvider.currentTontine);
                           },
-                        )
+                          eventLoader: (day) {
+                            return tontineProvider.currentTontine?.events
+                                .where((event) => isSameDay(event.startDate, day))
+                                .toList() ?? [];
+                          },
+                        ),
                       ],
                     ))
               ],
@@ -255,6 +318,70 @@ class _DashboardViewState extends State<DashboardView> {
           );
         }
       },
+    );
+  }
+
+  void _showEventDialog(DateTime selectedDay, Tontine? currentTontine) {
+    final events = currentTontine?.events
+        .where((event) => isSameDay(event.startDate, selectedDay))
+        .toList() ?? [];
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(DateFormat('dd/MM/yyyy').format(selectedDay)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ...events.map((event) => ListTile(
+              title: Text(event.title),
+              subtitle: Text(event.description),
+            )),
+            TextButton(
+              onPressed: () => _showCreateEventForm(selectedDay),
+              child: const Text('Ajouter un événement'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Fermer'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showCreateEventForm(DateTime selectedDay) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Créer un événement'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const TextField(
+              decoration: InputDecoration(labelText: 'Titre'),
+            ),
+            const TextField(
+              decoration: InputDecoration(labelText: 'Description'),
+            ),
+            DropdownButtonFormField<EventType>(
+              items: EventType.values.map((type) => DropdownMenuItem<EventType>(value: type, child: Text(type.name))).toList(),
+              onChanged: (value) {
+                print(value);
+              },
+            ),
+            const TextField(
+              decoration: InputDecoration(labelText: 'Date de début'),
+            ),
+            const TextField(
+              decoration: InputDecoration(labelText: 'Date de fin'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

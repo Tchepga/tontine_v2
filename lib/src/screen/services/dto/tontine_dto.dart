@@ -1,9 +1,7 @@
-
-
-
 import '../../../models/enum/currency.dart';
 import '../../../models/enum/loop_period.dart';
 import '../../../models/enum/type_mouvement.dart';
+import '../../../models/tontine.dart';
 
 class CreateConfigTontineDto {
   final double defaultLoanRate;
@@ -12,6 +10,9 @@ class CreateConfigTontineDto {
   final double minLoanAmount;
   final int countPersonPerMovement;
   final MovementType movementType;
+  final List<RateMap> rateMaps;
+  final int countMaxMember;
+
 
   CreateConfigTontineDto({
     required this.defaultLoanRate,
@@ -20,6 +21,8 @@ class CreateConfigTontineDto {
     required this.minLoanAmount,
     required this.countPersonPerMovement,
     required this.movementType,
+    this.rateMaps = const [],
+    required this.countMaxMember,
   });
 
   Map<String, dynamic> toJson() {
@@ -30,6 +33,8 @@ class CreateConfigTontineDto {
       'minLoanAmount': minLoanAmount,
       'countPersonPerMovement': countPersonPerMovement,
       'movementType': movementType.toString().split('.').last,
+      'rateMaps': rateMaps.map((rateMap) => rateMap.toJson()).toList(),
+      'countMaxMember': countMaxMember,
     };
   }
 }
@@ -37,7 +42,7 @@ class CreateConfigTontineDto {
 class CreateTontineDto {
   final String title;
   final String? legacy;
-  final List<int> memberIds;  // On utilise les IDs des membres plutôt que CreateMemberDto
+  final List<int> memberIds;
   final CreateConfigTontineDto config;
   final Currency currency;
 
