@@ -80,10 +80,11 @@ class TontineService {
       headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
+        'tontine-id': tontineId.toString(),
       },
       body: jsonEncode(memberDto.toJson()),
     );
-    if (responseCreateMember.statusCode != 200) {
+    if (responseCreateMember.statusCode != 201) {
       throw Exception('Failed to add member to tontine during creation');
     }
 

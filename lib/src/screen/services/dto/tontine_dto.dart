@@ -60,7 +60,7 @@ class CreateTontineDto {
     return {
       'title': title,
       if (legacy != null) 'legacy': legacy,
-      'members': memberDtos.map((memberDto) => memberDto.username).toList(),
+      'members': memberDtos.map((memberDto) => memberDto.toJson()).toList(),
       'config': config.toJson(),
       'currency': currency.toString().split('.').last,
     };

@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
 import '../services/dto/member_dto.dart';
@@ -20,7 +19,6 @@ class AddMemberForm extends StatefulWidget {
 
 class _AddMemberFormState extends State<AddMemberForm> {
   final _formKey = GlobalKey<FormState>();
-  final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   final _firstnameController = TextEditingController();
   final _lastnameController = TextEditingController();
@@ -57,26 +55,6 @@ class _AddMemberFormState extends State<AddMemberForm> {
             ),
             const SizedBox(height: 16),
           ],
-          TextFormField(
-            controller: _usernameController,
-            decoration: const InputDecoration(
-              labelText: 'Nom d\'utilisateur*',
-              border: OutlineInputBorder(),
-            ),
-            readOnly: true,
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Ce champ est requis';
-              }
-              // Assuming there's a function to check if a user with this username already exists
-              checkIfUserExists(value).then((bool userExists) {
-                if (userExists) {
-                  return 'Un utilisateur avec ce nom d\'utilisateur existe déjà';
-                }
-              });
-              return null;
-            },
-          ),
           TextFormField(
             controller: _firstnameController,
             decoration: const InputDecoration(
@@ -162,21 +140,50 @@ class _AddMemberFormState extends State<AddMemberForm> {
     return user != null;
   }
 
-  void _handleSubmit() {
-    if (_formKey.currentState!.validate()) {
-      final memberDto = CreateMemberDto(
-        username: '${_firstnameController.text.toLowerCase()}.${_lastnameController.text.toLowerCase()}',
-        password: widget.showPassword ? _passwordController.text : null,
-        firstname: _firstnameController.text,
-        lastname: _lastnameController.text,
-        email: _emailController.text.isNotEmpty ? _emailController.text : null,
-        phone: _completePhoneNumber.isNotEmpty
-            ? _completePhoneNumber
-            : _phoneController.text,
-        country: _countryController.text,
-      );
+  String _generateUsername() {
+    return '${_firstnameController.text.toLowerCase()}.${_lastnameController.text.toLowerCase()}';
+  }
 
-      widget.onSubmit(memberDto);
+  void _handleSubmit() async {
+    if (_formKey.currentState!.validate()) {
+      final username = _generateUsername();
+      
+      try {
+        final userExists = await _memberService.getUserByUsername(username);
+        
+        if (userExists != null) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Un utilisateur avec ce nom existe déjà'),
+              backgroundColor: Colors.red,
+            ),
+          );
+          return;
+        }
+
+        final memberDto = CreateMemberDto(
+          username: username,
+          password: widget.showPassword ? _passwordController.text : null,
+          firstname: _firstnameController.text,
+          lastname: _lastnameController.text,
+          email: _emailController.text.isNotEmpty ? _emailController.text : null,
+          phone: _completePhoneNumber.isNotEmpty
+              ? _completePhoneNumber
+              : _phoneController.text,
+          country: _countryController.text,
+        );
+
+        widget.onSubmit(memberDto);
+      } catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Erreur lors de la vérification de l\'utilisateur'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 

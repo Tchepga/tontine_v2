@@ -74,6 +74,7 @@ class _AddMembersViewState extends State<AddMembersView> {
                           memberDto,
                         );
                         if (!mounted) return;
+                        tontineProvider.loadTontines();
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             content: Text('Membre ajouté avec succès'),
