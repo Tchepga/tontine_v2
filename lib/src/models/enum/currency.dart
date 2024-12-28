@@ -5,11 +5,11 @@ enum Currency {
 }
 
 Currency currencyFromString(String currency) {
-  return Currency.values.firstWhere((e) => e.toString().split('.').last == currency);
+  return Currency.values.firstWhere((e) => e.toString().split('.').last == currency.toUpperCase());
 }
 
 String currencyToString(Currency currency) {
-  return currency.toString().split('.').last;
+  return currency.toString().split('.').last.toUpperCase();
 }
 
 extension CurrencyExtension on Currency {

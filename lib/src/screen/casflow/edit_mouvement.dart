@@ -35,7 +35,6 @@ class _EditMouvementState extends State<EditMouvement> {
     if (widget.deposit != null) {
       _amountController.text = widget.deposit!.amount.toString();
       _selectedReason = depositReasonFromString(widget.deposit!.reasons ?? '');
-      print(widget.deposit!.author);
       _selectedAuthor = widget.deposit!.author;
     }
   }

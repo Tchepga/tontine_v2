@@ -22,8 +22,20 @@ class DepositListItem extends StatelessWidget {
       child: ListTile(
         onTap: () => _showDetails(context),
         title: Text(deposit.reasons ?? ''),
-        subtitle: Text(
-          DateFormat('dd/MM/yyyy').format(deposit.creationDate),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              DateFormat('dd/MM/yyyy').format(deposit.creationDate),
+            ),
+            Text(
+              'Par ${deposit.author.firstname} ${deposit.author.lastname}',
+              style: const TextStyle(
+                fontSize: 12,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
         ),
         trailing: Text(
           '${deposit.amount} ${deposit.currency.name}',

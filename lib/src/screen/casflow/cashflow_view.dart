@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../models/tontine.dart';
 import '../../providers/tontine_provider.dart';
 import 'edit_mouvement.dart';
 import 'widgets/deposit_list_item.dart';
+import 'package:tontine_v2/src/models/enum/currency.dart';
 
 class CashflowView extends StatefulWidget {
   const CashflowView({super.key});
@@ -71,7 +73,7 @@ class _CashflowViewState extends State<CashflowView> {
     );
   }
 
-  Widget _buildBalanceCard(currentTontine) {
+  Widget _buildBalanceCard(Tontine? currentTontine) {
     return Card(
       child: Container(
         decoration: const BoxDecoration(
@@ -82,7 +84,7 @@ class _CashflowViewState extends State<CashflowView> {
         child: Column(
           children: [
             Text(
-              '${currentTontine?.cashFlow.amount ?? 0} ${currentTontine?.cashFlow.currency.name ?? ''}',
+              '${currentTontine?.cashFlow.amount ?? 0} ${currentTontine?.cashFlow.currency.displayName ?? ''}',
               style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,

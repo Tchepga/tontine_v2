@@ -329,7 +329,6 @@ class _SelectTontineViewState extends State<SelectTontineView> {
     Currency selectedCurrency,
   ) async {
     final currentUser = Provider.of<AuthProvider>(context, listen: false).currentUser;
-    print('currentUser: ${currentUser}');
     if (formKey.currentState!.validate() && currentUser != null) {
       try {
         final memberDto = CreateMemberDto(

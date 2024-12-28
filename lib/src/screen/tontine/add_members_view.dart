@@ -66,6 +66,9 @@ class _AddMembersViewState extends State<AddMembersView> {
                   key: _formKey,
                   child: AddMemberForm(
                     onSubmit: (memberDto) async {
+                      if (currentTontine.members.length >= currentTontine.config.countMaxMember) {
+                        Navigator.of(context).pushReplacementNamed(DashboardView.routeName);
+                      }
                       try {
                         // set default password
                         memberDto = memberDto.copyWith(password: 'changeme');

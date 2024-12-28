@@ -32,7 +32,6 @@ class _SettingTontineViewState extends State<SettingTontineView> {
         Provider.of<TontineProvider>(context, listen: false).currentTontine;
     if (currentTontine != null) {
       _initializeFields(currentTontine);
-      print("currentTontine: ${currentTontine.config.toJson()}");
     }
   }
 

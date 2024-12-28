@@ -16,12 +16,13 @@ class _LoginViewState extends State<LoginView> {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   final _memberService = MemberService();
+
   bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    _memberService.init(); // Initialiser GetStorages
+    _memberService.init();
     _checkToken();
     _usernameController.value = const TextEditingValue(text: 'username');
     _passwordController.value = const TextEditingValue(text: 'password');
@@ -41,7 +42,7 @@ class _LoginViewState extends State<LoginView> {
     });
 
     try {
-      final success = await _memberService.login(
+      final success = await Provider.of<AuthProvider>(context, listen: false).login(
         _usernameController.text,
         _passwordController.text,
       );

@@ -87,6 +87,14 @@ class MemberService {
     return null;
   }
 
+  Future<Member?> getMemberByUsername(String username) async {
+    final response = await client.get(Uri.parse('$urlApi/member/username/$username'));
+    if (response.statusCode == 200 && response.body.isNotEmpty) {
+      return Member.fromJson(jsonDecode(response.body));
+    }
+    return null;
+  }
+
   // Récupérer le token
   String? getToken() {
     return storage.read(KEY_TOKEN);
