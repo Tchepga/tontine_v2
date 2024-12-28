@@ -9,7 +9,7 @@ import 'package:logging/logging.dart';
 class MemberService {
   final client = ApiClient.client;
   final storage = GetStorage();
-  final String urlApi = '${dotenv.env['API_URL']}/api';
+  static final String urlApi = '${dotenv.env['API_URL']}/api';
   final _logger = Logger('MemberService');
   static const String KEY_USER_INFO = 'userInfo';
   static const String KEY_TOKEN = 'token';
@@ -79,6 +79,14 @@ class MemberService {
     );
   }
 
+  Future<User?> getUserByUsername(String username) async {
+    final response = await client.get(Uri.parse('$urlApi/auth/username/$username'));
+    if (response.statusCode == 200) {
+      return User.fromJson(jsonDecode(response.body));
+    }
+    return null;
+  }
+
   // Récupérer le token
   String? getToken() {
     return storage.read(KEY_TOKEN);
@@ -104,5 +112,35 @@ class MemberService {
         .post(Uri.parse('$urlApi/auth/verify'), body: {'token': token});
     final decodedResponse = jsonDecode(response.body);
     return decodedResponse['valid'] == true;
+  }
+
+  Future<bool> register(CreateMemberDto memberDto) async {
+    try {
+      final response = await client.post(
+        Uri.parse('$urlApi/auth/register'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(memberDto.toJson()),
+      );
+      return response.statusCode == 201;
+    } catch (e) {
+      _logger.severe('Error during registration: $e');
+      return false;
+    }
+  }
+
+  Future<int> registerPresident(CreateMemberDto memberDto) async {
+    try {
+      final response = await client.post(
+        Uri.parse('$urlApi/member/register-president'),
+        body: jsonEncode(memberDto.toJson()),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      );
+      return response.statusCode;
+    } catch (e) {
+      _logger.severe('Error during registration: $e');
+      return 500;
+    }
   }
 }

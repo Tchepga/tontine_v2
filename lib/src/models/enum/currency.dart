@@ -1,5 +1,5 @@
 enum Currency {
-  EURO,
+  EUR,
   FCFA,
   USD
 }
@@ -15,7 +15,7 @@ String currencyToString(Currency currency) {
 extension CurrencyExtension on Currency {
   String get displayName {
     switch (this) {
-      case Currency.EURO:
+      case Currency.EUR:
         return '€';
       case Currency.FCFA:
         return 'FCFA';

@@ -13,7 +13,7 @@ class CreateDepositDto {
 
   CreateDepositDto({
     required this.amount,
-    this.currency = Currency.EURO,
+    this.currency = Currency.EUR,
     required this.memberId,
     required this.status,
     required this.cashFlowId,

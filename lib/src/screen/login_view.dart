@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../providers/auth_provider.dart';
 import 'services/member_service.dart';
 import 'tontine/select_tontine_view.dart';
+import 'auth/register_view.dart';
+
 class LoginView extends StatefulWidget {
   static const routeName = '/login';
   const LoginView({super.key});
@@ -9,7 +13,6 @@ class LoginView extends StatefulWidget {
 }
 
 class _LoginViewState extends State<LoginView> {
-
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   final _memberService = MemberService();
@@ -18,23 +21,16 @@ class _LoginViewState extends State<LoginView> {
   @override
   void initState() {
     super.initState();
-    _memberService.init(); // Initialiser GetStorage
-    _memberService.logout();
-    _checkToken(); 
-    _usernameController.value = const TextEditingValue(text: 'president31');
-    _passwordController.value = const TextEditingValue(text: 'changeme');
+    _memberService.init(); // Initialiser GetStorages
+    _checkToken();
+    _usernameController.value = const TextEditingValue(text: 'username');
+    _passwordController.value = const TextEditingValue(text: 'password');
   }
-
-
 
   Future<void> _checkToken() async {
     final hasToken = await _memberService.hasValidToken();
-    await _memberService.getProfile();
-    final hasConnectedMemberInfo = await _memberService.hasConnectedMemberInfo();
-    if(!hasConnectedMemberInfo) {
-      await _memberService.getProfile();
-    }
     if (hasToken && mounted) {
+      await Provider.of<AuthProvider>(context, listen: false).getProfile();
       Navigator.of(context).pushReplacementNamed(SelectTontineView.routeName);
     }
   }
@@ -51,29 +47,36 @@ class _LoginViewState extends State<LoginView> {
       );
 
       if (success) {
-        await _memberService.getProfile();
-        // Navigation vers la page principale si la connexion réussit
-        Navigator.of(context).pushReplacementNamed(SelectTontineView.routeName);
+        if (mounted) {
+          Navigator.of(context)
+              .pushReplacementNamed(SelectTontineView.routeName);
+        }
       } else {
-        // Afficher un message d'erreur si la connexion échoue
+        if (mounted) {
+          // Afficher un message d'erreur si la connexion échoue
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Nom d\'utilisateur ou mot de passe incorrect'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Échec de la connexion. Veuillez réessayer.'),
+            content: Text('Une erreur est survenue. Veuillez réessayer.'),
             backgroundColor: Colors.red,
           ),
         );
       }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Une erreur est survenue. Veuillez réessayer.'),
-          backgroundColor: Colors.red,
-        ),
-      );
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -82,40 +85,44 @@ class _LoginViewState extends State<LoginView> {
     return Scaffold(
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Image.asset('assets/images/illustration_login.png'),
-            TextField(
-              controller: _usernameController,
-              
-              decoration: const InputDecoration(
-                labelText: 'Nom d\'utilisateur',
-              ),
+        child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+          Image.asset('assets/images/illustration_login.png'),
+          TextField(
+            controller: _usernameController,
+            decoration: const InputDecoration(
+              labelText: 'Nom d\'utilisateur',
             ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _passwordController,
-              decoration: const InputDecoration(
-                labelText: 'Mot de passe',
-              ),
-              obscureText: true,
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _passwordController,
+            decoration: const InputDecoration(
+              labelText: 'Mot de passe',
             ),
-            const SizedBox(height: 24),
-            _isLoading
-                ? const CircularProgressIndicator()
-                : ElevatedButton(
-                    onPressed: () {
-                      _handleLogin();
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.lightBlue,
-                      foregroundColor: Colors.white,
-                    ),
-                    child: const Text('Se connecter'),
+            obscureText: true,
+          ),
+          const SizedBox(height: 24),
+          _isLoading
+              ? const CircularProgressIndicator()
+              : ElevatedButton(
+                  onPressed: () {
+                    _handleLogin();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.lightBlue,
+                    foregroundColor: Colors.white,
                   ),
-          ]
-        ),
+                  child: const Text('Se connecter'),
+                ),
+          const SizedBox(height: 16),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context)
+                  .pushReplacementNamed(RegisterView.routeName);
+            },
+            child: const Text('Pas encore de compte ? S\'inscrire'),
+          ),
+        ]),
       ),
     );
   }

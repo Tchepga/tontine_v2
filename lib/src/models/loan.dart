@@ -11,7 +11,7 @@ class Loan {
   final StatusLoan status;
   final Member author;
   final int? tontineId;
-  final List<Member>? voters;
+  final List<int>? voters;
 
   Loan({
     required this.id,
@@ -26,18 +26,19 @@ class Loan {
   });
 
   factory Loan.fromJson(Map<String, dynamic> json) {
+    final List<int> voters = json['voters'] != null
+        ? List<int>.from(json['voters'].map((e) => int.parse(e)))
+        : [];
     return Loan(
       id: json['id'],
       amount: json['amount']?.toDouble() ?? 0.0,
-      currency: Currency.EURO,
+      currency: Currency.EUR,
       interestRate: json['interestRate']?.toDouble() ?? 0.0,
       redemptionDate: DateTime.parse(json['redemptionDate']),
       status: fromStringToStatusLoan(json['status']),
       author: Member.fromJson(json['author']),
       tontineId: json['tontineId'],
-      voters: json['voters'] != null 
-          ? (json['voters'] as List).map((voter) => Member.fromJson(voter)).toList()
-          : null,
+      voters: voters,
     );
   }
-} 
+}

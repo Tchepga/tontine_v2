@@ -6,6 +6,7 @@ import '../../models/tontine.dart';
 import '../../models/event.dart';
 import '../../models/sanction.dart';
 import '../../models/rapport_meeting.dart';
+import 'dto/member_dto.dart';
 import 'middleware/interceptor_http.dart';
 import 'dto/tontine_dto.dart';
 import 'dto/deposit_dto.dart';
@@ -56,14 +57,49 @@ class TontineService {
   }
 
   Future<Tontine> createTontine(CreateTontineDto tontineDto) async {
+    print(tontineDto.toJson());
+    final token = storage.read(MemberService.KEY_TOKEN);
     final response = await client.post(
       Uri.parse('$urlApi/tontine'),
       body: jsonEncode(tontineDto.toJson()),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
     );
     if (response.statusCode == 201) {
       return Tontine.fromJson(jsonDecode(response.body));
     }
     throw Exception('Failed to create tontine');
+  }
+
+  Future<void> addMemberToTontine(int tontineId, CreateMemberDto memberDto) async {
+    final token = storage.read(MemberService.KEY_TOKEN);
+    final responseCreateMember = await client.post(
+      Uri.parse('$urlApi/member'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode(memberDto.toJson()),
+    );
+    if (responseCreateMember.statusCode != 200) {
+      throw Exception('Failed to add member to tontine during creation');
+    }
+
+    final memberId = jsonDecode(responseCreateMember.body)['id'];
+
+    final responseAddMemberToTontine = await client.patch(
+      Uri.parse('$urlApi/tontine/$tontineId/member'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({'memberId': memberId}),
+    );
+    if (responseAddMemberToTontine.statusCode != 200) {
+      throw Exception('Failed to add member to tontine');
+    }
   }
 
   Future<Tontine> updateTontine(int id, CreateTontineDto tontineDto) async {

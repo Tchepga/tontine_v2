@@ -8,6 +8,7 @@ import 'package:tontine_v2/src/screen/member/account_view.dart';
 import 'package:tontine_v2/src/screen/splash_view.dart';
 
 import 'screen/selected_language_view.dart';
+import 'screen/tontine/add_members_view.dart';
 import 'screen/tontine/select_tontine_view.dart';
 import 'settings/settings_controller.dart';
 import 'settings/settings_view.dart';
@@ -15,6 +16,7 @@ import 'screen/check_connection_view.dart';
 import 'screen/loan/loan_view.dart';
 import 'screen/rapport/rapport_view.dart';
 import 'screen/tontine/setting_tontine_view.dart';
+import 'screen/auth/register_view.dart';
 
 /// The Widget that configures your application.
 class MyApp extends StatelessWidget {
@@ -138,6 +140,10 @@ class MyApp extends StatelessWidget {
                     return const RapportView();
                   case SettingTontineView.routeName:
                     return const SettingTontineView();
+                  case RegisterView.routeName:
+                    return const RegisterView();
+                  case AddMembersView.routeName:
+                    return const AddMembersView();
                   default:
                     return const SplashView();
                 }

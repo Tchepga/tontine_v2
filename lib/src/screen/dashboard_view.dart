@@ -133,7 +133,8 @@ class _DashboardViewState extends State<DashboardView> {
                   icon: const Icon(Icons.power_settings_new),
                   color: Colors.white,
                   onPressed: () {
-                    print('Logout');
+                    authProvider.logout();
+                    Navigator.of(context).pushReplacementNamed(LoginView.routeName);
                   },
                 ),
               ],

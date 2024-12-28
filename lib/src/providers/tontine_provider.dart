@@ -6,6 +6,7 @@ import '../models/event.dart';
 import '../models/sanction.dart';
 import '../models/tontine.dart';
 import '../screen/services/dto/deposit_dto.dart';
+import '../screen/services/dto/member_dto.dart';
 import '../screen/services/dto/rapport_dto.dart';
 import '../screen/services/dto/sanction_dto.dart';
 import '../screen/services/dto/tontine_dto.dart';
@@ -84,6 +85,16 @@ class TontineProvider extends ChangeNotifier {
       notifyListeners();
     } catch (e) {
       _logger.severe('Error creating tontine: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> addMemberToTontine(int tontineId, CreateMemberDto memberDto) async {
+    try {
+      await _tontineService.addMemberToTontine(tontineId, memberDto);
+      notifyListeners();
+    } catch (e) {
+      _logger.severe('Error adding member to tontine: $e');
       rethrow;
     }
   }

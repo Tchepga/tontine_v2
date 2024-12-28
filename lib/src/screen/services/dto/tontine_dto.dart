@@ -1,3 +1,5 @@
+import 'package:tontine_v2/src/screen/services/dto/member_dto.dart';
+
 import '../../../models/enum/currency.dart';
 import '../../../models/enum/loop_period.dart';
 import '../../../models/enum/type_mouvement.dart';
@@ -42,14 +44,14 @@ class CreateConfigTontineDto {
 class CreateTontineDto {
   final String title;
   final String? legacy;
-  final List<int> memberIds;
+  final List<CreateMemberDto> memberDtos;
   final CreateConfigTontineDto config;
   final Currency currency;
 
   CreateTontineDto({
     required this.title,
     this.legacy,
-    required this.memberIds,
+    required this.memberDtos,
     required this.config,
     required this.currency,
   });
@@ -58,7 +60,7 @@ class CreateTontineDto {
     return {
       'title': title,
       if (legacy != null) 'legacy': legacy,
-      'members': memberIds,
+      'members': memberDtos.map((memberDto) => memberDto.username).toList(),
       'config': config.toJson(),
       'currency': currency.toString().split('.').last,
     };

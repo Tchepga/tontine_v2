@@ -24,12 +24,11 @@ class _LoanViewState extends State<LoanView> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    Future.microtask(() async {
       if (!mounted) return;
       final loanProvider = Provider.of<LoanProvider>(context, listen: false);
-      final tontineProvider =
-          Provider.of<TontineProvider>(context, listen: false);
-      loanProvider.loadLoans(tontineProvider.currentTontine!.id);
+      final tontineProvider = Provider.of<TontineProvider>(context, listen: false);
+      await loanProvider.loadLoans(tontineProvider.currentTontine!.id);
     });
   }
 
@@ -167,7 +166,7 @@ class _LoanViewState extends State<LoanView> {
               icon: loan.status == StatusLoan.PENDING
                   ? Icon(
                       loan.voters?.any(
-                                  (voter) => voter.id == currentUser?.id) ??
+                                  (voter) => voter == currentUser?.id) ??
                               false
                           ? Icons.how_to_vote
                           : Icons.how_to_vote_outlined,
@@ -187,12 +186,11 @@ class _LoanViewState extends State<LoanView> {
   Future<void> _handleVote(Loan loan) async {
     try {
       await Provider.of<LoanProvider>(context, listen: false).voteLoan(loan.id);
-      if (!context.mounted) return;
+      if(!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Vote enregistré')),
       );
     } catch (e) {
-      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Erreur lors du vote'),
@@ -200,74 +198,6 @@ class _LoanViewState extends State<LoanView> {
         ),
       );
     }
-  }
-
-  Widget _buildLoanDetailsDialog(Loan loan, bool isMyLoan) {
-    return Dialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              isMyLoan ? 'Mon prêt' : 'Détails du prêt',
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 16),
-            _buildDetailRow('Montant', '${loan.amount} ${loan.currency.name}'),
-            _buildDetailRow('Taux d\'intérêt', '${loan.interestRate}%'),
-            _buildDetailRow('Date d\'échéance',
-                DateFormat('dd/MM/yyyy').format(loan.redemptionDate)),
-            _buildDetailRow('Statut', loan.status.displayName),
-            _buildDetailRow('Emprunteur',
-                '${loan.author.firstname} ${loan.author.lastname}'),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                if (isMyLoan && loan.status == StatusLoan.PENDING) ...[
-                  TextButton(
-                    onPressed: () {
-                      // Logique de remboursement
-                    },
-                    child: const Text('Rembourser'),
-                  ),
-                  const SizedBox(width: 8),
-                ],
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Fermer'),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDetailRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            '$label:',
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          Text(value),
-        ],
-      ),
-    );
   }
 
   void _showCreateLoanDialog(BuildContext context,
@@ -348,14 +278,17 @@ class _LoanViewState extends State<LoanView> {
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(context).pop(),
+              onPressed: () {
+                if (!mounted) return;
+                Navigator.of(context).pop();
+              },
               child: const Text('Annuler'),
             ),
             FilledButton(
               onPressed: () async {
-                if (formKey.currentState!.validate() &&
-                    currentTontine != null) {
+                if (formKey.currentState!.validate() && currentTontine != null) {
                   try {
+                    if (!mounted) return;
                     final loanDto = CreateLoanDto(
                       amount: double.parse(amountController.text),
                       currency: currentTontine.cashFlow.currency,
@@ -364,17 +297,20 @@ class _LoanViewState extends State<LoanView> {
                     );
 
                     await loanProvider.createLoan(loanDto);
-                    if (!context.mounted) return;
-
-                    loanProvider.loadLoans(currentTontine.id);
+                    await loanProvider.loadLoans(currentTontine.id);
+                    
+                    // ignore: use_build_context_synchronously
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text('Prêt créé avec succès'),
                         backgroundColor: Colors.green,
                       ),
                     );
+                    // ignore: use_build_context_synchronously
                     Navigator.of(context).pop();
                   } catch (e) {
+                    if (!mounted) return;
+                    // ignore: use_build_context_synchronously
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text('Erreur lors de la création du prêt'),

@@ -8,7 +8,7 @@ class CreateLoanDto {
 
   CreateLoanDto({
     required this.amount,
-    this.currency = Currency.EURO,
+    this.currency = Currency.EUR,
     required this.tontineId,
     required this.redemptionDate,
   }) : assert(amount > 0, 'Le montant doit être supérieur à 0');
