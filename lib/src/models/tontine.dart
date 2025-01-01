@@ -104,7 +104,7 @@ class Tontine {
   final ConfigTontine config;
   final CashFlow cashFlow;
   final List<Event> events;
-  final List<RapportMeeting> rapports;
+  List<RapportMeeting> rapports;
   final List<Sanction> sanctions;
   final bool isSelected;
 

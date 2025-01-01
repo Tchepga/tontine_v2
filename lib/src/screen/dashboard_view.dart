@@ -1,11 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import 'package:table_calendar/table_calendar.dart';
 import 'package:tontine_v2/src/models/enum/currency.dart';
-
-import '../models/enum/event_type.dart';
-import '../models/tontine.dart';
 import '../providers/auth_provider.dart';
 import '../providers/tontine_provider.dart';
 import '../widgets/menu_widget.dart';
@@ -14,47 +10,28 @@ import 'loan/loan_view.dart';
 import 'login_view.dart';
 import 'rapport/rapport_view.dart';
 import 'tontine/setting_tontine_view.dart';
+import 'event/event_view.dart';
 
 class DashboardView extends StatefulWidget {
   const DashboardView({super.key});
   static const routeName = '/dashboard';
-  static const withBlock = 180.0;
   @override
   State<DashboardView> createState() => _DashboardViewState();
 }
 
 class _DashboardViewState extends State<DashboardView> {
-
+  static const withBlock = 180.0;
   @override
   void initState() {
     super.initState();
-    Future.microtask(() => _loadData());
-  }
-
-  DateTime? _selectedDay;
-
-  Future<void> _loadData() async {
-    try {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    Future.microtask(() async {
+      if (!mounted) return;
       final tontineProvider =
           Provider.of<TontineProvider>(context, listen: false);
-
-      // Charger les données
-      await Future.wait([
-        authProvider.loadProfile(),
-        tontineProvider.loadTontines(),
-      ]);
-    } catch (e) {
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Erreur lors du chargement des données'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      Navigator.of(context).pushReplacementNamed(LoginView.routeName);
-    }
+      if (tontineProvider.currentTontine != null) {
+        await tontineProvider.getCurrentTontine();
+      }
+    });
   }
 
   void navigateToView(context, String route) {
@@ -134,7 +111,8 @@ class _DashboardViewState extends State<DashboardView> {
                   color: Colors.white,
                   onPressed: () {
                     authProvider.logout();
-                    Navigator.of(context).pushReplacementNamed(LoginView.routeName);
+                    Navigator.of(context)
+                        .pushReplacementNamed(LoginView.routeName);
                   },
                 ),
               ],
@@ -295,22 +273,7 @@ class _DashboardViewState extends State<DashboardView> {
                               ),
                             ]),
                         const SizedBox(width: 10.0),
-                        TableCalendar(
-                          focusedDay: DateTime.now(),
-                          firstDay: DateTime.now(),
-                          lastDay: DateTime(2200),
-                          onDaySelected: (selectedDay, focusedDay) {
-                            setState(() {
-                              _selectedDay = selectedDay;
-                            });
-                            _showEventDialog(selectedDay, tontineProvider.currentTontine);
-                          },
-                          eventLoader: (day) {
-                            return tontineProvider.currentTontine?.events
-                                .where((event) => isSameDay(event.startDate, day))
-                                .toList() ?? [];
-                          },
-                        ),
+                        Expanded(child: EventView())
                       ],
                     ))
               ],
@@ -322,67 +285,7 @@ class _DashboardViewState extends State<DashboardView> {
     );
   }
 
-  void _showEventDialog(DateTime selectedDay, Tontine? currentTontine) {
-    final events = currentTontine?.events
-        .where((event) => isSameDay(event.startDate, selectedDay))
-        .toList() ?? [];
+  
 
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(DateFormat('dd/MM/yyyy').format(selectedDay)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ...events.map((event) => ListTile(
-              title: Text(event.title),
-              subtitle: Text(event.description),
-            )),
-            TextButton(
-              onPressed: () => _showCreateEventForm(selectedDay),
-              child: const Text('Ajouter un événement'),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Fermer'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showCreateEventForm(DateTime selectedDay) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Créer un événement'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const TextField(
-              decoration: InputDecoration(labelText: 'Titre'),
-            ),
-            const TextField(
-              decoration: InputDecoration(labelText: 'Description'),
-            ),
-            DropdownButtonFormField<EventType>(
-              items: EventType.values.map((type) => DropdownMenuItem<EventType>(value: type, child: Text(type.name))).toList(),
-              onChanged: (value) {
-                print(value);
-              },
-            ),
-            const TextField(
-              decoration: InputDecoration(labelText: 'Date de début'),
-            ),
-            const TextField(
-              decoration: InputDecoration(labelText: 'Date de fin'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  
 }

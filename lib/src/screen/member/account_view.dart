@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:tontine_v2/src/models/enum/role.dart';
 import 'package:tontine_v2/src/models/member.dart';
 import 'package:tontine_v2/src/providers/auth_provider.dart';
 import 'package:tontine_v2/src/widgets/menu_widget.dart';
@@ -23,7 +24,7 @@ class AccountView extends StatelessWidget {
           );
         }
         final member = authProvider.currentUser;
-        final bool isPresident = member?.user?.roles?.contains('PRESIDENT') ?? false;
+        final bool isPresident = member?.user?.roles?.contains(Role.PRESIDENT) ?? false;
 
         return Scaffold(
           appBar: AppBar(

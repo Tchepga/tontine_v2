@@ -22,7 +22,8 @@ class _AddMembersViewState extends State<AddMembersView> {
         final currentTontine = tontineProvider.currentTontine;
         if (currentTontine == null) return const SizedBox();
 
-        final remainingMembers = currentTontine.config.countMaxMember - currentTontine.members.length;
+        final remainingMembers = currentTontine.config.countMaxMember -
+            currentTontine.members.length;
 
         return Scaffold(
           appBar: AppBar(
@@ -53,9 +54,11 @@ class _AddMembersViewState extends State<AddMembersView> {
                         ),
                         const SizedBox(height: 16),
                         LinearProgressIndicator(
-                          value: currentTontine.members.length / currentTontine.config.countMaxMember,
+                          value: currentTontine.members.length /
+                              currentTontine.config.countMaxMember,
                           backgroundColor: Colors.grey[200],
-                          valueColor: const AlwaysStoppedAnimation<Color>(Colors.orange),
+                          valueColor: const AlwaysStoppedAnimation<Color>(
+                              Colors.orange),
                         ),
                       ],
                     ),
@@ -66,8 +69,10 @@ class _AddMembersViewState extends State<AddMembersView> {
                   key: _formKey,
                   child: AddMemberForm(
                     onSubmit: (memberDto) async {
-                      if (currentTontine.members.length >= currentTontine.config.countMaxMember) {
-                        Navigator.of(context).pushReplacementNamed(DashboardView.routeName);
+                      if (currentTontine.members.length >=
+                          currentTontine.config.countMaxMember) {
+                        Navigator.of(context)
+                            .pushReplacementNamed(DashboardView.routeName);
                       }
                       try {
                         // set default password
@@ -76,14 +81,15 @@ class _AddMembersViewState extends State<AddMembersView> {
                           currentTontine.id,
                           memberDto,
                         );
-                        if (!mounted) return;
-                        tontineProvider.loadTontines();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Membre ajouté avec succès'),
-                            backgroundColor: Colors.green,
-                          ),
-                        );
+                          tontineProvider.loadTontines();
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Membre ajouté avec succès'),
+                              backgroundColor: Colors.green,
+                            ),
+                          );
+                        }
                       } catch (e) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
@@ -127,7 +133,8 @@ class _AddMembersViewState extends State<AddMembersView> {
             child: FilledButton(
               onPressed: remainingMembers == 0
                   ? () {
-                      Navigator.of(context).pushReplacementNamed(DashboardView.routeName);
+                      Navigator.of(context)
+                          .pushReplacementNamed(DashboardView.routeName);
                     }
                   : null,
               style: FilledButton.styleFrom(
@@ -141,4 +148,4 @@ class _AddMembersViewState extends State<AddMembersView> {
       },
     );
   }
-} 
+}

@@ -54,8 +54,6 @@ class LoanService {
 
   Future<void> createLoan(CreateLoanDto loanDto) async {
     final token = storage.read(MemberService.KEY_TOKEN);
-    print('token: $token');
-
     final response = await client.post(
       Uri.parse('$urlApi/loan'),
       headers: {
@@ -64,7 +62,6 @@ class LoanService {
       },
       body: jsonEncode(loanDto.toJson()),
     );
-    print("response: ${response.body}");
     if (response.statusCode != 201) {
       throw Exception('Failed to create loan');
     }

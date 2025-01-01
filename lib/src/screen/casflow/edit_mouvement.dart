@@ -166,8 +166,7 @@ class _EditMouvementState extends State<EditMouvement> {
             depositDto,
           );
         }
-        if (!mounted) return;
-
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             backgroundColor: Colors.green[300],

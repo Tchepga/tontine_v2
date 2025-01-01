@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 import 'package:tontine_v2/src/screen/services/dto/event_dto.dart';
@@ -156,19 +158,8 @@ class TontineProvider extends ChangeNotifier {
   Future<void> addRapport(
       int tontineId, CreateMeetingRapportDto rapportDto) async {
     try {
-      _tontineService.createRapport(tontineId, rapportDto);
-      final tontineIndex = _tontines.indexWhere((t) => t.id == tontineId);
-      if (tontineIndex != -1) {
-        // Mise à jour de la liste des rapports de la tontine
-        final updatedTontine = await _tontineService.getTontine(tontineId);
-        if (updatedTontine != null) {
-          _tontines[tontineIndex] = updatedTontine;
-          if (_currentTontine?.id == tontineId) {
-            _currentTontine = updatedTontine;
-          }
+      await _tontineService.createRapport(tontineId, rapportDto);
           notifyListeners();
-        }
-      }
     } catch (e) {
       _logger.severe('Error creating rapport: $e');
       rethrow;
@@ -177,7 +168,13 @@ class TontineProvider extends ChangeNotifier {
 
   Future<List<RapportMeeting>> getRapportsForTontine(int tontineId) async {
     try {
-      return await _tontineService.getRapports(tontineId);
+      final rapports = await _tontineService.getRapports(tontineId);
+      _logger.info('Rapports: ${rapports.first.attachmentFilename}');
+      if(_currentTontine != null ){
+        _currentTontine!.rapports = rapports;
+        notifyListeners();
+      }
+      return rapports;
     } catch (e) {
       _logger.severe('Error getting rapports: $e');
       return [];
@@ -271,5 +268,23 @@ class TontineProvider extends ChangeNotifier {
     await loadDeposits(tontineId);
   }
 
- 
+  Future<void> deleteRapport(int tontineId, int rapportId) async {
+    try {
+      await _tontineService.deleteRapport(tontineId, rapportId);
+      await getRapportsForTontine(tontineId);
+    } catch (e) {
+      _logger.severe('Error deleting rapport: $e');
+      rethrow;
+    }
+  }
+
+  Future<File?> downloadRapportAttachment(int tontineId, int rapportId) async {
+    try {
+      return await _tontineService.downloadRapportAttachment(tontineId, rapportId);
+    } catch (e) {
+      _logger.severe('Error downloading attachment: $e');
+      return null;
+    }
+  }
+
 }

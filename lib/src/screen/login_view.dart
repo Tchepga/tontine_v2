@@ -32,7 +32,9 @@ class _LoginViewState extends State<LoginView> {
     final hasToken = await _memberService.hasValidToken();
     if (hasToken && mounted) {
       await Provider.of<AuthProvider>(context, listen: false).getProfile();
-      Navigator.of(context).pushReplacementNamed(SelectTontineView.routeName);
+      if (mounted) {
+        Navigator.of(context).pushReplacementNamed(SelectTontineView.routeName);
+      }
     }
   }
 

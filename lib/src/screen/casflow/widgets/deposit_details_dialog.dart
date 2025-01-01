@@ -58,6 +58,7 @@ class DepositDetailsDialog extends StatelessWidget {
                 ),
                 _buildDetailRow('Montant', '${deposit.amount} ${deposit.currency.name}'),
                 _buildDetailRow('Date', DateFormat('dd/MM/yyyy').format(deposit.creationDate)),
+                _buildDetailRow('Auteur', '${deposit.author.firstname} ${deposit.author.lastname}'),
                 _buildDetailRow('Raison', deposit.reasons ?? 'Non spécifiée'),
                 _buildDetailRow('Statut', deposit.status.displayName),
                 const SizedBox(height: 16),

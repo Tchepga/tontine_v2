@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:get_storage/get_storage.dart';
 import 'package:tontine_v2/src/screen/services/member_service.dart';
 import '../../models/deposit.dart';
@@ -15,7 +16,7 @@ import 'dto/sanction_dto.dart';
 import 'package:logging/logging.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'dto/event_dto.dart';
-
+import 'package:path_provider/path_provider.dart';
 class TontineService {
   static final _logger = Logger('TontineService');
   final client = ApiClient.client;
@@ -73,7 +74,8 @@ class TontineService {
     throw Exception('Failed to create tontine');
   }
 
-  Future<void> addMemberToTontine(int tontineId, CreateMemberDto memberDto) async {
+  Future<void> addMemberToTontine(
+      int tontineId, CreateMemberDto memberDto) async {
     final token = storage.read(MemberService.KEY_TOKEN);
     final responseCreateMember = await client.post(
       Uri.parse('$urlApi/member'),
@@ -115,21 +117,49 @@ class TontineService {
   }
 
   // Rapports
-  Future<RapportMeeting> createRapport(
-      int tontineId, CreateMeetingRapportDto rapportDto) async {
-    final response = await client.post(
-      Uri.parse('$urlApi/tontine/$tontineId/rapport'),
-      body: jsonEncode(rapportDto.toJson()),
-    );
-    if (response.statusCode == 201) {
-      return RapportMeeting.fromJson(jsonDecode(response.body));
+  Future<RapportMeeting?> createRapport(
+      int tontineId,
+      CreateMeetingRapportDto rapportDto) async {
+    try {
+      final token = storage.read(MemberService.KEY_TOKEN);
+      final uri = Uri.parse('$urlApi/tontine/$tontineId/rapport');
+      dynamic body = jsonEncode(rapportDto.toJson());
+
+      if (rapportDto.attachment != null) {
+        final encodedFile = base64Encode(rapportDto.attachment!);
+        body = jsonEncode({
+          'title': rapportDto.title,
+          'content': rapportDto.content,
+          'attachment': encodedFile,
+          'attachmentFilename': rapportDto.attachmentFilename,
+        });
+      }
+
+      final response = await client.post(uri,
+          headers:  {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+          body: body);
+
+      if (response.statusCode == 201) {
+        return RapportMeeting.fromJson(jsonDecode(response.body));
+      }else {
+        _logger.severe('Error creating rapport: ${response.body}');
+        return null;
+      }
+    } catch (e) {
+      _logger.severe('Error creating rapport: $e');
+      return null;
     }
-    throw Exception('Failed to create rapport');
   }
 
   Future<List<RapportMeeting>> getRapports(int tontineId) async {
-    final response =
-        await client.get(Uri.parse('$urlApi/tontine/$tontineId/rapport'));
+    final token = storage.read(MemberService.KEY_TOKEN);
+    final response = await client
+        .get(Uri.parse('$urlApi/tontine/$tontineId/rapport'), headers: {
+      'Authorization': 'Bearer $token',
+    });
     if (response.statusCode == 200) {
       final List<dynamic> data = jsonDecode(response.body);
       return data.map((json) => RapportMeeting.fromJson(json)).toList();
@@ -280,6 +310,52 @@ class TontineService {
     );
     if (response.statusCode != 200) {
       throw Exception('Failed to update tontine config');
+    }
+  }
+
+  Future<void> deleteRapport(int tontineId, int rapportId) async {
+    final token = storage.read(MemberService.KEY_TOKEN);
+    final response = await client.delete(
+      Uri.parse('$urlApi/tontine/$tontineId/rapport/$rapportId'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to delete rapport');
+    }
+  }
+
+  Future<File> downloadRapportAttachment(int tontineId, int rapportId) async {
+    final token = storage.read(MemberService.KEY_TOKEN);
+    final response = await client.get(
+      Uri.parse('$urlApi/tontine/$tontineId/rapport/$rapportId/attachment'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    
+    if (response.statusCode != 200) {
+      throw Exception('Failed to download attachment');
+    }
+
+    try {
+      // Récupérer le nom du fichier depuis les headers
+      final disposition = response.headers['content-disposition'];
+      final filename = disposition != null 
+          ? disposition.split('filename=')[1].replaceAll('"', '')
+          : 'downloaded_file';
+
+      // Obtenir le répertoire de téléchargement
+      final dir = await getApplicationDocumentsDirectory();
+      final filePath = '${dir.path}/$filename';
+
+      // Écrire le fichier
+      final file = File(filePath);
+      file.writeAsBytes(response.bodyBytes);
+      return file;
+      
+      // Ouvrir le fichier
+      // await FileSaver.instance.saveFile(name: filename, bytes: response.bodyBytes);
+    } catch (e) {
+      _logger.severe('Error saving file: $e');
+      rethrow;
     }
   }
 }

@@ -13,7 +13,9 @@ class _SplashViewState extends State<SplashView> {
   void initState() {
     super.initState();
     Future.delayed(const Duration(seconds: 4), () {
-      Navigator.of(context).pushReplacementNamed(SelectedLanguageView.routeName);
+      if (mounted) {
+        Navigator.of(context).pushReplacementNamed(SelectedLanguageView.routeName);
+      }
     });
   }
 

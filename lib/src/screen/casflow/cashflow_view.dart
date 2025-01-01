@@ -34,16 +34,16 @@ class _CashflowViewState extends State<CashflowView> {
         final currentTontine = tontineProvider.currentTontine;
         final deposits = tontineProvider.deposits;
 
-        return Scaffold(
-          appBar: AppBar(
-            title: const Text('Trésorerie'),
-            actions: [
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Trésorerie'),
+        actions: [
               IconButton(
                 icon: const Icon(Icons.filter_list),
                 onPressed: () => _showDateFilter(context),
-              ),
-            ],
-          ),
+                        ),
+                      ],
+                      ),
           body: ListView(
             padding: const EdgeInsets.all(16),
             children: [
@@ -81,45 +81,45 @@ class _CashflowViewState extends State<CashflowView> {
           borderRadius: BorderRadius.all(Radius.circular(16)),
         ),
         padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            Text(
+              child: Column(
+                children: [
+                  Text(
               '${currentTontine?.cashFlow.amount ?? 0} ${currentTontine?.cashFlow.currency.displayName ?? ''}',
               style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
                 color: Colors.white,
               ),
-            ),
+                  ),
             const Text(
-              'Solde actuel',
+                        'Solde actuel',
               style: TextStyle(color: Colors.white),
+                  ),
+                ],
+              ),
             ),
-          ],
-        ),
-      ),
     );
   }
 
   Future<void> _showDateFilter(BuildContext context) async {
     final DateTimeRange? pickedDateRange = await showDateRangePicker(
-      context: context,
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2101),
-      initialDateRange: DateTimeRange(
+                          context: context,
+                          firstDate: DateTime(2000),
+                          lastDate: DateTime(2101),
+                          initialDateRange: DateTimeRange(
         start: DateTime.now().subtract(const Duration(days: 7)),
-        end: DateTime.now(),
-      ),
-    );
-    if (pickedDateRange != null) {
+                            end: DateTime.now(),
+                          ),
+                        );
+                        if (pickedDateRange != null) {
       // Implémenter le filtrage par date
     }
   }
 
   void _showAddDeposit(BuildContext context, TontineProvider tontineProvider, int tontineId) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
+                showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
         return const EditMouvement();
       },
     ).then((_) {
