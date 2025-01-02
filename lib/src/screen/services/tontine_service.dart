@@ -58,7 +58,6 @@ class TontineService {
   }
 
   Future<Tontine> createTontine(CreateTontineDto tontineDto) async {
-    print(tontineDto.toJson());
     final token = storage.read(MemberService.KEY_TOKEN);
     final response = await client.post(
       Uri.parse('$urlApi/tontine'),

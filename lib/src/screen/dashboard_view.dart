@@ -9,6 +9,7 @@ import 'casflow/cashflow_view.dart';
 import 'loan/loan_view.dart';
 import 'login_view.dart';
 import 'rapport/rapport_view.dart';
+import 'tontine/select_tontine_view.dart';
 import 'tontine/setting_tontine_view.dart';
 import 'event/event_view.dart';
 
@@ -28,8 +29,8 @@ class _DashboardViewState extends State<DashboardView> {
       if (!mounted) return;
       final tontineProvider =
           Provider.of<TontineProvider>(context, listen: false);
-      if (tontineProvider.currentTontine != null) {
-        await tontineProvider.getCurrentTontine();
+      if (tontineProvider.currentTontine == null) {
+        Navigator.of(context).pushReplacementNamed(SelectTontineView.routeName);
       }
     });
   }

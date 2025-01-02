@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
-// import 'package:open_file/open_file.dart';
+import 'package:open_file/open_file.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import '../../models/rapport_meeting.dart';
@@ -406,7 +406,7 @@ class _RapportViewState extends State<RapportView> {
         const SnackBar(content: Text('Téléchargement réussi')),
       );
       if(file != null) {
-        // OpenFile.open(file.path);
+        OpenFile.open(file.path);
       }
     } catch (e) {
       if (!context.mounted) return;
