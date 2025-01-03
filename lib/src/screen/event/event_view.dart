@@ -130,9 +130,12 @@ class _EventViewState extends State<EventView> {
             ),
           ],
         ),
-        trailing: Text(
-          '${event.participants.length} participants',
-          style: const TextStyle(color: Colors.grey),
+        trailing: SizedBox(
+          width: 100,
+          child: Text(
+            '${event.participants.length} participants',
+            style: const TextStyle(color: Colors.grey),
+          ),
         ),
       ),
     );
