@@ -1,6 +1,6 @@
 import 'package:get_storage/get_storage.dart';
 
-import '../../models/enum/available_language.dart';
+import '../../providers/models/enum/available_language.dart';
 
 class LanguageService {
   static const String languageKey = 'selected_language'; 

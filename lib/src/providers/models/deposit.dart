@@ -1,5 +1,5 @@
-import 'package:tontine_v2/src/models/enum/status_deposit.dart';
-import 'package:tontine_v2/src/models/enum/currency.dart';
+import 'package:tontine_v2/src/providers/models/enum/status_deposit.dart';
+import 'package:tontine_v2/src/providers/models/enum/currency.dart';
 import 'member.dart';
 import 'cashflow.dart';
 

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
-import '../models/enum/role.dart';
-import '../models/member.dart';
+import 'models/enum/role.dart';
+import 'models/member.dart';
 import '../screen/services/dto/member_dto.dart';
 import '../screen/services/member_service.dart';
 

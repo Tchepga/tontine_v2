@@ -1,4 +1,4 @@
-import '../../../models/enum/currency.dart';
+import '../../../providers/models/enum/currency.dart';
 
 class CreateLoanDto {
   final double amount;

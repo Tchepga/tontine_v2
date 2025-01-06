@@ -1,13 +1,6 @@
+import 'enum/event_type.dart';
 import 'member.dart';
-import 'tontine.dart';
 
-enum EventType {
-  MEETING,
-  CONTRIBUTION,
-  LOAN,
-  SANCTION,
-  OTHER
-}
 
 class Event {
   final int id;
@@ -16,9 +9,8 @@ class Event {
   final String description;
   final DateTime startDate;
   final DateTime? endDate;
-  final List<Member> participants;
+  final List<Member>? participants;
   final Member author;
-  final Tontine tontine;
 
   Event({
     required this.id,
@@ -29,7 +21,6 @@ class Event {
     this.endDate,
     required this.participants,
     required this.author,
-    required this.tontine,
   });
 
   factory Event.fromJson(Map<String, dynamic> json) {
@@ -42,11 +33,10 @@ class Event {
       description: json['description'],
       startDate: DateTime.parse(json['startDate']),
       endDate: json['endDate'] != null ? DateTime.parse(json['endDate']) : null,
-      participants: (json['participants'] as List)
+      participants: json['participants'] != null ? (json['participants'] as List)
           .map((participant) => Member.fromJson(participant))
-          .toList(),
+          .toList() : null,
       author: Member.fromJson(json['author']),
-      tontine: Tontine.fromJson(json['tontine']),
     );
   }
 } 

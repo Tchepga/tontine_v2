@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
-import '../models/loan.dart';
+import 'models/loan.dart';
 import '../screen/services/loan_service.dart';
 import '../screen/services/dto/loan_dto.dart';
 

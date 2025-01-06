@@ -3,17 +3,17 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 import 'package:tontine_v2/src/screen/services/dto/event_dto.dart';
-import '../models/deposit.dart';
-import '../models/event.dart';
-import '../models/sanction.dart';
-import '../models/tontine.dart';
+import 'models/deposit.dart';
+import 'models/event.dart';
+import 'models/sanction.dart';
+import 'models/tontine.dart';
 import '../screen/services/dto/deposit_dto.dart';
 import '../screen/services/dto/member_dto.dart';
 import '../screen/services/dto/rapport_dto.dart';
 import '../screen/services/dto/sanction_dto.dart';
 import '../screen/services/dto/tontine_dto.dart';
 import '../screen/services/tontine_service.dart';
-import '../models/rapport_meeting.dart';
+import 'models/rapport_meeting.dart';
 import 'package:get_storage/get_storage.dart';
 
 class TontineProvider extends ChangeNotifier {

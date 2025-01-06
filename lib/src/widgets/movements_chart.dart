@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:tontine_v2/src/models/enum/currency.dart';
-import '../models/deposit.dart';
+import 'package:tontine_v2/src/providers/models/enum/currency.dart';
+import '../providers/models/deposit.dart';
 import 'package:intl/intl.dart';
 
 class MovementsChart extends StatelessWidget {

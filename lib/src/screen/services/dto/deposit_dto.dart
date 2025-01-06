@@ -1,5 +1,5 @@
-import '../../../models/enum/currency.dart';
-import '../../../models/enum/status_deposit.dart';
+import '../../../providers/models/enum/currency.dart';
+import '../../../providers/models/enum/status_deposit.dart';
 
 
 

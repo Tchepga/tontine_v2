@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../models/enum/loop_period.dart';
-import '../../models/enum/type_mouvement.dart';
-import '../../models/tontine.dart';
+import '../../providers/models/enum/loop_period.dart';
+import '../../providers/models/enum/type_mouvement.dart';
+import '../../providers/models/tontine.dart';
 import '../../providers/tontine_provider.dart';
 import '../services/dto/tontine_dto.dart';
 

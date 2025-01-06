@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:tontine_v2/src/models/enum/role.dart';
-import 'package:tontine_v2/src/models/member.dart';
+import 'package:tontine_v2/src/providers/models/enum/role.dart';
+import 'package:tontine_v2/src/providers/models/member.dart';
 import 'package:tontine_v2/src/providers/auth_provider.dart';
 import 'package:tontine_v2/src/widgets/menu_widget.dart';
 

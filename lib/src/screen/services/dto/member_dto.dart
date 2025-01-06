@@ -1,4 +1,4 @@
-import '../../../models/enum/role.dart';
+import '../../../providers/models/enum/role.dart';
 
 class CreateMemberDto {
   final String? username;

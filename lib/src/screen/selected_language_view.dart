@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:tontine_v2/src/screen/services/member_service.dart';
-import '../models/enum/available_language.dart';
+import '../providers/models/enum/available_language.dart';
 import 'dashboard_view.dart';
 import 'login_view.dart';
 import 'services/language_service.dart';

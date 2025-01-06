@@ -1,4 +1,4 @@
-import 'package:tontine_v2/src/models/enum/currency.dart';
+import 'package:tontine_v2/src/providers/models/enum/currency.dart';
 
 class CashFlow {
   final int id;

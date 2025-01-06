@@ -2,11 +2,11 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:get_storage/get_storage.dart';
 import 'package:tontine_v2/src/screen/services/member_service.dart';
-import '../../models/deposit.dart';
-import '../../models/tontine.dart';
-import '../../models/event.dart';
-import '../../models/sanction.dart';
-import '../../models/rapport_meeting.dart';
+import '../../providers/models/deposit.dart';
+import '../../providers/models/tontine.dart';
+import '../../providers/models/event.dart';
+import '../../providers/models/sanction.dart';
+import '../../providers/models/rapport_meeting.dart';
 import 'dto/member_dto.dart';
 import 'middleware/interceptor_http.dart';
 import 'dto/tontine_dto.dart';
@@ -22,6 +22,7 @@ class TontineService {
   final client = ApiClient.client;
   final storage = GetStorage();
   final String urlApi = '${dotenv.env['API_URL']}/api';
+  final MemberService memberService = MemberService();
 
   // Tontine CRUD
   Future<List<Tontine>> getTontines() async {

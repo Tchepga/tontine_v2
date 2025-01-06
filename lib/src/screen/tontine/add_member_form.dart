@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
-import '../../models/member.dart';
+import '../../providers/models/member.dart';
 import '../services/dto/member_dto.dart';
 import '../services/member_service.dart';
 

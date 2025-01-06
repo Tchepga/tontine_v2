@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../models/enum/currency.dart';
-import '../../models/enum/loop_period.dart';
-import '../../models/enum/type_mouvement.dart';
+import '../../providers/models/enum/currency.dart';
+import '../../providers/models/enum/loop_period.dart';
+import '../../providers/models/enum/type_mouvement.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/tontine_provider.dart';
 import '../dashboard_view.dart';
 import 'package:logging/logging.dart';
 
+import '../login_view.dart';
 import '../services/dto/member_dto.dart';
 import '../services/dto/tontine_dto.dart';
+import '../services/member_service.dart';
 import 'add_members_view.dart';
 
 class SelectTontineView extends StatefulWidget {
@@ -22,10 +24,12 @@ class SelectTontineView extends StatefulWidget {
 
 class _SelectTontineViewState extends State<SelectTontineView> {
   final _logger = Logger('SelectTontineView');
+  final MemberService memberService = MemberService();
 
   @override
   void initState() {
     super.initState();
+    
     Future.microtask(() => _loadTontines());
     if(mounted) {
       if(Provider.of<TontineProvider>(context, listen: false).currentTontine != null) {
@@ -37,6 +41,14 @@ class _SelectTontineViewState extends State<SelectTontineView> {
 
   Future<void> _loadTontines() async {
     try {
+      final isValidToken = await memberService.hasValidToken();
+      if (!isValidToken) {
+        memberService.logout();
+        if(mounted) {
+          Navigator.of(context).pushReplacementNamed(LoginView.routeName);
+        }
+        return;
+      }
       await Provider.of<TontineProvider>(context, listen: false).loadTontines();
     } catch (e) {
       _logger.severe('Error loading tontines: $e');

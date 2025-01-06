@@ -1,6 +1,6 @@
 import 'package:get_storage/get_storage.dart';
 import 'dart:convert';
-import '../../models/member.dart';
+import '../../providers/models/member.dart';
 import 'dto/member_dto.dart';
 import 'middleware/interceptor_http.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';

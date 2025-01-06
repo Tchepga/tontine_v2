@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:tontine_v2/src/models/tontine.dart';
+import 'package:tontine_v2/src/providers/models/tontine.dart';
 import 'package:tontine_v2/src/screen/event/event_view.dart';
 
 import '../providers/auth_provider.dart';

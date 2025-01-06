@@ -1,9 +1,9 @@
 import 'package:tontine_v2/src/screen/services/dto/member_dto.dart';
 
-import '../../../models/enum/currency.dart';
-import '../../../models/enum/loop_period.dart';
-import '../../../models/enum/type_mouvement.dart';
-import '../../../models/tontine.dart';
+import '../../../providers/models/enum/currency.dart';
+import '../../../providers/models/enum/loop_period.dart';
+import '../../../providers/models/enum/type_mouvement.dart';
+import '../../../providers/models/tontine.dart';
 
 class CreateConfigTontineDto {
   final double defaultLoanRate;

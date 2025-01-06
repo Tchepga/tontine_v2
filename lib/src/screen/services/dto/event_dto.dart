@@ -1,4 +1,4 @@
-import '../../../models/enum/event_type.dart';
+import '../../../providers/models/enum/event_type.dart';
 
 class CreateEventDto {
   final int tontineId;

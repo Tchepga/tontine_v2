@@ -3,7 +3,7 @@ import 'package:logging/logging.dart';
 import 'package:open_file/open_file.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_quill/flutter_quill.dart';
-import '../../models/rapport_meeting.dart';
+import '../../providers/models/rapport_meeting.dart';
 import '../../providers/tontine_provider.dart';
 import '../../widgets/menu_widget.dart';
 import '../services/dto/rapport_dto.dart';
@@ -12,7 +12,7 @@ import 'package:file_picker/file_picker.dart'
     show FilePicker, FilePickerResult, FileType, PlatformFile;
 import 'dart:io';
 import '../../providers/auth_provider.dart';
-import '../../models/enum/role.dart';
+import '../../providers/models/enum/role.dart';
 
 class RapportView extends StatefulWidget {
   static const routeName = '/rapport';

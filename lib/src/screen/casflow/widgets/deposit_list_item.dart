@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../../models/deposit.dart';
+import '../../../providers/models/deposit.dart';
 import '../../../providers/tontine_provider.dart';
 import 'deposit_details_dialog.dart';
 

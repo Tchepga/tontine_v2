@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../models/deposit.dart';
-import '../../models/enum/deposit_reason.dart';
-import '../../models/enum/status_deposit.dart';
+import '../../providers/models/deposit.dart';
+import '../../providers/models/enum/deposit_reason.dart';
+import '../../providers/models/enum/status_deposit.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/tontine_provider.dart';
-import '../../models/member.dart';
+import '../../providers/models/member.dart';
 import '../services/dto/deposit_dto.dart';
 
 class EditMouvement extends StatefulWidget {

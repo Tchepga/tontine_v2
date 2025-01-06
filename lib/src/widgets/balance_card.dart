@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:tontine_v2/src/models/enum/currency.dart';
-import '../models/tontine.dart';
+import 'package:tontine_v2/src/providers/models/enum/currency.dart';
+import '../providers/models/tontine.dart';
 import '../screen/casflow/cashflow_view.dart';
 
 class BalanceCard extends StatelessWidget {

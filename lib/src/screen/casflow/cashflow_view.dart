@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../models/tontine.dart';
+import '../../providers/models/tontine.dart';
 import '../../providers/tontine_provider.dart';
 import 'edit_mouvement.dart';
 import 'widgets/deposit_list_item.dart';
-import 'package:tontine_v2/src/models/enum/currency.dart';
+import 'package:tontine_v2/src/providers/models/enum/currency.dart';
 
 class CashflowView extends StatefulWidget {
   const CashflowView({super.key});

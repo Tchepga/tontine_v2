@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:tontine_v2/src/models/enum/status_loan.dart';
-import 'package:tontine_v2/src/models/member.dart';
-import '../../models/loan.dart';
-import '../../models/tontine.dart';
+import 'package:tontine_v2/src/providers/models/enum/status_loan.dart';
+import 'package:tontine_v2/src/providers/models/member.dart';
+import '../../providers/models/loan.dart';
+import '../../providers/models/tontine.dart';
 import '../../providers/loan_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/tontine_provider.dart';

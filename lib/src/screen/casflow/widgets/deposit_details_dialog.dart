@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:tontine_v2/src/models/enum/status_deposit.dart';
-import '../../../models/deposit.dart';
+import 'package:tontine_v2/src/providers/models/enum/status_deposit.dart';
+import '../../../providers/models/deposit.dart';
 import '../../../providers/tontine_provider.dart';
 import '../edit_mouvement.dart';
 

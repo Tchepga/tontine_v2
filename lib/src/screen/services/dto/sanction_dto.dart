@@ -1,6 +1,6 @@
 
 
-import '../../../models/enum/type_sanction.dart';
+import '../../../providers/models/enum/type_sanction.dart';
 
 class CreateSanctionDto {
   final TypeSanction type;
