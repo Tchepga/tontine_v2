@@ -1,9 +1,11 @@
+import 'package:tontine_v2/src/providers/models/enum/type_sanction.dart';
+
 import 'member.dart';
 import 'tontine.dart';
 
 class Sanction {
   final int id;
-  final String type;
+  final TypeSanction type;
   final String description;
   final DateTime? startDate;
   final DateTime? endDate;
@@ -23,7 +25,7 @@ class Sanction {
   factory Sanction.fromJson(Map<String, dynamic> json) {
     return Sanction(
       id: json['id'],
-      type: json['type'],
+      type: TypeSanction.values.firstWhere((e) => e.name == json['type']),
       description: json['description'],
       startDate: json['startDate'] != null 
           ? DateTime.parse(json['startDate']) 

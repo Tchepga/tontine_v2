@@ -133,42 +133,73 @@ class _EventViewState extends State<EventView> {
               
               // Liste des événements
               Expanded(
-                child: ListView.builder(
-                  itemCount: eventsForTontine.length,
-                  padding: const EdgeInsets.all(16),
-                  itemBuilder: (context, index) {
-                    final event = eventsForTontine[index];
-                    return Card(
-                      child: ListTile(
-                        onTap: () => _showEventDetails(context, event, tontineProvider, eventProvider),
-                        title: Text(event.title),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                child: eventsForTontine.isEmpty
+                  ? Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            Text(event.description),
-                            const SizedBox(height: 4),
-                            Chip(
-                              label: Text(
-                                event.type.displayName,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 12,
-                                ),
+                            const Icon(
+                              Icons.event_busy,
+                              size: 48,
+                              color: Colors.orange,
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'Aucun événement le ${DateFormat('dd/MM/yyyy').format(selectedDate)}',
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(fontSize: 16),
+                            ),
+                            const SizedBox(height: 16),
+                            FilledButton.icon(
+                              onPressed: () => _showCreateEventDialog(context, tontineProvider, eventProvider),
+                              icon: const Icon(Icons.add),
+                              label: const Text('Ajouter un événement'),
+                              style: FilledButton.styleFrom(
+                                backgroundColor: Colors.orange,
                               ),
-                              backgroundColor: _getChipColor(event.type),
-                              padding: const EdgeInsets.symmetric(horizontal: 4),
-                              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                             ),
                           ],
                         ),
-                        trailing: Text(
-                          '${event.participants?.length ?? 0} participants',
-                          style: const TextStyle(color: Colors.grey),
-                        ),
                       ),
-                    );
-                  },
-                ),
+                    )
+                  : ListView.builder(
+                      itemCount: eventsForTontine.length,
+                      padding: const EdgeInsets.all(16),
+                      itemBuilder: (context, index) {
+                        final event = eventsForTontine[index];
+                        return Card(
+                          child: ListTile(
+                            onTap: () => _showEventDetails(context, event, tontineProvider, eventProvider),
+                            title: Text(event.title),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(event.description),
+                                const SizedBox(height: 4),
+                                Chip(
+                                  label: Text(
+                                    event.type.displayName,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                  backgroundColor: _getChipColor(event.type),
+                                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                ),
+                              ],
+                            ),
+                            trailing: Text(
+                              '${event.participants?.length ?? 0} participants',
+                              style: const TextStyle(color: Colors.grey),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
               ),
             ],
           ),

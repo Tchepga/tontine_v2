@@ -13,6 +13,8 @@ import 'package:file_picker/file_picker.dart'
 import 'dart:io';
 import '../../providers/auth_provider.dart';
 import '../../providers/models/enum/role.dart';
+import '../../providers/models/enum/type_sanction.dart';
+import '../services/dto/sanction_dto.dart';
 
 class RapportView extends StatefulWidget {
   static const routeName = '/rapport';
@@ -22,21 +24,22 @@ class RapportView extends StatefulWidget {
   State<RapportView> createState() => _RapportViewState();
 }
 
-class _RapportViewState extends State<RapportView> {
+class _RapportViewState extends State<RapportView> with SingleTickerProviderStateMixin {
   final Logger _logger = Logger('RapportView');
   final QuillController _controller = QuillController.basic();
   PlatformFile? _selectedFile;
+  late TabController _tabController;
 
   @override
   void initState() {
     super.initState();
-    Future.microtask(() async {
+    _tabController = TabController(length: 2, vsync: this);
+    Future.microtask(() {
       if (!mounted) return;
-      final tontineProvider =
-          Provider.of<TontineProvider>(context, listen: false);
+      final tontineProvider = Provider.of<TontineProvider>(context, listen: false);
       if (tontineProvider.currentTontine != null) {
-        await tontineProvider
-            .getRapportsForTontine(tontineProvider.currentTontine!.id);
+        tontineProvider.getRapportsForTontine(tontineProvider.currentTontine!.id);
+        tontineProvider.getSanctionsForTontine(tontineProvider.currentTontine!.id);
       }
     });
   }
@@ -275,54 +278,236 @@ class _RapportViewState extends State<RapportView> {
     return Consumer<TontineProvider>(
       builder: (context, tontineProvider, child) {
         final rapports = tontineProvider.currentTontine?.rapports ?? [];
+        final sanctions = tontineProvider.currentTontine?.sanctions ?? [];
+
         return Scaffold(
           appBar: AppBar(
-            title: const Text('Rapports de réunion'),
-            backgroundColor: Colors.transparent,
-            elevation: 0,
+            title: const Text('Rapports & Sanctions'),
+            bottom: TabBar(
+              controller: _tabController,
+              tabs: const [
+                Tab(text: 'Rapports'),
+                Tab(text: 'Sanctions'),
+              ],
+            ),
           ),
-          body: rapports.isEmpty
-              ? const Center(child: Text('Aucun rapport trouvé'))
-              : ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: rapports.length,
-                  itemBuilder: (context, index) {
-                    final rapport = rapports[index];
-                    return Card(
-                      child: ListTile(
-                        title: Text(rapport.title),
-                        subtitle: Text(
-                          DateFormat('dd/MM/yyyy').format(rapport.createdAt),
-                        ),
-                        trailing: canEdit
-                            ? Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  IconButton(
-                                    icon: const Icon(Icons.edit,
-                                        color: Colors.orange),
-                                    onPressed: () => _showCreateRapportDialog(
-                                        context, tontineProvider),
-                                  ),
-                                  IconButton(
-                                    icon: const Icon(Icons.delete,
-                                        color: Colors.red),
-                                    onPressed: () => _showDeleteConfirmation(
-                                        context, rapport),
-                                  ),
-                                ],
-                              )
-                            : null,
-                        onTap: () => _showRapportDetails(context, rapport),
+          body: TabBarView(
+            controller: _tabController,
+            children: [
+              // Tab Rapports
+              ListView.builder(
+                itemCount: rapports.length,
+                padding: const EdgeInsets.all(16),
+                itemBuilder: (context, index) {
+                  final rapport = rapports[index];
+                  return Card(
+                    child: ListTile(
+                      title: Text(rapport.title),
+                      subtitle: Text(
+                        DateFormat('dd/MM/yyyy').format(rapport.createdAt),
                       ),
-                    );
-                  },
+                      trailing: rapport.attachmentFilename != null
+                          ? const Icon(Icons.attachment)
+                          : null,
+                      onTap: () => _showRapportDetails(context, rapport),
+                    ),
+                  );
+                },
+              ),
+              // Tab Sanctions
+              ListView.builder(
+                itemCount: sanctions.length,
+                padding: const EdgeInsets.all(16),
+                itemBuilder: (context, index) {
+                  final sanction = sanctions[index];
+                  return Card(
+                    child: ListTile(
+                      title: Text('${sanction.gulty.firstname} ${sanction.gulty.lastname}'),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(sanction.description),
+                          Chip(
+                            label: Text(
+                              sanction.type.displayName,
+                              style: const TextStyle(color: Colors.white),
+                            ),
+                            backgroundColor: _getSanctionColor(sanction.type),
+                          ),
+                        ],
+                      ),
+                      trailing: Text(
+                        DateFormat('dd/MM/yyyy').format(sanction.startDate ?? DateTime.now()),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+          floatingActionButton: Column(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              if (_tabController.index == 0 && canEdit)
+                FloatingActionButton(
+                  heroTag: 'btn1',
+                  onPressed: () => _showCreateRapportDialog(context, tontineProvider),
+                  child: const Icon(Icons.description),
                 ),
-          floatingActionButton: FloatingActionButton(
-            onPressed: () => _showCreateRapportDialog(context, tontineProvider),
-            child: const Icon(Icons.add),
+              if (_tabController.index == 1 && canEdit) ...[
+                const SizedBox(height: 16),
+                FloatingActionButton(
+                  heroTag: 'btn2',
+                  onPressed: () => _showCreateSanctionDialog(context, tontineProvider),
+                  child: const Icon(Icons.gavel),
+                ),
+              ],
+            ],
           ),
           bottomNavigationBar: const MenuWidget(),
+        );
+      },
+    );
+  }
+
+  Color _getSanctionColor(TypeSanction type) {
+    switch (type) {
+      case TypeSanction.WARNING:
+        return Colors.orange;
+      case TypeSanction.SUSPENSION:
+        return Colors.red;
+      case TypeSanction.EXCLUSION:
+        return Colors.purple;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  void _showCreateSanctionDialog(BuildContext context, TontineProvider tontineProvider) {
+    final formKey = GlobalKey<FormState>();
+    final descriptionController = TextEditingController();
+    TypeSanction selectedType = TypeSanction.WARNING;
+    DateTime startDate = DateTime.now();
+    DateTime? endDate;
+    int? selectedMemberId;
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Form(
+              key: formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'Nouvelle sanction',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<int>(
+                    decoration: const InputDecoration(
+                      labelText: 'Membre',
+                      border: OutlineInputBorder(),
+                    ),
+                    items: tontineProvider.currentTontine?.members.map((member) {
+                      return DropdownMenuItem(
+                        value: member.id,
+                        child: Text('${member.firstname} ${member.lastname}'),
+                      );
+                    }).toList(),
+                    onChanged: (value) => selectedMemberId = value,
+                    validator: (value) {
+                      if (value == null) return 'Sélectionnez un membre';
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<TypeSanction>(
+                    decoration: const InputDecoration(
+                      labelText: 'Type de sanction',
+                      border: OutlineInputBorder(),
+                    ),
+                    value: selectedType,
+                    items: TypeSanction.values.map((type) {
+                      return DropdownMenuItem(
+                        value: type,
+                        child: Text(type.displayName),
+                      );
+                    }).toList(),
+                    onChanged: (value) => selectedType = value!,
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: descriptionController,
+                    decoration: const InputDecoration(
+                      labelText: 'Description',
+                      border: OutlineInputBorder(),
+                    ),
+                    maxLines: 3,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'La description est requise';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text('Annuler'),
+                      ),
+                      FilledButton(
+                        onPressed: () async {
+                          if (formKey.currentState!.validate() && selectedMemberId != null) {
+                            try {
+                              final sanctionDto = CreateSanctionDto(
+                                type: selectedType,
+                                description: descriptionController.text,
+                                startDate: startDate,
+                                endDate: endDate,
+                                memberId: selectedMemberId!,
+                              );
+                              
+                              await tontineProvider.addSanction(
+                                tontineProvider.currentTontine!.id,
+                                sanctionDto,
+                              );
+
+                              if (!context.mounted) return;
+                              Navigator.pop(context);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Sanction créée avec succès'),
+                                  backgroundColor: Colors.green,
+                                ),
+                              );
+                            } catch (e) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Erreur lors de la création'),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                          }
+                        },
+                        child: const Text('Créer'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
         );
       },
     );
@@ -462,3 +647,4 @@ class _RapportViewState extends State<RapportView> {
     );
   }
 }
+
