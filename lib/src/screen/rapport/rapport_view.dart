@@ -24,7 +24,8 @@ class RapportView extends StatefulWidget {
   State<RapportView> createState() => _RapportViewState();
 }
 
-class _RapportViewState extends State<RapportView> with SingleTickerProviderStateMixin {
+class _RapportViewState extends State<RapportView>
+    with SingleTickerProviderStateMixin {
   final Logger _logger = Logger('RapportView');
   final QuillController _controller = QuillController.basic();
   PlatformFile? _selectedFile;
@@ -36,10 +37,13 @@ class _RapportViewState extends State<RapportView> with SingleTickerProviderStat
     _tabController = TabController(length: 2, vsync: this);
     Future.microtask(() {
       if (!mounted) return;
-      final tontineProvider = Provider.of<TontineProvider>(context, listen: false);
+      final tontineProvider =
+          Provider.of<TontineProvider>(context, listen: false);
       if (tontineProvider.currentTontine != null) {
-        tontineProvider.getRapportsForTontine(tontineProvider.currentTontine!.id);
-        tontineProvider.getSanctionsForTontine(tontineProvider.currentTontine!.id);
+        tontineProvider
+            .getRapportsForTontine(tontineProvider.currentTontine!.id);
+        tontineProvider
+            .getSanctionsForTontine(tontineProvider.currentTontine!.id);
       }
     });
   }
@@ -156,8 +160,9 @@ class _RapportViewState extends State<RapportView> with SingleTickerProviderStat
                       attachmentFilename: _selectedFile?.name,
                     );
 
-                    await tontineProvider.addRapport(
-                        tontineProvider.currentTontine!.id, rapportDto);
+                    final tontineId = tontineProvider.currentTontine!.id;
+                    await tontineProvider.addRapport(tontineId, rapportDto);
+                    await tontineProvider.getRapportsForTontine(tontineId);
 
                     if (!context.mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -322,7 +327,8 @@ class _RapportViewState extends State<RapportView> with SingleTickerProviderStat
                   final sanction = sanctions[index];
                   return Card(
                     child: ListTile(
-                      title: Text('${sanction.gulty.firstname} ${sanction.gulty.lastname}'),
+                      title: Text(
+                          '${sanction.gulty.firstname} ${sanction.gulty.lastname}'),
                       subtitle: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -337,7 +343,8 @@ class _RapportViewState extends State<RapportView> with SingleTickerProviderStat
                         ],
                       ),
                       trailing: Text(
-                        DateFormat('dd/MM/yyyy').format(sanction.startDate ?? DateTime.now()),
+                        DateFormat('dd/MM/yyyy')
+                            .format(sanction.startDate ?? DateTime.now()),
                       ),
                     ),
                   );
@@ -345,25 +352,26 @@ class _RapportViewState extends State<RapportView> with SingleTickerProviderStat
               ),
             ],
           ),
-          floatingActionButton: Column(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              if (_tabController.index == 0 && canEdit)
-                FloatingActionButton(
-                  heroTag: 'btn1',
-                  onPressed: () => _showCreateRapportDialog(context, tontineProvider),
-                  child: const Icon(Icons.description),
-                ),
-              if (_tabController.index == 1 && canEdit) ...[
-                const SizedBox(height: 16),
-                FloatingActionButton(
-                  heroTag: 'btn2',
-                  onPressed: () => _showCreateSanctionDialog(context, tontineProvider),
-                  child: const Icon(Icons.gavel),
-                ),
-              ],
-            ],
-          ),
+          floatingActionButton: canEdit
+              ? Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    FloatingActionButton(
+                      heroTag: 'btn1',
+                      onPressed: () =>
+                          _showCreateRapportDialog(context, tontineProvider),
+                      child: const Icon(Icons.description),
+                    ),
+                    const SizedBox(height: 16),
+                    FloatingActionButton(
+                      heroTag: 'btn2',
+                      onPressed: () =>
+                          _showCreateSanctionDialog(context, tontineProvider),
+                      child: const Icon(Icons.gavel),
+                    ),
+                  ],
+                )
+              : null,
           bottomNavigationBar: const MenuWidget(),
         );
       },
@@ -383,7 +391,8 @@ class _RapportViewState extends State<RapportView> with SingleTickerProviderStat
     }
   }
 
-  void _showCreateSanctionDialog(BuildContext context, TontineProvider tontineProvider) {
+  void _showCreateSanctionDialog(
+      BuildContext context, TontineProvider tontineProvider) {
     final formKey = GlobalKey<FormState>();
     final descriptionController = TextEditingController();
     TypeSanction selectedType = TypeSanction.WARNING;
@@ -415,7 +424,8 @@ class _RapportViewState extends State<RapportView> with SingleTickerProviderStat
                       labelText: 'Membre',
                       border: OutlineInputBorder(),
                     ),
-                    items: tontineProvider.currentTontine?.members.map((member) {
+                    items:
+                        tontineProvider.currentTontine?.members.map((member) {
                       return DropdownMenuItem(
                         value: member.id,
                         child: Text('${member.firstname} ${member.lastname}'),
@@ -467,7 +477,8 @@ class _RapportViewState extends State<RapportView> with SingleTickerProviderStat
                       ),
                       FilledButton(
                         onPressed: () async {
-                          if (formKey.currentState!.validate() && selectedMemberId != null) {
+                          if (formKey.currentState!.validate() &&
+                              selectedMemberId != null) {
                             try {
                               final sanctionDto = CreateSanctionDto(
                                 type: selectedType,
@@ -476,12 +487,10 @@ class _RapportViewState extends State<RapportView> with SingleTickerProviderStat
                                 endDate: endDate,
                                 memberId: selectedMemberId!,
                               );
-                              
-                              await tontineProvider.addSanction(
-                                tontineProvider.currentTontine!.id,
-                                sanctionDto,
-                              );
 
+                              final tontineId = tontineProvider.currentTontine!.id;
+                              await tontineProvider.addSanction(tontineId, sanctionDto);
+                              await tontineProvider.getSanctionsForTontine(tontineId);
                               if (!context.mounted) return;
                               Navigator.pop(context);
                               ScaffoldMessenger.of(context).showSnackBar(
@@ -590,7 +599,7 @@ class _RapportViewState extends State<RapportView> with SingleTickerProviderStat
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Téléchargement réussi')),
       );
-      if(file != null) {
+      if (file != null) {
         OpenFile.open(file.path);
       }
     } catch (e) {
@@ -647,4 +656,3 @@ class _RapportViewState extends State<RapportView> with SingleTickerProviderStat
     );
   }
 }
-

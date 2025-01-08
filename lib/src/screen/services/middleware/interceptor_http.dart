@@ -5,9 +5,18 @@ import 'package:get_storage/get_storage.dart';
 
 class AuthInterceptor implements InterceptorContract {
   final storage = GetStorage();
+  static const List<String> publicPaths = [
+    '/api/auth/login',
+    '/api/auth/logout',
+  ];
 
   @override
   Future<BaseRequest> interceptRequest({required BaseRequest request}) async {
+    // Ne pas intercepter les routes publiques
+    if (publicPaths.any((path) => request.url.path.endsWith(path))) {
+      return request;
+    }
+
     final token = storage.read('token');
     final authorisationHeader = request.headers['Authorization'];
     if (token != null && authorisationHeader != 'Bearer $token') {
@@ -16,6 +25,7 @@ class AuthInterceptor implements InterceptorContract {
     request.headers['Content-Type'] = 'application/json';
     return request;
   }
+
   @override
   Future<BaseResponse> interceptResponse({required BaseResponse response}) async {
     return response;
@@ -23,7 +33,7 @@ class AuthInterceptor implements InterceptorContract {
 
   @override
   FutureOr<bool> shouldInterceptRequest() {
-    return false;
+    return true;
   }
 
   @override

@@ -182,7 +182,8 @@ class TontineService {
   Future<Sanction> createSanction(
       int tontineId, CreateSanctionDto sanctionDto) async {
     final response = await client.post(
-      Uri.parse('$urlApi/tontine/$tontineId/sanction'),
+      Uri.parse('$urlApi/tontine/$tontineId/sanction', 
+      ),
       body: jsonEncode(sanctionDto.toJson()),
     );
     if (response.statusCode == 201) {
