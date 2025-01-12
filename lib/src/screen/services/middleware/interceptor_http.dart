@@ -6,8 +6,10 @@ import 'package:get_storage/get_storage.dart';
 class AuthInterceptor implements InterceptorContract {
   final storage = GetStorage();
   static const List<String> publicPaths = [
-    '/api/auth/login',
-    '/api/auth/logout',
+    'login',
+    'logout',
+    'verify',
+    'register',
   ];
 
   @override

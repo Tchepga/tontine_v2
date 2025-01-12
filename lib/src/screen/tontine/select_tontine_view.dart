@@ -49,6 +49,7 @@ class _SelectTontineViewState extends State<SelectTontineView> {
         }
         return;
       }
+     await memberService.getProfile();
       await Provider.of<TontineProvider>(context, listen: false).loadTontines();
     } catch (e) {
       _logger.severe('Error loading tontines: $e');

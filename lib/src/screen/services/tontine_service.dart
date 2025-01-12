@@ -7,6 +7,7 @@ import '../../providers/models/tontine.dart';
 import '../../providers/models/event.dart';
 import '../../providers/models/sanction.dart';
 import '../../providers/models/rapport_meeting.dart';
+import '../../services/websocket_service.dart';
 import 'dto/member_dto.dart';
 import 'middleware/interceptor_http.dart';
 import 'dto/tontine_dto.dart';
@@ -17,12 +18,14 @@ import 'package:logging/logging.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'dto/event_dto.dart';
 import 'package:path_provider/path_provider.dart';
+
 class TontineService {
   static final _logger = Logger('TontineService');
   final client = ApiClient.client;
   final storage = GetStorage();
   final String urlApi = '${dotenv.env['API_URL']}/api';
   final MemberService memberService = MemberService();
+  final _webSocket = WebSocketService();
 
   // Tontine CRUD
   Future<List<Tontine>> getTontines() async {
@@ -69,7 +72,9 @@ class TontineService {
       },
     );
     if (response.statusCode == 201) {
-      return Tontine.fromJson(jsonDecode(response.body));
+      final tontine = Tontine.fromJson(jsonDecode(response.body));
+      _webSocket.emit('tontine.created', tontine.id);
+      return tontine;
     }
     throw Exception('Failed to create tontine');
   }
@@ -143,7 +148,9 @@ class TontineService {
           body: body);
 
       if (response.statusCode == 201) {
-        return RapportMeeting.fromJson(jsonDecode(response.body));
+        final rapport = RapportMeeting.fromJson(jsonDecode(response.body));
+        _webSocket.emit('rapport.created', rapport.id);
+        return rapport;
       }else {
         _logger.severe('Error creating rapport: ${response.body}');
         return null;
@@ -172,7 +179,7 @@ class TontineService {
     final response = await client.patch(
       Uri.parse('$urlApi/tontine/$tontineId/rapport'),
       body: jsonEncode(rapportDto.toJson()),
-    );
+    // );
     if (response.statusCode != 200) {
       throw Exception('Failed to update rapport');
     }
