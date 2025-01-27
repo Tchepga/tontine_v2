@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:get_storage/get_storage.dart';
 import 'package:logging/logging.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:tontine_v2/src/providers/models/enum/currency.dart';
 import '../../providers/models/loan.dart';
 import 'middleware/interceptor_http.dart';
 import 'dto/loan_dto.dart';

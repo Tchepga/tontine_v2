@@ -302,7 +302,7 @@ class _LoanViewState extends State<LoanView> {
                     // ignore: use_build_context_synchronously
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text('Prêt créé avec succès'),
+                        content: Text('Prêt créé avec succès. Il devra être validé par la suite'),
                         backgroundColor: Colors.green,
                       ),
                     );

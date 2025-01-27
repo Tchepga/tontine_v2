@@ -31,7 +31,7 @@ class Member {
       phone: json['phone'],
       avatar: json['avatar'] ?? '',
       country: json['country'] ?? '',
-      user: User.fromJson(json['user']),
+      user: json['user'] != null ? User.fromJson(json['user']) : null,
       // loans: json['loans'] ?? ''
     );
   }

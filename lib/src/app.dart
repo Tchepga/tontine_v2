@@ -18,6 +18,7 @@ import 'screen/rapport/rapport_view.dart';
 import 'screen/tontine/setting_tontine_view.dart';
 import 'screen/auth/register_view.dart';
 import 'screen/event/event_view.dart';
+import 'screen/notification/notification_view.dart';
 
 /// The Widget that configures your application.
 class MyApp extends StatelessWidget {
@@ -148,6 +149,8 @@ class MyApp extends StatelessWidget {
                     return const AddMembersView();
                   case EventView.routeName:
                     return const EventView();
+                  case NotificationView.routeName:
+                    return const NotificationView();
                   default:
                     return const SplashView();
                 }

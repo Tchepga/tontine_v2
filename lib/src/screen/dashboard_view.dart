@@ -11,6 +11,7 @@ import '../widgets/movements_chart.dart';
 import 'login_view.dart';
 import 'tontine/select_tontine_view.dart';
 import 'tontine/setting_tontine_view.dart';
+import 'notification/notification_view.dart';
 
 class DashboardView extends StatefulWidget {
   const DashboardView({super.key});
@@ -82,7 +83,7 @@ class _DashboardViewState extends State<DashboardView> {
                   color: Colors.white,
                   icon: const Icon(Icons.notifications),
                   onPressed: () {
-                    print('Notifications');
+                    Navigator.pushNamed(context, NotificationView.routeName);
                   },
                 ),
                 IconButton(

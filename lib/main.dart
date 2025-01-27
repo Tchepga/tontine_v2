@@ -11,7 +11,7 @@ import 'src/providers/tontine_provider.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'src/providers/loan_provider.dart';
 import 'src/providers/event_provider.dart';
-import 'src/services/websocket_service.dart';
+import 'src/providers/notification_provider.dart';
 
 // DotEnv dotenv = DotEnv() is automatically called during import.
 // If you want to load multiple dotenv files or name your dotenv object differently, you can do the following and import the singleton into the relavant files:
@@ -19,8 +19,8 @@ import 'src/services/websocket_service.dart';
 
 
 void main() async {
-
-
+  WidgetsFlutterBinding.ensureInitialized(); // Important !
+  
   await dotenv.load(fileName: ".env");
 
   Logger.root.level = Level.ALL;
@@ -40,6 +40,8 @@ void main() async {
   // Run the app and pass in the SettingsController. The app listens to the
   // SettingsController for changes, then passes it further down to the
   // SettingsView.
+  //await WebSocketService().connect();
+
   runApp(
     MultiProvider(
       providers: [
@@ -47,10 +49,12 @@ void main() async {
         ChangeNotifierProvider(create: (_) => TontineProvider()),
         ChangeNotifierProvider(create: (_) => LoanProvider()),
         ChangeNotifierProvider(create: (_) => EventProvider()),
+        ChangeNotifierProvider(create: (_) => NotificationProvider()),
       ],
       child: MyApp(settingsController: settingsController),
     ),
   );
 
-  WebSocketService().connect();
+  // Suppression de l'appel WebSocket
+  // WebSocketService().connect();
 }
