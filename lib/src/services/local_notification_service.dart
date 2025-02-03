@@ -5,6 +5,9 @@ class LocalNotificationService {
   static final LocalNotificationService _instance = LocalNotificationService._internal();
   final _logger = Logger('LocalNotificationService');
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+  
+  // Callback pour la navigation
+  static Function(String?)? onNotificationTap;
 
   factory LocalNotificationService() {
     return _instance;
@@ -29,7 +32,9 @@ class LocalNotificationService {
       initializationSettings,
       onDidReceiveNotificationResponse: (NotificationResponse response) {
         _logger.info('Notification clicked: ${response.payload}');
-        // Gérer la navigation ici si nécessaire
+        if (onNotificationTap != null) {
+          onNotificationTap!(response.payload);
+        }
       },
     );
   }

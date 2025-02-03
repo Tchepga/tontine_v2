@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:provider/provider.dart';
 import 'package:logging/logging.dart';
+import 'src/services/local_notification_service.dart';
 
 import 'src/app.dart';
 import 'src/providers/auth_provider.dart';
@@ -23,11 +24,15 @@ void main() async {
   
   await dotenv.load(fileName: ".env");
 
+  await GetStorage.init();
+  
+  // Initialiser les notifications locales
+  await LocalNotificationService().init();
+
   Logger.root.level = Level.ALL;
   Logger.root.onRecord.listen((record) {
     print('${record.level.name}: ${record.time}: ${record.message}');
   });
-  await GetStorage.init();
 
   // Set up the SettingsController, which will glue user settings to multiple
   // Flutter Widgets.

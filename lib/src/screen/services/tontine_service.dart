@@ -17,7 +17,6 @@ import 'package:logging/logging.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'dto/event_dto.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:tontine_v2/src/providers/models/enum/currency.dart';
 
 class TontineService {
   static final _logger = Logger('TontineService');
@@ -357,6 +356,19 @@ class TontineService {
     } catch (e) {
       _logger.severe('Error saving file: $e');
       rethrow;
+    }
+  }
+
+  Future<void> removeMemberFromTontine(int tontineId, int memberId) async {
+    final token = storage.read(MemberService.KEY_TOKEN);
+    final response = await client.delete(
+      Uri.parse('$urlApi/tontine/$tontineId/member/$memberId'),
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to remove member from tontine');
     }
   }
 }

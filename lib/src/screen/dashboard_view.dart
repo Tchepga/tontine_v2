@@ -30,6 +30,8 @@ class _DashboardViewState extends State<DashboardView> {
           Provider.of<TontineProvider>(context, listen: false);
       if (tontineProvider.currentTontine == null) {
         Navigator.of(context).pushReplacementNamed(SelectTontineView.routeName);
+      } else {
+        tontineProvider.loadDeposits(tontineProvider.currentTontine!.id);
       }
     });
   }

@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 import 'package:tontine_v2/src/screen/services/dto/event_dto.dart';
+import '../services/local_notification_service.dart';
 import 'models/deposit.dart';
 import 'models/event.dart';
 import 'models/sanction.dart';
@@ -26,6 +27,8 @@ class TontineProvider extends ChangeNotifier {
   List<Deposit> _deposits = [];
   Tontine? _currentTontine;
   bool _isLoading = false;
+  final _notificationService = LocalNotificationService();
+
 
   List<Tontine> get tontines => _tontines;
   Tontine? get currentTontine => _currentTontine;
@@ -160,10 +163,17 @@ class TontineProvider extends ChangeNotifier {
     try {
       await _tontineService.createRapport(tontineId, rapportDto);
           notifyListeners();
+
+      await _notificationService.showNotification(
+        title: 'Rapport créé',
+        body: 'Un nouveau rapport a été créé',
+        payload: '/rapport',
+      );
     } catch (e) {
       _logger.severe('Error creating rapport: $e');
       rethrow;
     }
+
   }
 
   Future<List<RapportMeeting>> getRapportsForTontine(int tontineId) async {
@@ -206,8 +216,14 @@ class TontineProvider extends ChangeNotifier {
   Future<void> addSanction(int tontineId, CreateSanctionDto sanctionDto) async {
     try {
       await _tontineService.createSanction(tontineId, sanctionDto);
+      await _notificationService.showNotification(
+        title: 'Sanction créée',
+        body: 'Une nouvelle sanction a été créée',
+        payload: '/sanction',
+      );
       final tontineIndex = _tontines.indexWhere((t) => t.id == tontineId);
       if (tontineIndex != -1) {
+
         final updatedTontine = await _tontineService.getTontine(tontineId);
         if (updatedTontine != null) {
           _tontines[tontineIndex] = updatedTontine;
@@ -287,4 +303,13 @@ class TontineProvider extends ChangeNotifier {
     }
   }
 
+  Future<void> removeMemberFromTontine(int tontineId, int memberId) async {
+    try {
+      await _tontineService.removeMemberFromTontine(tontineId, memberId);
+      await loadTontines();
+    } catch (e) {
+      _logger.severe('Error removing member from tontine: $e');
+      rethrow;
+    }
+  }
 }

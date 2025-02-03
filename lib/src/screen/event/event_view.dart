@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import '../services/dto/event_dto.dart';
 import '../../providers/event_provider.dart';
 import 'package:table_calendar/table_calendar.dart';
+import '../../services/local_notification_service.dart';
 
 class EventView extends StatefulWidget {
   static const routeName = '/event';
@@ -19,6 +20,7 @@ class EventView extends StatefulWidget {
 
 class _EventViewState extends State<EventView> {
   DateTime selectedDate = DateTime.now();
+  final localNotificationService = LocalNotificationService();
 
   @override
   void initState() {
@@ -29,6 +31,7 @@ class _EventViewState extends State<EventView> {
       final tontineProvider = Provider.of<TontineProvider>(context, listen: false);
       if (tontineProvider.currentTontine != null) {
         eventProvider.loadEvents(tontineProvider.currentTontine!.id);
+        print('eventProvider.events: ${eventProvider.events}');
       }
     });
   }
@@ -225,27 +228,16 @@ class _EventViewState extends State<EventView> {
     DateTime? endDate;
     EventType selectedType = EventType.MEETING;
 
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Container(
-            width: MediaQuery.of(context).size.width * 0.9,
-            padding: const EdgeInsets.all(16),
+        return AlertDialog(
+          title: const Text('Nouvel événement'),
+          content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
-                  'Nouvel événement',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 16),
                 TextField(
                   controller: titleController,
                   decoration: const InputDecoration(labelText: 'Titre'),
@@ -328,14 +320,18 @@ class _EventViewState extends State<EventView> {
                         try {
                           Navigator.pop(context);
                           await eventProvider.createEvent(eventDto);
-                          await eventProvider.loadEvents(tontineProvider.currentTontine!.id);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Événement créé avec succès')),
-                          );
-                        } catch (e) {
+                          if (!mounted) return;
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                              content: Text('Erreur lors de la création de l\'événement'),
+                              content: Text('Événement créé avec succès'),
+                              backgroundColor: Colors.green,
+                            ),
+                          );
+                        } catch (e) {
+                          if (!mounted) return;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Erreur: ${e.toString()}'),
                               backgroundColor: Colors.red,
                             ),
                           );

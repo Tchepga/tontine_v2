@@ -31,7 +31,7 @@ class _LoginViewState extends State<LoginView> {
   Future<void> _checkToken() async {
     final hasToken = await _memberService.hasValidToken();
     if (hasToken && mounted) {
-      await Provider.of<AuthProvider>(context, listen: false).getProfile();
+      await Provider.of<AuthProvider>(context, listen: true).getProfile();
       if (mounted) {
         Navigator.of(context).pushReplacementNamed(SelectTontineView.routeName);
       }

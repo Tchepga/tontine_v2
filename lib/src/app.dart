@@ -19,9 +19,11 @@ import 'screen/tontine/setting_tontine_view.dart';
 import 'screen/auth/register_view.dart';
 import 'screen/event/event_view.dart';
 import 'screen/notification/notification_view.dart';
+import 'package:tontine_v2/src/services/local_notification_service.dart';
+import 'screen/member/member_view.dart';
 
 /// The Widget that configures your application.
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({
     super.key,
     required this.settingsController,
@@ -30,15 +32,37 @@ class MyApp extends StatelessWidget {
   final SettingsController settingsController;
 
   @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  final _navigatorKey = GlobalKey<NavigatorState>();
+
+  @override
+  void initState() {
+    super.initState();
+    _setupNotificationHandling();
+  }
+
+  void _setupNotificationHandling() {
+    LocalNotificationService.onNotificationTap = (String? payload) {
+      if (payload != null && _navigatorKey.currentState != null) {
+        _navigatorKey.currentState!.pushNamed(payload);
+      }
+    };
+  }
+
+  @override
   Widget build(BuildContext context) {
     // Glue the SettingsController to the MaterialApp.
     //
     // The ListenableBuilder Widget listens to the SettingsController for changes.
     // Whenever the user updates their settings, the MaterialApp is rebuilt.
     return ListenableBuilder(
-      listenable: settingsController,
+      listenable: widget.settingsController,
       builder: (BuildContext context, Widget? child) {
         return MaterialApp(
+          navigatorKey: _navigatorKey,
           // Providing a restorationScopeId allows the Navigator built by the
           // MaterialApp to restore the navigation stack when a user leaves and
           // returns to the app after it has been killed while running in the
@@ -112,7 +136,7 @@ class MyApp extends StatelessWidget {
             ),
           ),
           darkTheme: ThemeData.light(),
-          themeMode: settingsController.themeMode,
+          themeMode: widget.settingsController.themeMode,
 
           // Define a function to handle named routes in order to support
           // Flutter web url navigation and deep linking.
@@ -122,7 +146,7 @@ class MyApp extends StatelessWidget {
               builder: (BuildContext context) {
                 switch (routeSettings.name) {
                   case SettingsView.routeName:
-                    return SettingsView(controller: settingsController);
+                    return SettingsView(controller: widget.settingsController);
                   case LoginView.routeName:
                     return const LoginView();
                   case DashboardView.routeName:
@@ -151,6 +175,8 @@ class MyApp extends StatelessWidget {
                     return const EventView();
                   case NotificationView.routeName:
                     return const NotificationView();
+                  case MemberView.routeName:
+                    return const MemberView();
                   default:
                     return const SplashView();
                 }
