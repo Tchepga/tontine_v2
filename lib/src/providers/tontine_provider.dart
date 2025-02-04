@@ -16,6 +16,7 @@ import '../screen/services/dto/tontine_dto.dart';
 import '../screen/services/tontine_service.dart';
 import 'models/rapport_meeting.dart';
 import 'package:get_storage/get_storage.dart';
+import 'models/part.dart';
 
 class TontineProvider extends ChangeNotifier {
   static const KEY_SELECTED_TONTINE_ID = 'selectedTontineId';
@@ -28,12 +29,13 @@ class TontineProvider extends ChangeNotifier {
   Tontine? _currentTontine;
   bool _isLoading = false;
   final _notificationService = LocalNotificationService();
-
+  List<Part> _parts = [];
 
   List<Tontine> get tontines => _tontines;
   Tontine? get currentTontine => _currentTontine;
   List<Deposit> get deposits => _deposits;
   bool get isLoading => _isLoading;
+  List<Part> get parts => _parts;
 
   Future<void> loadTontines() async {
     _isLoading = true;
@@ -309,6 +311,25 @@ class TontineProvider extends ChangeNotifier {
       await loadTontines();
     } catch (e) {
       _logger.severe('Error removing member from tontine: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> loadParts(int tontineId) async {
+    try {
+      _parts = await _tontineService.getParts(tontineId);
+      notifyListeners();
+    } catch (e) {
+      _logger.severe('Error loading parts: $e');
+    }
+  }
+
+  Future<void> updatePartDate(int partId, DateTime date) async {
+    try {
+      await _tontineService.updatePartDate(partId, date);
+      await loadParts(_currentTontine!.id);
+    } catch (e) {
+      _logger.severe('Error updating part date: $e');
       rethrow;
     }
   }
