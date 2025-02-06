@@ -315,22 +315,14 @@ class TontineProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> loadParts(int tontineId) async {
+  Future<void> addPart(int tontineId, PartOrderDto partDto) async {
     try {
-      _parts = await _tontineService.getParts(tontineId);
-      notifyListeners();
+      await _tontineService.addPart(tontineId, partDto);
+      await loadTontines();
     } catch (e) {
-      _logger.severe('Error loading parts: $e');
-    }
-  }
-
-  Future<void> updatePartDate(int partId, DateTime date) async {
-    try {
-      await _tontineService.updatePartDate(partId, date);
-      await loadParts(_currentTontine!.id);
-    } catch (e) {
-      _logger.severe('Error updating part date: $e');
+      _logger.severe('Error adding part: $e');
       rethrow;
     }
   }
+
 }

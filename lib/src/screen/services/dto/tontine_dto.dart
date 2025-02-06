@@ -5,7 +5,25 @@ import '../../../providers/models/enum/loop_period.dart';
 import '../../../providers/models/enum/type_mouvement.dart';
 import '../../../providers/models/tontine.dart';
 
+class PartOrderDto {
+  final int order;
+  final int memberId;
+  final DateTime? period;
+
+  PartOrderDto({required this.order, required this.memberId, this.period});
+
+  Map<String, dynamic> toJson() {
+    return {
+      'order': order,
+      'memberId': memberId,
+      'period': period?.toIso8601String(),
+    };
+  }
+
+}
+
 class CreateConfigTontineDto {
+
   final double defaultLoanRate;
   final int defaultLoanDuration;
   final LoopPeriod loopPeriod;
@@ -14,6 +32,7 @@ class CreateConfigTontineDto {
   final MovementType movementType;
   final List<RateMap> rateMaps;
   final int countMaxMember;
+  final List<PartOrderDto>? parts;
 
 
   CreateConfigTontineDto({
@@ -25,6 +44,7 @@ class CreateConfigTontineDto {
     required this.movementType,
     this.rateMaps = const [],
     required this.countMaxMember,
+    this.parts,
   });
 
   Map<String, dynamic> toJson() {
@@ -37,6 +57,7 @@ class CreateConfigTontineDto {
       'movementType': movementType.toString().split('.').last,
       'rateMaps': rateMaps.map((rateMap) => rateMap.toJson()).toList(),
       'countMaxMember': countMaxMember,
+      if (parts != null) 'parts': parts!.map((part) => part.toJson()).toList(),
     };
   }
 }

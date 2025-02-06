@@ -38,7 +38,40 @@ class RateMap {
   }
 }
 
+class PartOrder {
+  final int id;
+  final int order;
+  final Member member;
+  final DateTime? passageDate;
+
+  PartOrder({
+    required this.id,
+    required this.order,
+    required this.member,
+    this.passageDate,
+  });
+
+  factory PartOrder.fromJson(Map<String, dynamic> json) {
+    return PartOrder(
+      id: json['id'],
+      order: json['order'],
+      member: Member.fromJson(json['member']),
+      passageDate: json['passageDate'] != null ? DateTime.parse(json['passageDate']) : null,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'order': order,
+      'member': member.toJson(),
+      'passageDate': passageDate,
+    };
+  }
+}
+
 class ConfigTontine {
+
   final int id;
   final double defaultLoanRate;
   final int? defaultLoanDuration;
@@ -48,6 +81,7 @@ class ConfigTontine {
   final int countPersonPerMovement;
   final MovementType movementType;
   final int countMaxMember;
+  final List<PartOrder>? parts;
 
   ConfigTontine({
     required this.id,
@@ -59,7 +93,9 @@ class ConfigTontine {
     this.movementType = MovementType.ROTATIVE,
     this.countMaxMember = 12,
     this.rateMaps = const [],
+    this.parts,
   });
+
 
   factory ConfigTontine.fromJson(Map<String, dynamic> json) {
     return ConfigTontine(
@@ -78,8 +114,14 @@ class ConfigTontine {
               .map((rateMap) => RateMap.fromJson(rateMap))
               .toList()
           : [],
+      parts: json['parts'] != null
+          ? (json['parts'] as List)
+              .map((part) => PartOrder.fromJson(part))
+              .toList()
+          : null,
     );
   }
+
 
   Map<String, dynamic> toJson() {
     return {

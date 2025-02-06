@@ -21,6 +21,7 @@ import 'screen/event/event_view.dart';
 import 'screen/notification/notification_view.dart';
 import 'package:tontine_v2/src/services/local_notification_service.dart';
 import 'screen/member/member_view.dart';
+import 'screen/part/part_order_view.dart';
 
 /// The Widget that configures your application.
 class MyApp extends StatefulWidget {
@@ -177,6 +178,8 @@ class _MyAppState extends State<MyApp> {
                     return const NotificationView();
                   case MemberView.routeName:
                     return const MemberView();
+                  case PartOrderView.routeName:
+                    return const PartOrderView();
                   default:
                     return const SplashView();
                 }

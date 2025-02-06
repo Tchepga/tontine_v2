@@ -371,4 +371,15 @@ class TontineService {
       throw Exception('Failed to remove member from tontine');
     }
   }
+
+  Future<void> addPart(int tontineId, PartOrderDto partDto) async {
+    final response = await client.post(
+      Uri.parse('$urlApi/tontine/$tontineId/config/part-order'),
+      body: jsonEncode(partDto.toJson()),
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to add part');
+    }
+  }
+
 }
