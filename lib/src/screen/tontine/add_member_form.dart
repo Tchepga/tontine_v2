@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
 import '../../providers/models/member.dart';
+import '../../services/error_catchable.dart';
 import '../services/dto/member_dto.dart';
 import '../services/member_service.dart';
 
@@ -54,17 +55,27 @@ class _AddMemberFormState extends State<AddMemberForm> {
             },
           ),
           const SizedBox(height: 16),
-
           if (_isSearchMode) ...[
             Row(
               children: [
                 Expanded(
                   child: TextFormField(
                     controller: _searchUsernameController,
-                    decoration: const InputDecoration(
-                      labelText: 'Nom d\'utilisateur',
-                      border: OutlineInputBorder(),
-                      hintText: 'Entrez le nom d\'utilisateur',
+                    decoration: InputDecoration(
+                      labelText: 'Pseudo d\'utilisateur',
+                      border: const OutlineInputBorder(),
+                      hintText: 'Entrez le pseudo d\'utilisateur',
+                      suffixIcon: _searchUsernameController.text.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(Icons.clear),
+                              onPressed: () {
+                                _searchUsernameController.clear();
+                                setState(() {
+                                  _selectedMember = null;
+                                });
+                              },
+                            )
+                          : null,
                     ),
                   ),
                 ),
@@ -78,11 +89,21 @@ class _AddMemberFormState extends State<AddMemberForm> {
                     setState(() {
                       _selectedMember = member;
                       if (_selectedMember != null) {
-                        _firstnameController.text = _selectedMember?.firstname ?? '';
-                        _lastnameController.text = _selectedMember?.lastname ?? '';
+                        _firstnameController.text =
+                            _selectedMember?.firstname ?? '';
+                        _lastnameController.text =
+                            _selectedMember?.lastname ?? '';
                         _emailController.text = _selectedMember?.email ?? '';
                         _phoneController.text = _selectedMember?.phone ?? '';
-                        _countryController.text = _selectedMember?.country ?? '';
+                        _countryController.text =
+                            _selectedMember?.country ?? '';
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Utilisateur non trouvé'),
+                            backgroundColor: Colors.orange,
+                          ),
+                        );
                       }
                     });
                   },
@@ -93,9 +114,13 @@ class _AddMemberFormState extends State<AddMemberForm> {
               Card(
                 margin: const EdgeInsets.symmetric(vertical: 8),
                 child: ListTile(
-                  title: Text('${_selectedMember?.firstname} ${_selectedMember?.lastname}'),
+                  title: Text(
+                      '${_selectedMember?.firstname} ${_selectedMember?.lastname}'),
                   subtitle: Text(_selectedMember?.user?.username ?? ''),
                   leading: const CircleAvatar(child: Icon(Icons.person)),
+                  onTap: () {
+                    _handleSubmit();
+                  },
                 ),
               ),
           ] else ...[
@@ -187,14 +212,14 @@ class _AddMemberFormState extends State<AddMemberForm> {
               ),
             ),
           ],
-
           const SizedBox(height: 24),
           FilledButton(
             style: FilledButton.styleFrom(
               backgroundColor: Colors.orange,
             ),
             onPressed: _handleSubmit,
-            child: Text(_isSearchMode ? 'Ajouter le membre' : 'Créer et ajouter'),
+            child:
+                Text(_isSearchMode ? 'Ajouter le membre' : 'Créer et ajouter'),
           ),
         ],
       ),
@@ -207,6 +232,7 @@ class _AddMemberFormState extends State<AddMemberForm> {
     _emailController.clear();
     _phoneController.clear();
     _countryController.text = 'FR';
+    _searchUsernameController.clear();
   }
 
   Future<bool> checkIfUserExists(String username) async {
@@ -234,7 +260,7 @@ class _AddMemberFormState extends State<AddMemberForm> {
         final username = _generateUsername();
         try {
           final userExists = await _memberService.getUserByUsername(username);
-          
+
           if (userExists != null) {
             if (!mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
@@ -251,7 +277,8 @@ class _AddMemberFormState extends State<AddMemberForm> {
             password: widget.showPassword ? _passwordController.text : null,
             firstname: _firstnameController.text,
             lastname: _lastnameController.text,
-            email: _emailController.text.isNotEmpty ? _emailController.text : null,
+            email:
+                _emailController.text.isNotEmpty ? _emailController.text : null,
             phone: _completePhoneNumber.isNotEmpty
                 ? _completePhoneNumber
                 : _phoneController.text,
@@ -261,12 +288,24 @@ class _AddMemberFormState extends State<AddMemberForm> {
           widget.onSubmit(memberDto);
         } catch (e) {
           if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Erreur lors de la vérification de l\'utilisateur'),
-              backgroundColor: Colors.red,
-            ),
-          );
+          if (e == ErrorCatchable.USER_ALREADY_EXISTS) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Un utilisateur avec ce nom existe déjà'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content:
+                    Text('Erreur lors de la vérification de l\'utilisateur'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+
+          _clearFields();
         }
       }
     }

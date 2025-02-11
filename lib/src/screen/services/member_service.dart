@@ -81,7 +81,7 @@ class MemberService {
 
   Future<User?> getUserByUsername(String username) async {
     final response = await client.get(Uri.parse('$urlApi/auth/username/$username'));
-    if (response.statusCode == 200 && response.body.isNotEmpty) {
+    if (response.statusCode == 200 && response.body.isNotEmpty && response.body != 'null') {
       return User.fromJson(jsonDecode(response.body));
     }
     return null;
@@ -89,7 +89,7 @@ class MemberService {
 
   Future<Member?> getMemberByUsername(String username) async {
     final response = await client.get(Uri.parse('$urlApi/member/username/$username'));
-    if (response.statusCode == 200 && response.body.isNotEmpty) {
+    if (response.statusCode == 200 && response.body.isNotEmpty && response.body != 'null') {
       return Member.fromJson(jsonDecode(response.body));
     }
     return null;

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/tontine_provider.dart';
+import '../../services/error_catchable.dart';
 import '../dashboard_view.dart';
 import './add_member_form.dart';
 
@@ -81,7 +82,7 @@ class _AddMembersViewState extends State<AddMembersView> {
                           currentTontine.id,
                           memberDto,
                         );
-                          tontineProvider.loadTontines();
+                        tontineProvider.loadTontines();
                         if (mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
@@ -91,12 +92,24 @@ class _AddMembersViewState extends State<AddMembersView> {
                           );
                         }
                       } catch (e) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Erreur lors de l\'ajout du membre'),
-                            backgroundColor: Colors.red,
-                          ),
-                        );
+                        if (!mounted) return;
+                        if (e == ErrorCatchable.USER_ALREADY_EXISTS) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                  'Un utilisateur avec ce nom existe déjà'),
+                              backgroundColor: Colors.orange,
+                            ),
+                          );
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content:
+                                  Text('Erreur lors de l\'ajout du membre'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
                       }
                     },
                   ),

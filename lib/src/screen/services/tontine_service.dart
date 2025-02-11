@@ -7,6 +7,7 @@ import '../../providers/models/tontine.dart';
 import '../../providers/models/event.dart';
 import '../../providers/models/sanction.dart';
 import '../../providers/models/rapport_meeting.dart';
+import '../../services/error_catchable.dart';
 import 'dto/member_dto.dart';
 import 'middleware/interceptor_http.dart';
 import 'dto/tontine_dto.dart';
@@ -87,7 +88,11 @@ class TontineService {
       },
       body: jsonEncode(memberDto.toJson()),
     );
+    if(responseCreateMember.statusCode == 400) {
+      throw ErrorCatchable.USER_ALREADY_EXISTS;
+    }
     if (responseCreateMember.statusCode != 201) {
+      _logger.severe('Failed to add member to tontine during creation: ${responseCreateMember.body}');
       throw Exception('Failed to add member to tontine during creation');
     }
 

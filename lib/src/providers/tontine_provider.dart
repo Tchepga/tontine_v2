@@ -315,8 +315,9 @@ class TontineProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> addPart(int tontineId, PartOrderDto partDto) async {
+  Future<void> addPart(PartOrderDto partDto) async {
     try {
+      final tontineId = _currentTontine!.id;
       await _tontineService.addPart(tontineId, partDto);
       await loadTontines();
     } catch (e) {

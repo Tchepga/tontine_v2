@@ -492,11 +492,13 @@ class _SelectTontineViewState extends State<SelectTontineView> {
                   onTap: () async {
                     await tontineProvider.setCurrentTontine(tontine);
                     if (mounted) {
-                      if (tontine.members.length < tontine.config.countMaxMember) {
-                        Navigator.of(context).pushReplacementNamed(AddMembersView.routeName);
-                      } else {
-                        Navigator.of(context).pushReplacementNamed(DashboardView.routeName);
-                      }
+                      Navigator.of(context).pushReplacementNamed(DashboardView.routeName);
+                      // TODO: review after adding part order
+                      // if (tontine.members.length < tontine.config.countMaxMember) {
+                      //   Navigator.of(context).pushReplacementNamed(AddMembersView.routeName);
+                      // } else {
+                      //   Navigator.of(context).pushReplacementNamed(DashboardView.routeName);
+                      // }
                     }
                   },
                 ),

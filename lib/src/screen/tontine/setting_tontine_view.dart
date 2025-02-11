@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../providers/auth_provider.dart';
 import '../../providers/models/enum/loop_period.dart';
 import '../../providers/models/enum/type_mouvement.dart';
 import '../../providers/models/tontine.dart';
 import '../../providers/tontine_provider.dart';
 import '../services/dto/tontine_dto.dart';
+import '../../providers/models/part.dart';
 
 class SettingTontineView extends StatefulWidget {
   static const routeName = '/setting-tontine';
@@ -24,6 +26,9 @@ class _SettingTontineViewState extends State<SettingTontineView> {
   late MovementType _movementType = MovementType.ROTATIVE;
   late int _countMaxMember = 10;
   List<RateMap> _rateMaps = [];
+  List<PartOrder> _parts = [];
+
+
 
   @override
   void initState() {
@@ -44,6 +49,7 @@ class _SettingTontineViewState extends State<SettingTontineView> {
     _movementType = tontine.config.movementType;
     _countMaxMember = tontine.config.countMaxMember;
     _rateMaps = List.from(tontine.config.rateMaps);
+    _parts = List.from(tontine.config.parts ?? []);
   }
 
   Widget _buildRateMapSection() {
@@ -155,10 +161,92 @@ class _SettingTontineViewState extends State<SettingTontineView> {
     );
   }
 
+  Widget _buildPartOrderSection(TontineProvider tontineProvider) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            Text(
+              'Ordre des parts',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            FilledButton(
+              onPressed: () => _addPartOrderDialog(tontineProvider),
+              child: const Text('Ajouter une part'),
+            ),
+            const SizedBox(height: 16),
+            ..._parts.map((part) => Card(
+                  child: ListTile(
+                    title: Text(part.member.firstname ?? ''),
+                    subtitle: Text(part.order.toString()),
+                  ),
+                )),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _addPartOrderDialog(TontineProvider tontineProvider) {
+    final orderController = TextEditingController();
+    final memberController = TextEditingController();
+    final periodController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Ajouter une part (nom)'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextFormField(
+              controller: orderController,
+              decoration: const InputDecoration(
+                labelText: 'Ordre',
+              ),
+              keyboardType: TextInputType.number,
+            ),
+            TextFormField(
+              controller: memberController,
+              decoration: const InputDecoration(
+                labelText: 'Membre',
+              ),
+            ),
+            TextFormField(
+              controller: periodController,
+              decoration: const InputDecoration(
+                labelText: 'Période',
+              ),
+            ),
+
+            FilledButton(
+              onPressed: () {
+                final order = int.tryParse(orderController.text);
+                final member = memberController.text;
+                final period = periodController.text;
+                if (order != null && member.isNotEmpty && period.isNotEmpty) {
+                  final memberId = int.tryParse(member);
+                  final periodDate = DateTime.tryParse(period);
+                  if (memberId != null && periodDate != null) {
+                    setState(() {
+                      tontineProvider.addPart(PartOrderDto(order: order, memberId: memberId, period: periodDate));
+                      tontineProvider.loadTontines();
+                    });
+                  }
+                }
+              },
+              child: const Text('Ajouter'),
+            ),
+          ],
+        ),
+
+      ),
+    );
+  }
   @override
   Widget build(BuildContext context) {
-    return Consumer<TontineProvider>(
-      builder: (context, tontineProvider, child) {
+    return Consumer2<TontineProvider, AuthProvider>(
+      builder: (context, tontineProvider, authProvider, child) {
         final currentTontine = tontineProvider.currentTontine;
         if (currentTontine == null) return const SizedBox();
 
@@ -351,6 +439,8 @@ class _SettingTontineViewState extends State<SettingTontineView> {
                 ),
                 const SizedBox(height: 16),
                 _buildRateMapSection(),
+                const SizedBox(height: 16),
+                _buildPartOrderSection(tontineProvider),
               ],
             ),
           ),
