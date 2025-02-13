@@ -6,7 +6,7 @@ import '../../providers/models/enum/type_mouvement.dart';
 import '../../providers/models/tontine.dart';
 import '../../providers/tontine_provider.dart';
 import '../services/dto/tontine_dto.dart';
-import '../../providers/models/part.dart';
+import 'package:intl/intl.dart';
 
 class SettingTontineView extends StatefulWidget {
   static const routeName = '/setting-tontine';
@@ -172,7 +172,7 @@ class _SettingTontineViewState extends State<SettingTontineView> {
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             FilledButton(
-              onPressed: () => _addPartOrderDialog(tontineProvider),
+              onPressed: () => _showAddPartDialog(context, tontineProvider.currentTontine!, _parts),
               child: const Text('Ajouter une part'),
             ),
             const SizedBox(height: 16),
@@ -188,59 +188,148 @@ class _SettingTontineViewState extends State<SettingTontineView> {
     );
   }
 
-  void _addPartOrderDialog(TontineProvider tontineProvider) {
-    final orderController = TextEditingController();
-    final memberController = TextEditingController();
-    final periodController = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Ajouter une part (nom)'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextFormField(
-              controller: orderController,
-              decoration: const InputDecoration(
-                labelText: 'Ordre',
-              ),
-              keyboardType: TextInputType.number,
-            ),
-            TextFormField(
-              controller: memberController,
-              decoration: const InputDecoration(
-                labelText: 'Membre',
-              ),
-            ),
-            TextFormField(
-              controller: periodController,
-              decoration: const InputDecoration(
-                labelText: 'Période',
-              ),
-            ),
+  Future<void> _showAddPartDialog(BuildContext context, Tontine tontine, List<PartOrder> existingParts) async {
+    final selectedMemberId = ValueNotifier<int?>(null);
+    final selectedOrder = ValueNotifier<int?>(null);
+    final selectedDate = ValueNotifier<DateTime?>(null);
 
+    final now = DateTime.now();
+    final firstDate = now;
+    final lastDate = DateTime(now.year + 2, now.month, now.day); // 2 ans à partir d'aujourd'hui
+
+    // Créer la liste des ordres disponibles
+    final availableOrders = List.generate(
+      tontine.members.length,
+      (i) => i + 1,
+    ).where((order) => !existingParts.any((part) => part.order == order)).toList();
+
+    // Créer la liste des membres disponibles
+    final availableMembers = tontine.members
+        .where((member) => !existingParts.any((part) => part.member.id == member.id))
+        .toList();
+
+    return showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Ajouter une part'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Sélection de l'ordre
+              ValueListenableBuilder<int?>(
+                valueListenable: selectedOrder,
+                builder: (context, value, child) {
+                  return DropdownButtonFormField<int>(
+                    value: value,
+                    decoration: const InputDecoration(
+                      labelText: 'Ordre de passage',
+                      hintText: 'Sélectionnez l\'ordre',
+                    ),
+                    items: availableOrders.map((order) {
+                      return DropdownMenuItem<int>(
+                        value: order,
+                        child: Text('Ordre $order'),
+                      );
+                    }).toList(),
+                    onChanged: (newValue) {
+                      selectedOrder.value = newValue;
+                    },
+                  );
+                },
+              ),
+              const SizedBox(height: 16),
+              // Sélection du membre
+              ValueListenableBuilder<int?>(
+                valueListenable: selectedMemberId,
+                builder: (context, value, child) {
+                  return DropdownButtonFormField<int>(
+                    value: value,
+                    decoration: const InputDecoration(
+                      labelText: 'Membre',
+                      hintText: 'Sélectionnez un membre',
+                    ),
+                    items: availableMembers.map((member) {
+                      return DropdownMenuItem<int>(
+                        value: member.id,
+                        child: Text('${member.firstname} ${member.lastname}'.trim()),
+                      );
+                    }).toList(),
+                    onChanged: (newValue) {
+                      selectedMemberId.value = newValue;
+                    },
+                  );
+                },
+              ),
+              const SizedBox(height: 16),
+              // Sélection de la date
+              ValueListenableBuilder<DateTime?>(
+                valueListenable: selectedDate,
+                builder: (context, value, child) {
+                  return ListTile(
+                    title: Text(
+                      value != null 
+                          ? DateFormat('dd/MM/yyyy').format(value)
+                          : 'Sélectionner une date',
+                    ),
+                    trailing: const Icon(Icons.calendar_today),
+                    onTap: () async {
+                      final picked = await showDatePicker(
+                        context: context,
+                        initialDate: value ?? now,
+                        firstDate: firstDate,
+                        lastDate: lastDate,
+                      );
+                      if (picked != null) {
+                        selectedDate.value = picked;
+                      }
+                    },
+                  );
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Annuler'),
+            ),
             FilledButton(
-              onPressed: () {
-                final order = int.tryParse(orderController.text);
-                final member = memberController.text;
-                final period = periodController.text;
-                if (order != null && member.isNotEmpty && period.isNotEmpty) {
-                  final memberId = int.tryParse(member);
-                  final periodDate = DateTime.tryParse(period);
-                  if (memberId != null && periodDate != null) {
-                    setState(() {
-                      tontineProvider.addPart(PartOrderDto(order: order, memberId: memberId, period: periodDate));
-                      tontineProvider.loadTontines();
-                    });
+              onPressed: () async {
+                if (selectedMemberId.value != null && selectedOrder.value != null) {
+                  try {
+                    final tontineProvider = Provider.of<TontineProvider>(context, listen: false);
+                    final partDto = PartOrderDto(
+                      memberId: selectedMemberId.value!,
+                      order: selectedOrder.value!,
+                      period: selectedDate.value,
+                    );
+
+                    await tontineProvider.addPart(partDto);
+
+                    if (!mounted) return;
+                    Navigator.of(context).pop();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Part ajoutée avec succès'),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Erreur lors de l\'ajout de la part'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
                   }
                 }
               },
               child: const Text('Ajouter'),
             ),
           ],
-        ),
-
-      ),
+        );
+      },
     );
   }
   @override
