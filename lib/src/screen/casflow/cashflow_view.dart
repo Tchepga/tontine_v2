@@ -116,11 +116,11 @@ class _CashflowViewState extends State<CashflowView> {
                 ],
               ),
               const SizedBox(height: 16),
-              ...filteredDeposits.sort((a, b) => b.creationDate.compareTo(a.creationDate)).map((deposit) => DepositListItem(
+              ...filteredDeposits.map((deposit) => DepositListItem(
                     deposit: deposit,
                     tontineProvider: tontineProvider,
                     tontineId: currentTontine!.id,
-                  )).toList(),
+                  )),
             ],
           ),
           floatingActionButton: FloatingActionButton(
