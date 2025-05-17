@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/models/tontine.dart';
 import '../../providers/tontine_provider.dart';
+import '../../widgets/action_menu.dart';
+import '../../widgets/menu_widget.dart';
 import 'edit_mouvement.dart';
 import 'widgets/deposit_list_item.dart';
 import 'package:tontine_v2/src/providers/models/enum/currency.dart';
+import '../../providers/models/enum/deposit_reason.dart';
 
 class CashflowView extends StatefulWidget {
   const CashflowView({super.key});
@@ -15,6 +18,9 @@ class CashflowView extends StatefulWidget {
 }
 
 class _CashflowViewState extends State<CashflowView> {
+  DepositReason? _selectedReason;
+  String _searchName = '';
+
   @override
   void initState() {
     super.initState();
@@ -34,40 +40,94 @@ class _CashflowViewState extends State<CashflowView> {
         final currentTontine = tontineProvider.currentTontine;
         final deposits = tontineProvider.deposits;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Trésorerie'),
-        actions: [
-              IconButton(
-                icon: const Icon(Icons.filter_list),
-                onPressed: () => _showDateFilter(context),
-                        ),
-                      ],
-                      ),
+        // Filtrage
+        final filteredDeposits = deposits.where((deposit) {
+          final matchType = _selectedReason == null ||
+              (deposit.reasons != null && deposit.reasons!.toLowerCase() == _selectedReason!.displayName.toLowerCase());
+          final matchName = _searchName.isEmpty ||
+              (deposit.author.firstname?.toLowerCase().contains(_searchName.toLowerCase()) ?? false) ||
+              (deposit.author.lastname?.toLowerCase().contains(_searchName.toLowerCase()) ?? false);
+          return matchType && matchName;
+        }).toList();
+
+        return Scaffold(
+          appBar: ActionMenu(title: 'Trésorerie', showBackButton: true),
           body: ListView(
             padding: const EdgeInsets.all(16),
             children: [
               _buildBalanceCard(currentTontine),
               const SizedBox(height: 16),
-              const Text(
-                'Historique des mouvements',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+              // Filtres
+              Row(
+                children: [
+                  Expanded(
+                    child: DropdownButtonFormField<DepositReason>(
+                      value: _selectedReason,
+                      isExpanded: true,
+                      decoration: const InputDecoration(
+                        labelText: 'Type',
+                        border: OutlineInputBorder(),
+                        contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+                      ),
+                      items: [
+                        const DropdownMenuItem<DepositReason>(
+                          value: null,
+                          child: Text('Tous'),
+                        ),
+                        ...DepositReason.values.map((reason) => DropdownMenuItem(
+                              value: reason,
+                              child: Text(reason.displayName),
+                            ))
+                      ],
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedReason = value;
+                        });
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: TextField(
+                      decoration: const InputDecoration(
+                        labelText: 'Nom',
+                        border: OutlineInputBorder(),
+                        contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+                      ),
+                      onChanged: (value) {
+                        setState(() {
+                          _searchName = value;
+                        });
+                      },
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 16),
-              ...deposits.map((deposit) => DepositListItem(
+              const Row(
+                children: [
+                  Text(
+                    'Mouvements',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              ...filteredDeposits.sort((a, b) => b.creationDate.compareTo(a.creationDate)).map((deposit) => DepositListItem(
                     deposit: deposit,
                     tontineProvider: tontineProvider,
                     tontineId: currentTontine!.id,
-                  )),
+                  )).toList(),
             ],
           ),
           floatingActionButton: FloatingActionButton(
             onPressed: () => _showAddDeposit(context, tontineProvider, currentTontine!.id),
             child: const Icon(Icons.add),
           ),
+          bottomNavigationBar: const MenuWidget(),
         );
       },
     );
@@ -77,8 +137,15 @@ class _CashflowViewState extends State<CashflowView> {
     return Card(
       child: Container(
         decoration: const BoxDecoration(
-          color: Colors.orange,
+          color: Colors.blueGrey,
           borderRadius: BorderRadius.all(Radius.circular(16)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black26,
+              blurRadius: 10,
+              offset: Offset(0, 2),
+            ),
+          ],
         ),
         padding: const EdgeInsets.all(16),
               child: Column(
@@ -86,8 +153,8 @@ class _CashflowViewState extends State<CashflowView> {
                   Text(
               '${currentTontine?.cashFlow.amount ?? 0} ${currentTontine?.cashFlow.currency.displayName ?? ''}',
               style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
+                        fontSize: 32,
+                        fontWeight: FontWeight.w800,
                 color: Colors.white,
               ),
                   ),

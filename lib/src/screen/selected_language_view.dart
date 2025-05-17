@@ -18,6 +18,7 @@ class _SelectedLanguageViewState extends State<SelectedLanguageView> {
   final _languageService = LanguageService();
   final _storage = GetStorage();
 
+
   @override
   void initState() {
     super.initState();
@@ -26,13 +27,8 @@ class _SelectedLanguageViewState extends State<SelectedLanguageView> {
 
   Future<void> _checkLanguage() async {
     final hasLanguage = await _storage.read(LanguageService.languageKey) != null;
-    final token = await _storage.read(MemberService.KEY_TOKEN);
     if (hasLanguage && mounted) {
-      if(token != null) {
         Navigator.of(context).pushReplacementNamed(DashboardView.routeName);
-      } else {
-        Navigator.of(context).pushReplacementNamed(LoginView.routeName);
-      }
     }
   }
 
