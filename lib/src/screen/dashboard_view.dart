@@ -9,15 +9,10 @@ import 'package:tontine_v2/src/screen/rapport/rapport_view.dart';
 
 import '../providers/auth_provider.dart';
 import '../providers/tontine_provider.dart';
-import '../widgets/balance_card.dart';
-import '../widgets/menu_widget.dart';
-import '../widgets/movements_chart.dart';
-import 'login_view.dart';
-import 'tontine/select_tontine_view.dart';
-import 'tontine/setting_tontine_view.dart';
-import 'notification/notification_view.dart';
 import '../widgets/action_menu.dart';
 import '../widgets/annual_movements_chart.dart';
+import '../widgets/menu_widget.dart';
+import 'tontine/select_tontine_view.dart';
 
 class DashboardView extends StatefulWidget {
   const DashboardView({super.key});

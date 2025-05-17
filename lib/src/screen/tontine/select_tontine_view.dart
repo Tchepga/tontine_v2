@@ -1,18 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:logging/logging.dart';
 import 'package:provider/provider.dart';
+
+import '../../providers/auth_provider.dart';
 import '../../providers/models/enum/currency.dart';
 import '../../providers/models/enum/loop_period.dart';
 import '../../providers/models/enum/type_mouvement.dart';
-import '../../providers/auth_provider.dart';
 import '../../providers/tontine_provider.dart';
 import '../dashboard_view.dart';
-import 'package:logging/logging.dart';
-
 import '../login_view.dart';
 import '../services/dto/member_dto.dart';
 import '../services/dto/tontine_dto.dart';
 import '../services/member_service.dart';
-import 'add_members_view.dart';
 
 class SelectTontineView extends StatefulWidget {
   static const routeName = '/select-tontine';

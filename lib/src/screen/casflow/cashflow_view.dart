@@ -168,21 +168,6 @@ class _CashflowViewState extends State<CashflowView> {
     );
   }
 
-  Future<void> _showDateFilter(BuildContext context) async {
-    final DateTimeRange? pickedDateRange = await showDateRangePicker(
-                          context: context,
-                          firstDate: DateTime(2000),
-                          lastDate: DateTime(2101),
-                          initialDateRange: DateTimeRange(
-        start: DateTime.now().subtract(const Duration(days: 7)),
-                            end: DateTime.now(),
-                          ),
-                        );
-                        if (pickedDateRange != null) {
-      // Implémenter le filtrage par date
-    }
-  }
-
   void _showAddDeposit(BuildContext context, TontineProvider tontineProvider, int tontineId) {
                 showDialog(
                   context: context,
