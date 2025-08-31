@@ -28,8 +28,6 @@ class _SettingTontineViewState extends State<SettingTontineView> {
   List<RateMap> _rateMaps = [];
   List<PartOrder> _parts = [];
 
-
-
   @override
   void initState() {
     super.initState();
@@ -172,7 +170,8 @@ class _SettingTontineViewState extends State<SettingTontineView> {
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             FilledButton(
-              onPressed: () => _showAddPartDialog(context, tontineProvider.currentTontine!, _parts),
+              onPressed: () => _showAddPartDialog(
+                  context, tontineProvider.currentTontine!, _parts),
               child: const Text('Ajouter une part'),
             ),
             const SizedBox(height: 16),
@@ -188,24 +187,29 @@ class _SettingTontineViewState extends State<SettingTontineView> {
     );
   }
 
-  Future<void> _showAddPartDialog(BuildContext context, Tontine tontine, List<PartOrder> existingParts) async {
+  Future<void> _showAddPartDialog(BuildContext context, Tontine tontine,
+      List<PartOrder> existingParts) async {
     final selectedMemberId = ValueNotifier<int?>(null);
     final selectedOrder = ValueNotifier<int?>(null);
     final selectedDate = ValueNotifier<DateTime?>(null);
 
     final now = DateTime.now();
     final firstDate = now;
-    final lastDate = DateTime(now.year + 2, now.month, now.day); // 2 ans à partir d'aujourd'hui
+    final lastDate = DateTime(
+        now.year + 2, now.month, now.day); // 2 ans à partir d'aujourd'hui
 
     // Créer la liste des ordres disponibles
     final availableOrders = List.generate(
       tontine.members.length,
       (i) => i + 1,
-    ).where((order) => !existingParts.any((part) => part.order == order)).toList();
+    )
+        .where((order) => !existingParts.any((part) => part.order == order))
+        .toList();
 
     // Créer la liste des membres disponibles
     final availableMembers = tontine.members
-        .where((member) => !existingParts.any((part) => part.member.id == member.id))
+        .where((member) =>
+            !existingParts.any((part) => part.member.id == member.id))
         .toList();
 
     return showDialog(
@@ -221,7 +225,7 @@ class _SettingTontineViewState extends State<SettingTontineView> {
                 valueListenable: selectedOrder,
                 builder: (context, value, child) {
                   return DropdownButtonFormField<int>(
-                    value: value,
+                    initialValue: value,
                     decoration: const InputDecoration(
                       labelText: 'Ordre de passage',
                       hintText: 'Sélectionnez l\'ordre',
@@ -244,7 +248,7 @@ class _SettingTontineViewState extends State<SettingTontineView> {
                 valueListenable: selectedMemberId,
                 builder: (context, value, child) {
                   return DropdownButtonFormField<int>(
-                    value: value,
+                    initialValue: value,
                     decoration: const InputDecoration(
                       labelText: 'Membre',
                       hintText: 'Sélectionnez un membre',
@@ -252,7 +256,8 @@ class _SettingTontineViewState extends State<SettingTontineView> {
                     items: availableMembers.map((member) {
                       return DropdownMenuItem<int>(
                         value: member.id,
-                        child: Text('${member.firstname} ${member.lastname}'.trim()),
+                        child: Text(
+                            '${member.firstname} ${member.lastname}'.trim()),
                       );
                     }).toList(),
                     onChanged: (newValue) {
@@ -268,7 +273,7 @@ class _SettingTontineViewState extends State<SettingTontineView> {
                 builder: (context, value, child) {
                   return ListTile(
                     title: Text(
-                      value != null 
+                      value != null
                           ? DateFormat('dd/MM/yyyy').format(value)
                           : 'Sélectionner une date',
                     ),
@@ -296,9 +301,11 @@ class _SettingTontineViewState extends State<SettingTontineView> {
             ),
             FilledButton(
               onPressed: () async {
-                if (selectedMemberId.value != null && selectedOrder.value != null) {
+                if (selectedMemberId.value != null &&
+                    selectedOrder.value != null) {
                   try {
-                    final tontineProvider = Provider.of<TontineProvider>(context, listen: false);
+                    final tontineProvider =
+                        Provider.of<TontineProvider>(context, listen: false);
                     final partDto = PartOrderDto(
                       memberId: selectedMemberId.value!,
                       order: selectedOrder.value!,
@@ -332,6 +339,7 @@ class _SettingTontineViewState extends State<SettingTontineView> {
       },
     );
   }
+
   @override
   Widget build(BuildContext context) {
     return Consumer2<TontineProvider, AuthProvider>(
@@ -446,7 +454,7 @@ class _SettingTontineViewState extends State<SettingTontineView> {
                         ),
                         const SizedBox(height: 16),
                         DropdownButtonFormField<LoopPeriod>(
-                          value: _loopPeriod,
+                          initialValue: _loopPeriod,
                           decoration: const InputDecoration(
                             labelText: 'Périodicité',
                           ),
@@ -464,7 +472,7 @@ class _SettingTontineViewState extends State<SettingTontineView> {
                         ),
                         const SizedBox(height: 8),
                         DropdownButtonFormField<MovementType>(
-                          value: _movementType,
+                          initialValue: _movementType,
                           decoration: const InputDecoration(
                             labelText: 'Type de mouvement',
                           ),

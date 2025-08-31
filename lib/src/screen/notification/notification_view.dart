@@ -20,7 +20,8 @@ class _NotificationViewState extends State<NotificationView> {
     super.initState();
     Future.microtask(() {
       if (!mounted) return;
-      final tontineProvider = Provider.of<TontineProvider>(context, listen: false);
+      final tontineProvider =
+          Provider.of<TontineProvider>(context, listen: false);
       if (tontineProvider.currentTontine != null) {
         Provider.of<NotificationProvider>(context, listen: false)
             .startChecking(tontineProvider.currentTontine!.id);
@@ -75,7 +76,7 @@ class _NotificationViewState extends State<NotificationView> {
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: notification.type.color.withOpacity(0.2),
+          backgroundColor: notification.type.color.withAlpha(20),
           child: Icon(
             _getIconForType(notification.type),
             color: notification.type.color,
@@ -84,7 +85,8 @@ class _NotificationViewState extends State<NotificationView> {
         title: Text(
           notification.message,
           style: TextStyle(
-            fontWeight: notification.isRead ? FontWeight.normal : FontWeight.bold,
+            fontWeight:
+                notification.isRead ? FontWeight.normal : FontWeight.bold,
           ),
         ),
         subtitle: Text(
@@ -154,4 +156,4 @@ class _NotificationViewState extends State<NotificationView> {
         break;
     }
   }
-} 
+}

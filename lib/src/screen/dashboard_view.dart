@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:tontine_v2/src/providers/models/tontine.dart';
 import 'package:tontine_v2/src/screen/casflow/cashflow_view.dart';
 import 'package:tontine_v2/src/screen/event/event_view.dart';
 import 'package:tontine_v2/src/screen/loan/loan_view.dart';
@@ -37,23 +36,8 @@ class _DashboardViewState extends State<DashboardView> {
     });
   }
 
-  void navigateToView(context, String route) {
+  void navigateToView(dynamic context, String route) {
     Navigator.pushNamed(context, route);
-  }
-
-
-  double _calculateProgress(Tontine? tontine) {
-    if (tontine == null) return 0.0;
-    final monthlyTarget = _calculateMonthlyTarget(tontine);
-    if (monthlyTarget == 0) return 0.0;
-    return (tontine.cashFlow.amount / monthlyTarget).clamp(0.0, 1.0);
-  }
-
-  double _calculateMonthlyTarget(Tontine? tontine) {
-    if (tontine == null) return 0.0;
-    // Calculer l'objectif mensuel basé sur la configuration de la tontine
-    // Par exemple : nombre de membres * cotisation mensuelle
-    return tontine.members.length * 100; // À adapter selon votre logique métier
   }
 
   @override
@@ -83,7 +67,8 @@ class _DashboardViewState extends State<DashboardView> {
               children: [
                 Expanded(
                   child: ListView(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
                     children: [
                       const SizedBox(height: 24),
                       AnnualMovementsChart(deposits: tontineProvider.deposits),
@@ -96,11 +81,20 @@ class _DashboardViewState extends State<DashboardView> {
                         crossAxisSpacing: 24,
                         childAspectRatio: 1,
                         children: [
-                          _buildMenuCard(context, 'Banque', Icons.balance, Colors.purple, CashflowView.routeName),
-                          _buildMenuCard(context, 'Rapports', Icons.read_more, Colors.amber, RapportView.routeName),
-                          _buildMenuCard(context, 'Emprunts', Icons.monetization_on, Colors.orange, LoanView.routeName),
-                          _buildMenuCard(context, 'Événements', Icons.event, Colors.blue, EventView.routeName),
-                          _buildMenuCard(context, 'Membres', Icons.person, Colors.teal, AccountView.routeName),
+                          _buildMenuCard(context, 'Banque', Icons.balance,
+                              Colors.purple, CashflowView.routeName),
+                          _buildMenuCard(context, 'Rapports', Icons.read_more,
+                              Colors.amber, RapportView.routeName),
+                          _buildMenuCard(
+                              context,
+                              'Emprunts',
+                              Icons.monetization_on,
+                              Colors.orange,
+                              LoanView.routeName),
+                          _buildMenuCard(context, 'Événements', Icons.event,
+                              Colors.blue, EventView.routeName),
+                          _buildMenuCard(context, 'Membres', Icons.person,
+                              Colors.teal, AccountView.routeName),
                         ],
                       ),
                     ],
@@ -115,8 +109,8 @@ class _DashboardViewState extends State<DashboardView> {
     );
   }
 
-
-  Widget _buildMenuCard(BuildContext context, String title, IconData icon, Color color, String route) {
+  Widget _buildMenuCard(BuildContext context, String title, IconData icon,
+      Color color, String route) {
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -130,7 +124,7 @@ class _DashboardViewState extends State<DashboardView> {
             children: [
               Container(
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
+                  color: color.withAlpha(10),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 padding: const EdgeInsets.all(16),
@@ -151,5 +145,4 @@ class _DashboardViewState extends State<DashboardView> {
       ),
     );
   }
-
 }

@@ -28,6 +28,8 @@ class _RapportViewState extends State<RapportView>
     with SingleTickerProviderStateMixin {
   final Logger _logger = Logger('RapportView');
   final QuillController _controller = QuillController.basic();
+  final FocusNode _editorFocusNode = FocusNode();
+  final ScrollController _editorScrollController = ScrollController();
   PlatformFile? _selectedFile;
   late TabController _tabController;
 
@@ -100,10 +102,9 @@ class _RapportViewState extends State<RapportView>
                     ),
                     child: Column(
                       children: [
-                        QuillToolbar.simple(
+                        QuillSimpleToolbar(
                           controller: _controller,
-                          configurations:
-                              const QuillSimpleToolbarConfigurations(
+                          config: const QuillSimpleToolbarConfig(
                             showAlignmentButtons: false,
                             showBackgroundColorButton: false,
                             showCenterAlignment: false,
@@ -131,8 +132,14 @@ class _RapportViewState extends State<RapportView>
                         Expanded(
                           child: Container(
                             padding: const EdgeInsets.all(8),
-                            child: QuillEditor.basic(
+                            child: QuillEditor(
+                              focusNode: _editorFocusNode,
+                              scrollController: _editorScrollController,
                               controller: _controller,
+                              config: const QuillEditorConfig(
+                                placeholder:
+                                    'Saisissez le contenu du rapport...',
+                              ),
                             ),
                           ),
                         ),
@@ -443,7 +450,7 @@ class _RapportViewState extends State<RapportView>
                       labelText: 'Type de sanction',
                       border: OutlineInputBorder(),
                     ),
-                    value: selectedType,
+                    initialValue: selectedType,
                     items: TypeSanction.values.map((type) {
                       return DropdownMenuItem(
                         value: type,
@@ -488,9 +495,12 @@ class _RapportViewState extends State<RapportView>
                                 memberId: selectedMemberId!,
                               );
 
-                              final tontineId = tontineProvider.currentTontine!.id;
-                              await tontineProvider.addSanction(tontineId, sanctionDto);
-                              await tontineProvider.getSanctionsForTontine(tontineId);
+                              final tontineId =
+                                  tontineProvider.currentTontine!.id;
+                              await tontineProvider.addSanction(
+                                  tontineId, sanctionDto);
+                              await tontineProvider
+                                  .getSanctionsForTontine(tontineId);
                               if (!context.mounted) return;
                               Navigator.pop(context);
                               ScaffoldMessenger.of(context).showSnackBar(
@@ -611,48 +621,5 @@ class _RapportViewState extends State<RapportView>
         ),
       );
     }
-  }
-
-  void _showDeleteConfirmation(BuildContext context, RapportMeeting rapport) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) => AlertDialog(
-        title: const Text('Confirmation'),
-        content: const Text('Voulez-vous vraiment supprimer ce rapport ?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Annuler'),
-          ),
-          FilledButton(
-            onPressed: () async {
-              try {
-                final tontineProvider =
-                    Provider.of<TontineProvider>(context, listen: false);
-                await tontineProvider.deleteRapport(
-                  tontineProvider.currentTontine!.id,
-                  rapport.id,
-                );
-                if (!context.mounted) return;
-                Navigator.of(context).pop();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Rapport supprimé')),
-                );
-              } catch (e) {
-                if (!context.mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Erreur lors de la suppression'),
-                    backgroundColor: Colors.red,
-                  ),
-                );
-              }
-            },
-            style: FilledButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Supprimer'),
-          ),
-        ],
-      ),
-    );
   }
 }

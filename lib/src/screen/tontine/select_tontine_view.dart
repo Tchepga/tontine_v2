@@ -28,14 +28,14 @@ class _SelectTontineViewState extends State<SelectTontineView> {
   @override
   void initState() {
     super.initState();
-    
+
     Future.microtask(() => _loadTontines());
-    if(mounted) {
-      if(Provider.of<TontineProvider>(context, listen: false).currentTontine != null) {
+    if (mounted) {
+      if (Provider.of<TontineProvider>(context, listen: false).currentTontine !=
+          null) {
         Navigator.of(context).pushReplacementNamed(DashboardView.routeName);
       }
     }
-
   }
 
   Future<void> _loadTontines() async {
@@ -43,12 +43,12 @@ class _SelectTontineViewState extends State<SelectTontineView> {
       final isValidToken = await memberService.hasValidToken();
       if (!isValidToken) {
         memberService.logout();
-        if(mounted) {
+        if (mounted) {
           Navigator.of(context).pushReplacementNamed(LoginView.routeName);
         }
         return;
       }
-     await memberService.getProfile();
+      await memberService.getProfile();
       await Provider.of<TontineProvider>(context, listen: false).loadTontines();
     } catch (e) {
       _logger.severe('Error loading tontines: $e');
@@ -72,7 +72,7 @@ class _SelectTontineViewState extends State<SelectTontineView> {
     final minLoanAmountController = TextEditingController(text: '100');
     final maxMembersController = TextEditingController(text: '12');
     final countPersonPerMovementController = TextEditingController(text: '1');
-    
+
     LoopPeriod selectedPeriod = LoopPeriod.MONTHLY;
     MovementType selectedMovementType = MovementType.ROTATIVE;
     Currency selectedCurrency = Currency.EUR;
@@ -219,7 +219,7 @@ class _SelectTontineViewState extends State<SelectTontineView> {
                             ),
                             const SizedBox(height: 16),
                             DropdownButtonFormField<LoopPeriod>(
-                              value: selectedPeriod,
+                              initialValue: selectedPeriod,
                               decoration: const InputDecoration(
                                 labelText: 'Période*',
                                 border: OutlineInputBorder(),
@@ -236,7 +236,7 @@ class _SelectTontineViewState extends State<SelectTontineView> {
                             ),
                             const SizedBox(height: 16),
                             DropdownButtonFormField<MovementType>(
-                              value: selectedMovementType,
+                              initialValue: selectedMovementType,
                               decoration: const InputDecoration(
                                 labelText: 'Type de mouvement*',
                                 border: OutlineInputBorder(),
@@ -253,7 +253,7 @@ class _SelectTontineViewState extends State<SelectTontineView> {
                             ),
                             const SizedBox(height: 16),
                             DropdownButtonFormField<Currency>(
-                              value: selectedCurrency,
+                              initialValue: selectedCurrency,
                               decoration: const InputDecoration(
                                 labelText: 'Devise*',
                                 border: OutlineInputBorder(),
@@ -261,7 +261,8 @@ class _SelectTontineViewState extends State<SelectTontineView> {
                               items: Currency.values.map((currency) {
                                 return DropdownMenuItem(
                                   value: currency,
-                                  child: Text('${currency.toString().split('.').last} (${currency.displayName})'),
+                                  child: Text(
+                                      '${currency.toString().split('.').last} (${currency.displayName})'),
                                 );
                               }).toList(),
                               onChanged: (value) {
@@ -285,8 +286,8 @@ class _SelectTontineViewState extends State<SelectTontineView> {
                 foregroundColor: Colors.white,
               ),
               onPressed: () => _handleCreateTontine(
-                context, 
-                formKey, 
+                context,
+                formKey,
                 titleController,
                 legacyController,
                 loanRateController,
@@ -298,7 +299,9 @@ class _SelectTontineViewState extends State<SelectTontineView> {
                 selectedMovementType,
                 selectedCurrency,
               ),
-              child: const Text('Créer la tontine',),
+              child: const Text(
+                'Créer la tontine',
+              ),
             ),
           ),
         ),
@@ -340,7 +343,8 @@ class _SelectTontineViewState extends State<SelectTontineView> {
     MovementType selectedMovementType,
     Currency selectedCurrency,
   ) async {
-    final currentUser = Provider.of<AuthProvider>(context, listen: false).currentUser;
+    final currentUser =
+        Provider.of<AuthProvider>(context, listen: false).currentUser;
     if (formKey.currentState!.validate() && currentUser != null) {
       try {
         final memberDto = CreateMemberDto(
@@ -360,7 +364,8 @@ class _SelectTontineViewState extends State<SelectTontineView> {
             defaultLoanDuration: int.parse(loanDurationController.text),
             loopPeriod: selectedPeriod,
             minLoanAmount: double.parse(minLoanAmountController.text),
-            countPersonPerMovement: int.parse(countPersonPerMovementController.text),
+            countPersonPerMovement:
+                int.parse(countPersonPerMovementController.text),
             movementType: selectedMovementType,
             countMaxMember: int.parse(maxMembersController.text),
           ),
@@ -392,7 +397,6 @@ class _SelectTontineViewState extends State<SelectTontineView> {
       ),
       body: Consumer<TontineProvider>(
         builder: (context, tontineProvider, child) {
-          
           if (tontineProvider.isLoading) {
             return const Center(child: CircularProgressIndicator());
           }
@@ -412,7 +416,10 @@ class _SelectTontineViewState extends State<SelectTontineView> {
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
-                          colors: [Colors.orange.shade300, Colors.orange.shade500],
+                          colors: [
+                            Colors.orange.shade300,
+                            Colors.orange.shade500
+                          ],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         ),
@@ -482,7 +489,8 @@ class _SelectTontineViewState extends State<SelectTontineView> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text('${tontine.members.length} membres'),
-                      Text('Solde: ${tontine.cashFlow.amount} ${tontine.cashFlow.currency.displayName}'),
+                      Text(
+                          'Solde: ${tontine.cashFlow.amount} ${tontine.cashFlow.currency.displayName}'),
                     ],
                   ),
                   trailing: tontine.isSelected
@@ -491,7 +499,8 @@ class _SelectTontineViewState extends State<SelectTontineView> {
                   onTap: () async {
                     await tontineProvider.setCurrentTontine(tontine);
                     if (mounted) {
-                      Navigator.of(context).pushReplacementNamed(DashboardView.routeName);
+                      Navigator.of(context)
+                          .pushReplacementNamed(DashboardView.routeName);
                       // TODO: review after adding part order
                       // if (tontine.members.length < tontine.config.countMaxMember) {
                       //   Navigator.of(context).pushReplacementNamed(AddMembersView.routeName);
@@ -512,4 +521,4 @@ class _SelectTontineViewState extends State<SelectTontineView> {
       ),
     );
   }
-} 
+}

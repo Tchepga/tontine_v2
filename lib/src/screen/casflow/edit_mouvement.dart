@@ -72,16 +72,18 @@ class _EditMouvementState extends State<EditMouvement> {
                   const SizedBox(height: 16),
                   if (isPresident) ...[
                     DropdownButtonFormField<Member>(
-                      value: _selectedAuthor,
+                      initialValue: _selectedAuthor,
                       decoration: const InputDecoration(
                         labelText: 'Auteur',
                       ),
                       items: currentTontine?.members.map((member) {
-                        return DropdownMenuItem<Member>(
-                          value: member,
-                          child: Text('${member.firstname} ${member.lastname}'),
-                        );
-                      }).toList() ?? [],
+                            return DropdownMenuItem<Member>(
+                              value: member,
+                              child: Text(
+                                  '${member.firstname} ${member.lastname}'),
+                            );
+                          }).toList() ??
+                          [],
                       onChanged: (Member? value) {
                         setState(() {
                           _selectedAuthor = currentTontine?.members.firstWhere(
@@ -97,15 +99,18 @@ class _EditMouvementState extends State<EditMouvement> {
                         return null;
                       },
                       selectedItemBuilder: (BuildContext context) {
-                        return currentTontine?.members.map<Widget>((Member member) {
-                          return Text('${member.firstname} ${member.lastname}');
-                        }).toList() ?? [];
+                        return currentTontine?.members
+                                .map<Widget>((Member member) {
+                              return Text(
+                                  '${member.firstname} ${member.lastname}');
+                            }).toList() ??
+                            [];
                       },
                     ),
                     const SizedBox(height: 16),
                   ],
                   DropdownButtonFormField<DepositReason>(
-                    value: _selectedReason,
+                    initialValue: _selectedReason,
                     decoration: const InputDecoration(
                       labelText: 'Raison',
                     ),
@@ -170,7 +175,7 @@ class _EditMouvementState extends State<EditMouvement> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             backgroundColor: Colors.green[300],
-            content: Text(widget.deposit != null 
+            content: Text(widget.deposit != null
                 ? 'Mouvement modifié avec succès'
                 : 'Mouvement créé avec succès'),
             shape: RoundedRectangleBorder(

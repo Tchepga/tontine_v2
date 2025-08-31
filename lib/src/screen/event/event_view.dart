@@ -28,7 +28,8 @@ class _EventViewState extends State<EventView> {
     Future.microtask(() {
       if (!mounted) return;
       final eventProvider = Provider.of<EventProvider>(context, listen: false);
-      final tontineProvider = Provider.of<TontineProvider>(context, listen: false);
+      final tontineProvider =
+          Provider.of<TontineProvider>(context, listen: false);
       if (tontineProvider.currentTontine != null) {
         eventProvider.loadEvents(tontineProvider.currentTontine!.id);
         print('eventProvider.events: ${eventProvider.events}');
@@ -74,7 +75,8 @@ class _EventViewState extends State<EventView> {
   Widget build(BuildContext context) {
     return Consumer2<TontineProvider, EventProvider>(
       builder: (context, tontineProvider, eventProvider, child) {
-        final eventsForTontine = _getEventsForSelectedDate(eventProvider.events);
+        final eventsForTontine =
+            _getEventsForSelectedDate(eventProvider.events);
 
         return Scaffold(
           appBar: AppBar(
@@ -86,14 +88,17 @@ class _EventViewState extends State<EventView> {
               TableCalendar(
                 calendarBuilders: CalendarBuilders(
                   defaultBuilder: (context, date, events) {
-                    final hasEvent = isAnyEventThisDay(date, eventProvider.events);
+                    final hasEvent =
+                        isAnyEventThisDay(date, eventProvider.events);
                     return Container(
                       margin: const EdgeInsets.all(3),
                       alignment: Alignment.center,
-                      decoration: hasEvent ? BoxDecoration(
-                        color: Colors.orange[100],
-                        shape: BoxShape.circle,
-                      ) : null,
+                      decoration: hasEvent
+                          ? BoxDecoration(
+                              color: Colors.orange[100],
+                              shape: BoxShape.circle,
+                            )
+                          : null,
                       child: Text(date.day.toString()),
                     );
                   },
@@ -122,7 +127,7 @@ class _EventViewState extends State<EventView> {
                     shape: BoxShape.circle,
                   ),
                   todayDecoration: BoxDecoration(
-                    color: Theme.of(context).primaryColor.withOpacity(0.5),
+                    color: Theme.of(context).primaryColor.withAlpha(50),
                     shape: BoxShape.circle,
                   ),
                   markerMargin: const EdgeInsets.only(top: 1),
@@ -133,81 +138,86 @@ class _EventViewState extends State<EventView> {
                   titleCentered: true,
                 ),
               ),
-              
+
               // Liste des événements
               Expanded(
                 child: eventsForTontine.isEmpty
-                  ? Card(
-                      child: Padding(
+                    ? Card(
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.event_busy,
+                                size: 48,
+                                color: Colors.orange,
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                'Aucun événement le ${DateFormat('dd/MM/yyyy').format(selectedDate)}',
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(fontSize: 16),
+                              ),
+                              const SizedBox(height: 16),
+                              FilledButton.icon(
+                                onPressed: () => _showCreateEventDialog(
+                                    context, tontineProvider, eventProvider),
+                                icon: const Icon(Icons.add),
+                                label: const Text('Ajouter un événement'),
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: Colors.orange,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                    : ListView.builder(
+                        itemCount: eventsForTontine.length,
                         padding: const EdgeInsets.all(16),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              Icons.event_busy,
-                              size: 48,
-                              color: Colors.orange,
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              'Aucun événement le ${DateFormat('dd/MM/yyyy').format(selectedDate)}',
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(fontSize: 16),
-                            ),
-                            const SizedBox(height: 16),
-                            FilledButton.icon(
-                              onPressed: () => _showCreateEventDialog(context, tontineProvider, eventProvider),
-                              icon: const Icon(Icons.add),
-                              label: const Text('Ajouter un événement'),
-                              style: FilledButton.styleFrom(
-                                backgroundColor: Colors.orange,
+                        itemBuilder: (context, index) {
+                          final event = eventsForTontine[index];
+                          return Card(
+                            child: ListTile(
+                              onTap: () => _showEventDetails(context, event,
+                                  tontineProvider, eventProvider),
+                              title: Text(event.title),
+                              subtitle: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(event.description),
+                                  const SizedBox(height: 4),
+                                  Chip(
+                                    label: Text(
+                                      event.type.displayName,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                    backgroundColor: _getChipColor(event.type),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 4),
+                                    materialTapTargetSize:
+                                        MaterialTapTargetSize.shrinkWrap,
+                                  ),
+                                ],
+                              ),
+                              trailing: Text(
+                                '${event.participants?.length ?? 0} participants',
+                                style: const TextStyle(color: Colors.grey),
                               ),
                             ),
-                          ],
-                        ),
+                          );
+                        },
                       ),
-                    )
-                  : ListView.builder(
-                      itemCount: eventsForTontine.length,
-                      padding: const EdgeInsets.all(16),
-                      itemBuilder: (context, index) {
-                        final event = eventsForTontine[index];
-                        return Card(
-                          child: ListTile(
-                            onTap: () => _showEventDetails(context, event, tontineProvider, eventProvider),
-                            title: Text(event.title),
-                            subtitle: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(event.description),
-                                const SizedBox(height: 4),
-                                Chip(
-                                  label: Text(
-                                    event.type.displayName,
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                  backgroundColor: _getChipColor(event.type),
-                                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                ),
-                              ],
-                            ),
-                            trailing: Text(
-                              '${event.participants?.length ?? 0} participants',
-                              style: const TextStyle(color: Colors.grey),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
               ),
             ],
           ),
           floatingActionButton: FloatingActionButton(
-            onPressed: () => _showCreateEventDialog(context, tontineProvider, eventProvider),
+            onPressed: () =>
+                _showCreateEventDialog(context, tontineProvider, eventProvider),
             child: const Icon(Icons.add),
           ),
           bottomNavigationBar: const MenuWidget(),
@@ -217,17 +227,16 @@ class _EventViewState extends State<EventView> {
   }
 
   bool isAnyEventThisDay(DateTime date, List<Event> events) {
-    
     return events.any((event) => DateUtils.isSameDay(event.startDate, date));
   }
 
-  void _showCreateEventDialog(BuildContext context, TontineProvider tontineProvider, EventProvider eventProvider) {
+  void _showCreateEventDialog(BuildContext context,
+      TontineProvider tontineProvider, EventProvider eventProvider) {
     final titleController = TextEditingController();
     final descriptionController = TextEditingController();
     DateTime startDate = DateTime.now();
     DateTime? endDate;
     EventType selectedType = EventType.MEETING;
-
 
     showDialog(
       context: context,
@@ -249,7 +258,7 @@ class _EventViewState extends State<EventView> {
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<EventType>(
-                  value: selectedType,
+                  initialValue: selectedType,
                   decoration: const InputDecoration(labelText: 'Type'),
                   items: EventType.values.map((type) {
                     return DropdownMenuItem(
@@ -279,9 +288,9 @@ class _EventViewState extends State<EventView> {
                 ),
                 ListTile(
                   title: const Text('Date de fin (optionnel)'),
-                  subtitle: Text(endDate != null 
-                    ? DateFormat('dd/MM/yyyy').format(endDate!)
-                    : 'Non définie'),
+                  subtitle: Text(endDate != null
+                      ? DateFormat('dd/MM/yyyy').format(endDate!)
+                      : 'Non définie'),
                   trailing: const Icon(Icons.calendar_today),
                   onTap: () async {
                     final date = await showDatePicker(
@@ -304,7 +313,8 @@ class _EventViewState extends State<EventView> {
                     ),
                     FilledButton(
                       onPressed: () async {
-                        if (titleController.text.isEmpty || descriptionController.text.isEmpty) {
+                        if (titleController.text.isEmpty ||
+                            descriptionController.text.isEmpty) {
                           return;
                         }
 
@@ -349,7 +359,8 @@ class _EventViewState extends State<EventView> {
     );
   }
 
-  void _showEventDetails(BuildContext context, Event event, TontineProvider tontineProvider, EventProvider eventProvider) {
+  void _showEventDetails(BuildContext context, Event event,
+      TontineProvider tontineProvider, EventProvider eventProvider) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -385,11 +396,11 @@ class _EventViewState extends State<EventView> {
                 const Divider(),
                 const SizedBox(height: 8),
                 _buildDetailRow('Type', event.type.displayName),
-                _buildDetailRow('Date de début', 
-                  DateFormat('dd/MM/yyyy').format(event.startDate)),
+                _buildDetailRow('Date de début',
+                    DateFormat('dd/MM/yyyy').format(event.startDate)),
                 if (event.endDate != null)
-                  _buildDetailRow('Date de fin', 
-                    DateFormat('dd/MM/yyyy').format(event.endDate!)),
+                  _buildDetailRow('Date de fin',
+                      DateFormat('dd/MM/yyyy').format(event.endDate!)),
                 const SizedBox(height: 16),
                 const Text(
                   'Description',
@@ -410,10 +421,11 @@ class _EventViewState extends State<EventView> {
                 ),
                 const SizedBox(height: 8),
                 if (event.participants?.isNotEmpty ?? false)
-                  ...event.participants!.map((participant) => 
-                    Padding(
+                  ...event.participants!.map(
+                    (participant) => Padding(
                       padding: const EdgeInsets.only(bottom: 4),
-                      child: Text('• ${participant.firstname} ${participant.lastname}'),
+                      child: Text(
+                          '• ${participant.firstname} ${participant.lastname}'),
                     ),
                   )
                 else
@@ -425,13 +437,15 @@ class _EventViewState extends State<EventView> {
                     TextButton(
                       onPressed: () {
                         Navigator.pop(context);
-                        _showEditEventDialog(context, event, tontineProvider, eventProvider);
+                        _showEditEventDialog(
+                            context, event, tontineProvider, eventProvider);
                       },
                       child: const Text('Modifier'),
                     ),
                     const SizedBox(width: 8),
                     TextButton(
-                      onPressed: () => _showDeleteConfirmation(context, event, tontineProvider, eventProvider),
+                      onPressed: () => _showDeleteConfirmation(
+                          context, event, tontineProvider, eventProvider),
                       style: TextButton.styleFrom(
                         foregroundColor: Colors.red,
                       ),
@@ -470,9 +484,11 @@ class _EventViewState extends State<EventView> {
     );
   }
 
-  void _showEditEventDialog(BuildContext context, Event event, TontineProvider tontineProvider, EventProvider eventProvider) {
+  void _showEditEventDialog(BuildContext context, Event event,
+      TontineProvider tontineProvider, EventProvider eventProvider) {
     final titleController = TextEditingController(text: event.title);
-    final descriptionController = TextEditingController(text: event.description);
+    final descriptionController =
+        TextEditingController(text: event.description);
     DateTime startDate = event.startDate;
     DateTime? endDate = event.endDate;
     EventType selectedType = event.type;
@@ -509,7 +525,7 @@ class _EventViewState extends State<EventView> {
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<EventType>(
-                  value: selectedType,
+                  initialValue: selectedType,
                   decoration: const InputDecoration(labelText: 'Type'),
                   items: EventType.values.map((type) {
                     return DropdownMenuItem(
@@ -539,9 +555,9 @@ class _EventViewState extends State<EventView> {
                 ),
                 ListTile(
                   title: const Text('Date de fin (optionnel)'),
-                  subtitle: Text(endDate != null 
-                    ? DateFormat('dd/MM/yyyy').format(endDate!)
-                    : 'Non définie'),
+                  subtitle: Text(endDate != null
+                      ? DateFormat('dd/MM/yyyy').format(endDate!)
+                      : 'Non définie'),
                   trailing: const Icon(Icons.calendar_today),
                   onTap: () async {
                     final date = await showDatePicker(
@@ -564,7 +580,8 @@ class _EventViewState extends State<EventView> {
                     ),
                     FilledButton(
                       onPressed: () async {
-                        if (titleController.text.isEmpty || descriptionController.text.isEmpty) {
+                        if (titleController.text.isEmpty ||
+                            descriptionController.text.isEmpty) {
                           return;
                         }
 
@@ -582,13 +599,15 @@ class _EventViewState extends State<EventView> {
                           await eventProvider.updateEvent(event.id, eventDto);
                           if (!context.mounted) return;
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Événement modifié avec succès')),
+                            const SnackBar(
+                                content: Text('Événement modifié avec succès')),
                           );
                         } catch (e) {
                           if (!context.mounted) return;
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                              content: Text('Erreur lors de la modification de l\'événement'),
+                              content: Text(
+                                  'Erreur lors de la modification de l\'événement'),
                               backgroundColor: Colors.red,
                             ),
                           );
@@ -606,13 +625,15 @@ class _EventViewState extends State<EventView> {
     );
   }
 
-  void _showDeleteConfirmation(BuildContext context, Event event, TontineProvider tontineProvider, EventProvider eventProvider) {
+  void _showDeleteConfirmation(BuildContext context, Event event,
+      TontineProvider tontineProvider, EventProvider eventProvider) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Confirmer la suppression'),
-          content: Text('Voulez-vous vraiment supprimer l\'événement "${event.title}" ?'),
+          content: Text(
+              'Voulez-vous vraiment supprimer l\'événement "${event.title}" ?'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
@@ -621,18 +642,23 @@ class _EventViewState extends State<EventView> {
             FilledButton(
               onPressed: () async {
                 try {
-                  Navigator.pop(context); // Fermer la boîte de dialogue de confirmation
-                  Navigator.pop(context); // Fermer la boîte de dialogue des détails
-                  await eventProvider.deleteEvent(tontineProvider.currentTontine!.id, event.id);
+                  Navigator.pop(
+                      context); // Fermer la boîte de dialogue de confirmation
+                  Navigator.pop(
+                      context); // Fermer la boîte de dialogue des détails
+                  await eventProvider.deleteEvent(
+                      tontineProvider.currentTontine!.id, event.id);
                   if (!context.mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Événement supprimé avec succès')),
+                    const SnackBar(
+                        content: Text('Événement supprimé avec succès')),
                   );
                 } catch (e) {
                   if (!context.mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text('Erreur lors de la suppression de l\'événement'),
+                      content:
+                          Text('Erreur lors de la suppression de l\'événement'),
                       backgroundColor: Colors.red,
                     ),
                   );
@@ -648,4 +674,4 @@ class _EventViewState extends State<EventView> {
       },
     );
   }
-} 
+}

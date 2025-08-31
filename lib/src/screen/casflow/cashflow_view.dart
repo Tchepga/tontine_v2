@@ -26,7 +26,8 @@ class _CashflowViewState extends State<CashflowView> {
     super.initState();
     Future.microtask(() {
       if (!mounted) return;
-      final tontineProvider = Provider.of<TontineProvider>(context, listen: false);
+      final tontineProvider =
+          Provider.of<TontineProvider>(context, listen: false);
       if (tontineProvider.currentTontine != null) {
         tontineProvider.loadDeposits(tontineProvider.currentTontine!.id);
       }
@@ -43,10 +44,18 @@ class _CashflowViewState extends State<CashflowView> {
         // Filtrage
         final filteredDeposits = deposits.where((deposit) {
           final matchType = _selectedReason == null ||
-              (deposit.reasons != null && deposit.reasons!.toLowerCase() == _selectedReason!.displayName.toLowerCase());
+              (deposit.reasons != null &&
+                  deposit.reasons!.toLowerCase() ==
+                      _selectedReason!.displayName.toLowerCase());
           final matchName = _searchName.isEmpty ||
-              (deposit.author.firstname?.toLowerCase().contains(_searchName.toLowerCase()) ?? false) ||
-              (deposit.author.lastname?.toLowerCase().contains(_searchName.toLowerCase()) ?? false);
+              (deposit.author.firstname
+                      ?.toLowerCase()
+                      .contains(_searchName.toLowerCase()) ??
+                  false) ||
+              (deposit.author.lastname
+                      ?.toLowerCase()
+                      .contains(_searchName.toLowerCase()) ??
+                  false);
           return matchType && matchName;
         }).toList();
 
@@ -62,22 +71,24 @@ class _CashflowViewState extends State<CashflowView> {
                 children: [
                   Expanded(
                     child: DropdownButtonFormField<DepositReason>(
-                      value: _selectedReason,
+                      initialValue: _selectedReason,
                       isExpanded: true,
                       decoration: const InputDecoration(
                         labelText: 'Type',
                         border: OutlineInputBorder(),
-                        contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+                        contentPadding:
+                            EdgeInsets.symmetric(horizontal: 8, vertical: 0),
                       ),
                       items: [
                         const DropdownMenuItem<DepositReason>(
                           value: null,
                           child: Text('Tous'),
                         ),
-                        ...DepositReason.values.map((reason) => DropdownMenuItem(
-                              value: reason,
-                              child: Text(reason.displayName),
-                            ))
+                        ...DepositReason.values
+                            .map((reason) => DropdownMenuItem(
+                                  value: reason,
+                                  child: Text(reason.displayName),
+                                ))
                       ],
                       onChanged: (value) {
                         setState(() {
@@ -92,7 +103,8 @@ class _CashflowViewState extends State<CashflowView> {
                       decoration: const InputDecoration(
                         labelText: 'Nom',
                         border: OutlineInputBorder(),
-                        contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+                        contentPadding:
+                            EdgeInsets.symmetric(horizontal: 8, vertical: 0),
                       ),
                       onChanged: (value) {
                         setState(() {
@@ -124,7 +136,8 @@ class _CashflowViewState extends State<CashflowView> {
             ],
           ),
           floatingActionButton: FloatingActionButton(
-            onPressed: () => _showAddDeposit(context, tontineProvider, currentTontine!.id),
+            onPressed: () =>
+                _showAddDeposit(context, tontineProvider, currentTontine!.id),
             child: const Icon(Icons.add),
           ),
           bottomNavigationBar: const MenuWidget(),
@@ -148,30 +161,31 @@ class _CashflowViewState extends State<CashflowView> {
           ],
         ),
         padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  Text(
+        child: Column(
+          children: [
+            Text(
               '${currentTontine?.cashFlow.amount ?? 0} ${currentTontine?.cashFlow.currency.displayName ?? ''}',
               style: const TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.w800,
+                fontSize: 32,
+                fontWeight: FontWeight.w800,
                 color: Colors.white,
               ),
-                  ),
-            const Text(
-                        'Solde actuel',
-              style: TextStyle(color: Colors.white),
-                  ),
-                ],
-              ),
             ),
+            const Text(
+              'Solde actuel',
+              style: TextStyle(color: Colors.white),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
-  void _showAddDeposit(BuildContext context, TontineProvider tontineProvider, int tontineId) {
-                showDialog(
-                  context: context,
-                  builder: (BuildContext context) {
+  void _showAddDeposit(
+      BuildContext context, TontineProvider tontineProvider, int tontineId) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
         return const EditMouvement();
       },
     ).then((_) {

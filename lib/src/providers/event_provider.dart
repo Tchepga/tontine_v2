@@ -33,7 +33,7 @@ class EventProvider extends ChangeNotifier {
     try {
       // Créer l'événement d'abord
       await _eventService.createEvent(eventDto);
-      
+
       // Envoyer la notification avant de recharger les événements
       try {
         await _notificationService.showNotification(
@@ -62,7 +62,6 @@ class EventProvider extends ChangeNotifier {
         payload: '/event',
       );
       await loadEvents(eventDto.tontineId);
-
     } catch (e) {
       _logger.severe('Error updating event: $e');
       rethrow;
@@ -74,7 +73,7 @@ class EventProvider extends ChangeNotifier {
       await _eventService.deleteEvent(eventId);
       await _notificationService.showNotification(
         title: 'Événement supprimé',
-        body: 'L\'événement "${eventId}" a été supprimé',
+        body: 'L\'événement "$eventId" a été supprimé',
         payload: '/event',
       );
       await loadEvents(tontineId);
@@ -82,6 +81,5 @@ class EventProvider extends ChangeNotifier {
       _logger.severe('Error deleting event: $e');
       rethrow;
     }
-
   }
-} 
+}

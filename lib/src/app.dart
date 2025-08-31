@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:tontine_v2/src/screen/casflow/cashflow_view.dart';
 import 'package:tontine_v2/src/screen/dashboard_view.dart';
@@ -21,6 +20,7 @@ import 'screen/event/event_view.dart';
 import 'screen/notification/notification_view.dart';
 import 'package:tontine_v2/src/services/local_notification_service.dart';
 import 'screen/member/member_view.dart';
+import 'localization/app_localizations.dart';
 
 /// The Widget that configures your application.
 class MyApp extends StatefulWidget {
@@ -72,7 +72,7 @@ class _MyAppState extends State<MyApp> {
           // Provide the generated AppLocalizations to the MaterialApp. This
           // allows descendant Widgets to display the correct translations
           // depending on the user's locale.
-          localizationsDelegates: const [
+          localizationsDelegates: [
             AppLocalizations.delegate,
             GlobalMaterialLocalizations.delegate,
             GlobalWidgetsLocalizations.delegate,

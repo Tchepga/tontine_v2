@@ -79,7 +79,7 @@ class BalanceCard extends StatelessWidget {
                 width: double.infinity,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
+                  color: Colors.white.withAlpha(20),
                   borderRadius: BorderRadius.circular(2),
                 ),
                 child: FractionallySizedBox(
@@ -107,4 +107,4 @@ class BalanceCard extends StatelessWidget {
       ),
     );
   }
-} 
+}

@@ -24,8 +24,8 @@ class _LoginViewState extends State<LoginView> {
     super.initState();
     _memberService.init();
     _checkToken();
-    _usernameController.value = const TextEditingValue(text: 'username');
-    _passwordController.value = const TextEditingValue(text: 'password');
+    _usernameController.value = const TextEditingValue(text: '');
+    _passwordController.value = const TextEditingValue(text: '');
   }
 
   Future<void> _checkToken() async {
@@ -44,7 +44,8 @@ class _LoginViewState extends State<LoginView> {
     });
 
     try {
-      final success = await Provider.of<AuthProvider>(context, listen: false).login(
+      final success =
+          await Provider.of<AuthProvider>(context, listen: false).login(
         _usernameController.text,
         _passwordController.text,
       );

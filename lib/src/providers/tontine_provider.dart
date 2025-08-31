@@ -20,7 +20,7 @@ import 'models/part.dart';
 
 class TontineProvider extends ChangeNotifier {
   static const KEY_SELECTED_TONTINE_ID = 'selectedTontineId';
-  
+
   final _tontineService = TontineService();
   final _logger = Logger('TontineProvider');
   final _storage = GetStorage();
@@ -29,7 +29,7 @@ class TontineProvider extends ChangeNotifier {
   Tontine? _currentTontine;
   bool _isLoading = false;
   final _notificationService = LocalNotificationService();
-  List<Part> _parts = [];
+  final List<Part> _parts = [];
 
   List<Tontine> get tontines => _tontines;
   Tontine? get currentTontine => _currentTontine;
@@ -44,8 +44,9 @@ class TontineProvider extends ChangeNotifier {
     try {
       final tontines = await _tontineService.getTontines();
       _tontines = tontines;
-      final index = _tontines.indexWhere((t) => t.id == _storage.read(KEY_SELECTED_TONTINE_ID));
-      if(index != -1) {
+      final index = _tontines
+          .indexWhere((t) => t.id == _storage.read(KEY_SELECTED_TONTINE_ID));
+      if (index != -1) {
         _currentTontine = _tontines[index];
       } else {
         throw Exception('La tontine sélectionnée n\'existe pas');
@@ -96,7 +97,8 @@ class TontineProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> addMemberToTontine(int tontineId, CreateMemberDto memberDto) async {
+  Future<void> addMemberToTontine(
+      int tontineId, CreateMemberDto memberDto) async {
     try {
       await _tontineService.addMemberToTontine(tontineId, memberDto);
       notifyListeners();
@@ -121,7 +123,8 @@ class TontineProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> updateTontineConfig(int tontineId, CreateConfigTontineDto configDto) async {
+  Future<void> updateTontineConfig(
+      int tontineId, CreateConfigTontineDto configDto) async {
     try {
       await _tontineService.updateTontineConfig(tontineId, configDto);
     } catch (e) {
@@ -164,7 +167,7 @@ class TontineProvider extends ChangeNotifier {
       int tontineId, CreateMeetingRapportDto rapportDto) async {
     try {
       await _tontineService.createRapport(tontineId, rapportDto);
-          notifyListeners();
+      notifyListeners();
 
       await _notificationService.showNotification(
         title: 'Rapport créé',
@@ -175,14 +178,13 @@ class TontineProvider extends ChangeNotifier {
       _logger.severe('Error creating rapport: $e');
       rethrow;
     }
-
   }
 
   Future<List<RapportMeeting>> getRapportsForTontine(int tontineId) async {
     try {
       final rapports = await _tontineService.getRapports(tontineId);
       _logger.info('Rapports: ${rapports.first.attachmentFilename}');
-      if(_currentTontine != null ){
+      if (_currentTontine != null) {
         _currentTontine!.rapports = rapports;
         notifyListeners();
       }
@@ -225,7 +227,6 @@ class TontineProvider extends ChangeNotifier {
       );
       final tontineIndex = _tontines.indexWhere((t) => t.id == tontineId);
       if (tontineIndex != -1) {
-
         final updatedTontine = await _tontineService.getTontine(tontineId);
         if (updatedTontine != null) {
           _tontines[tontineIndex] = updatedTontine;
@@ -281,7 +282,8 @@ class TontineProvider extends ChangeNotifier {
     await loadDeposits(tontineId);
   }
 
-  Future<void> updateDeposit(int tontineId, int depositId, CreateDepositDto depositDto) async {
+  Future<void> updateDeposit(
+      int tontineId, int depositId, CreateDepositDto depositDto) async {
     await _tontineService.updateDeposit(tontineId, depositId, depositDto);
     await loadDeposits(tontineId);
   }
@@ -298,7 +300,8 @@ class TontineProvider extends ChangeNotifier {
 
   Future<File?> downloadRapportAttachment(int tontineId, int rapportId) async {
     try {
-      return await _tontineService.downloadRapportAttachment(tontineId, rapportId);
+      return await _tontineService.downloadRapportAttachment(
+          tontineId, rapportId);
     } catch (e) {
       _logger.severe('Error downloading attachment: $e');
       return null;
@@ -325,5 +328,4 @@ class TontineProvider extends ChangeNotifier {
       rethrow;
     }
   }
-
 }

@@ -1,12 +1,12 @@
 buildscript {
-    ext.kotlin_version = '1.9.0'
+    ext.kotlin_version = '1.9.10'
     repositories {
         google()
         mavenCentral()
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:8.7.0'
+        classpath 'com.android.tools.build:gradle:8.6.1'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
     }
 }
@@ -24,12 +24,51 @@ allprojects {
 
     plugins.withType(com.android.build.gradle.BasePlugin) {
         android {
-            compileSdkVersion 34
+            compileSdkVersion 35
             
             compileOptions {
                 sourceCompatibility JavaVersion.VERSION_17
                 targetCompatibility JavaVersion.VERSION_17
             }
+        }
+    }
+
+    tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+        kotlinOptions {
+            jvmTarget = '17'
+        }
+    }
+
+    // Force all subprojects to use Java 17
+    subprojects {
+        afterEvaluate { project ->
+            if (project.hasProperty('android')) {
+                android {
+                    compileOptions {
+                        sourceCompatibility JavaVersion.VERSION_17
+                        targetCompatibility JavaVersion.VERSION_17
+                    }
+                }
+            }
+            
+            tasks.withType(JavaCompile) {
+                sourceCompatibility = JavaVersion.VERSION_17
+                targetCompatibility = JavaVersion.VERSION_17
+            }
+            
+            tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile) {
+                kotlinOptions {
+                    jvmTarget = '17'
+                }
+            }
+        }
+    }
+
+    // Force specific plugins to use Java 17
+    configurations.all {
+        resolutionStrategy {
+            force 'org.jetbrains.kotlin:kotlin-stdlib:1.9.10'
+            force 'org.jetbrains.kotlin:kotlin-stdlib-common:1.9.10'
         }
     }
 }
