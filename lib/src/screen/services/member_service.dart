@@ -55,7 +55,7 @@ class MemberService {
         },
         Uri.parse('$urlApi/member'),
       );
-      if (response.statusCode == 200 && response.body.isNotEmpty ) {
+      if (response.statusCode == 200 && response.body.isNotEmpty) {
         final member = Member.fromJson(jsonDecode(response.body));
         storage.write(KEY_USER_INFO, member.toJson());
         return member;
@@ -80,16 +80,22 @@ class MemberService {
   }
 
   Future<User?> getUserByUsername(String username) async {
-    final response = await client.get(Uri.parse('$urlApi/auth/username/$username'));
-    if (response.statusCode == 200 && response.body.isNotEmpty && response.body != 'null') {
+    final response =
+        await client.get(Uri.parse('$urlApi/auth/username/$username'));
+    if (response.statusCode == 200 &&
+        response.body.isNotEmpty &&
+        response.body != 'null') {
       return User.fromJson(jsonDecode(response.body));
     }
     return null;
   }
 
   Future<Member?> getMemberByUsername(String username) async {
-    final response = await client.get(Uri.parse('$urlApi/member/username/$username'));
-    if (response.statusCode == 200 && response.body.isNotEmpty && response.body != 'null') {
+    final response =
+        await client.get(Uri.parse('$urlApi/member/username/$username'));
+    if (response.statusCode == 200 &&
+        response.body.isNotEmpty &&
+        response.body != 'null') {
       return Member.fromJson(jsonDecode(response.body));
     }
     return null;
@@ -113,7 +119,7 @@ class MemberService {
 
   Future<bool> hasValidToken() async {
     final token = await storage.read(KEY_TOKEN);
-    if(token == null) {
+    if (token == null) {
       return false;
     }
     final response = await client

@@ -27,7 +27,8 @@ class _LoanViewState extends State<LoanView> {
     Future.microtask(() async {
       if (!mounted) return;
       final loanProvider = Provider.of<LoanProvider>(context, listen: false);
-      final tontineProvider = Provider.of<TontineProvider>(context, listen: false);
+      final tontineProvider =
+          Provider.of<TontineProvider>(context, listen: false);
       await loanProvider.loadLoans(tontineProvider.currentTontine!.id);
     });
   }
@@ -109,6 +110,7 @@ class _LoanViewState extends State<LoanView> {
             ],
           ),
           floatingActionButton: FloatingActionButton(
+            heroTag: 'loan_fab',
             onPressed: () =>
                 _showCreateLoanDialog(context, tontineProvider, loanProvider),
             child: const Icon(Icons.add),
@@ -165,8 +167,7 @@ class _LoanViewState extends State<LoanView> {
             trailing: IconButton(
               icon: loan.status == StatusLoan.PENDING
                   ? Icon(
-                      loan.voters?.any(
-                                  (voter) => voter == currentUser?.id) ??
+                      loan.voters?.any((voter) => voter == currentUser?.id) ??
                               false
                           ? Icons.how_to_vote
                           : Icons.how_to_vote_outlined,
@@ -186,7 +187,7 @@ class _LoanViewState extends State<LoanView> {
   Future<void> _handleVote(Loan loan) async {
     try {
       await Provider.of<LoanProvider>(context, listen: false).voteLoan(loan.id);
-      if(!mounted) return;
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Vote enregistré')),
       );
@@ -286,7 +287,8 @@ class _LoanViewState extends State<LoanView> {
             ),
             FilledButton(
               onPressed: () async {
-                if (formKey.currentState!.validate() && currentTontine != null) {
+                if (formKey.currentState!.validate() &&
+                    currentTontine != null) {
                   try {
                     if (!mounted) return;
                     final loanDto = CreateLoanDto(
@@ -298,11 +300,12 @@ class _LoanViewState extends State<LoanView> {
 
                     await loanProvider.createLoan(loanDto);
                     await loanProvider.loadLoans(currentTontine.id);
-                    
+
                     // ignore: use_build_context_synchronously
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text('Prêt créé avec succès. Il devra être validé par la suite'),
+                        content: Text(
+                            'Prêt créé avec succès. Il devra être validé par la suite'),
                         backgroundColor: Colors.green,
                       ),
                     );

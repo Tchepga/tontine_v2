@@ -516,6 +516,7 @@ class _SelectTontineViewState extends State<SelectTontineView> {
         },
       ),
       floatingActionButton: FloatingActionButton(
+        heroTag: 'select_tontine_fab',
         onPressed: () => _showCreateTontineDialog(context),
         child: const Icon(Icons.add),
       ),

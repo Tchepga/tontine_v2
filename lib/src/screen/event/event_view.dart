@@ -216,6 +216,7 @@ class _EventViewState extends State<EventView> {
             ],
           ),
           floatingActionButton: FloatingActionButton(
+            heroTag: 'event_fab',
             onPressed: () =>
                 _showCreateEventDialog(context, tontineProvider, eventProvider),
             child: const Icon(Icons.add),

@@ -24,12 +24,14 @@ class MenuWidget extends StatelessWidget {
           Positioned(
             bottom: 24,
             child: FloatingActionButton(
+              heroTag: 'menu_fab',
               backgroundColor: Colors.blueAccent,
               elevation: 4,
               onPressed: () {
                 Navigator.pushReplacementNamed(context, AccountView.routeName);
               },
-              child: const Icon(Icons.people_alt_outlined, color: Colors.white, size: 32),
+              child: const Icon(Icons.people_alt_outlined,
+                  color: Colors.white, size: 32),
             ),
           ),
           // Icône Cashflow à gauche
@@ -48,7 +50,8 @@ class MenuWidget extends StatelessWidget {
             right: 32,
             bottom: 18,
             child: IconButton(
-              icon: const Icon(Icons.event_available, color: Colors.white, size: 32),
+              icon: const Icon(Icons.event_available,
+                  color: Colors.white, size: 32),
               onPressed: () {
                 Navigator.pushReplacementNamed(context, EventView.routeName);
               },
@@ -74,15 +77,21 @@ class _FooterPainter extends CustomPainter {
     path.lineTo(size.width * 0.35, 0);
     // Début du creux circulaire
     path.cubicTo(
-      size.width * 0.40, 0, // contrôle gauche
-      size.width * 0.42, 40, // contrôle bas gauche
-      size.width * 0.50, 40 // point bas du creux
-    );
+        size.width * 0.40,
+        0, // contrôle gauche
+        size.width * 0.42,
+        40, // contrôle bas gauche
+        size.width * 0.50,
+        40 // point bas du creux
+        );
     path.cubicTo(
-      size.width * 0.58, 40, // contrôle bas droite
-      size.width * 0.60, 0, // contrôle droite
-      size.width * 0.65, 0 // sortie du creux
-    );
+        size.width * 0.58,
+        40, // contrôle bas droite
+        size.width * 0.60,
+        0, // contrôle droite
+        size.width * 0.65,
+        0 // sortie du creux
+        );
     // Ligne jusqu'à l'arrondi droit
     path.lineTo(size.width - 30, 0);
     path.quadraticBezierTo(size.width, 0, size.width, 20);

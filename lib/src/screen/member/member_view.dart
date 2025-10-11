@@ -53,7 +53,8 @@ class _MemberViewState extends State<MemberView> {
       builder: (context, tontineProvider, authProvider, child) {
         final currentTontine = tontineProvider.currentTontine;
         final currentUser = authProvider.currentUser;
-        final isPresident = currentUser?.user?.roles?.contains(Role.PRESIDENT) ?? false;
+        final isPresident =
+            currentUser?.user?.roles?.contains(Role.PRESIDENT) ?? false;
 
         if (currentTontine == null) {
           return const Scaffold(
@@ -92,7 +93,8 @@ class _MemberViewState extends State<MemberView> {
               // Liste des membres
               Expanded(
                 child: ListView.builder(
-                  padding: const EdgeInsets.only(top: 16, left: 16, right: 16, bottom: 56),
+                  padding: const EdgeInsets.only(
+                      top: 16, left: 16, right: 16, bottom: 56),
                   itemCount: currentTontine.members.length,
                   itemBuilder: (context, index) {
                     final member = currentTontine.members[index];
@@ -110,6 +112,7 @@ class _MemberViewState extends State<MemberView> {
           // Bouton d'ajout uniquement pour le président
           floatingActionButton: isPresident
               ? FloatingActionButton(
+                  heroTag: 'member_fab',
                   onPressed: () =>
                       _showAddMemberDialog(context, tontineProvider),
                   child: const Icon(Icons.person_add),

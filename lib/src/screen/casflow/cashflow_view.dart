@@ -136,6 +136,7 @@ class _CashflowViewState extends State<CashflowView> {
             ],
           ),
           floatingActionButton: FloatingActionButton(
+            heroTag: 'cashflow_fab',
             onPressed: () =>
                 _showAddDeposit(context, tontineProvider, currentTontine!.id),
             child: const Icon(Icons.add),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:tontine_v2/src/screen/casflow/cashflow_view.dart';
 import 'package:tontine_v2/src/screen/event/event_view.dart';
 import 'package:tontine_v2/src/screen/loan/loan_view.dart';
@@ -81,20 +82,31 @@ class _DashboardViewState extends State<DashboardView> {
                         crossAxisSpacing: 24,
                         childAspectRatio: 1,
                         children: [
-                          _buildMenuCard(context, 'Banque', Icons.balance,
-                              Colors.purple, CashflowView.routeName),
-                          _buildMenuCard(context, 'Rapports', Icons.read_more,
-                              Colors.amber, RapportView.routeName),
+                          _buildMenuCard(
+                              context,
+                              'Banque',
+                              'assets/images/undraw_wallet_diag.svg',
+                              CashflowView.routeName),
+                          _buildMenuCard(
+                              context,
+                              'Rapports',
+                              'assets/images/undraw_uploading_nu4x.svg',
+                              RapportView.routeName),
                           _buildMenuCard(
                               context,
                               'Emprunts',
-                              Icons.monetization_on,
-                              Colors.orange,
+                              'assets/images/undraw_investment_ojxu.svg',
                               LoanView.routeName),
-                          _buildMenuCard(context, 'Événements', Icons.event,
-                              Colors.blue, EventView.routeName),
-                          _buildMenuCard(context, 'Membres', Icons.person,
-                              Colors.teal, AccountView.routeName),
+                          _buildMenuCard(
+                              context,
+                              'Événements',
+                              'assets/images/undraw_special-event_hv54.svg',
+                              EventView.routeName),
+                          _buildMenuCard(
+                              context,
+                              'Membres',
+                              'assets/images/undraw_fans_icv6.svg',
+                              AccountView.routeName),
                         ],
                       ),
                     ],
@@ -109,8 +121,8 @@ class _DashboardViewState extends State<DashboardView> {
     );
   }
 
-  Widget _buildMenuCard(BuildContext context, String title, IconData icon,
-      Color color, String route) {
+  Widget _buildMenuCard(
+      BuildContext context, String title, String imagePath, String route) {
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -124,11 +136,20 @@ class _DashboardViewState extends State<DashboardView> {
             children: [
               Container(
                 decoration: BoxDecoration(
-                  color: color.withAlpha(10),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 padding: const EdgeInsets.all(16),
-                child: Icon(icon, size: 40, color: color),
+                child: imagePath.endsWith('.svg')
+                    ? SvgPicture.asset(
+                        imagePath,
+                        width: 70,
+                        height: 70,
+                      )
+                    : Image.asset(
+                        imagePath,
+                        width: 40,
+                        height: 40,
+                      ),
               ),
               const SizedBox(height: 16),
               Text(
