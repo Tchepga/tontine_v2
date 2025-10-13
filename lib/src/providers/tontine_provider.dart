@@ -9,6 +9,7 @@ import 'models/event.dart';
 import 'models/sanction.dart';
 import 'models/tontine.dart';
 import 'models/enum/loop_period.dart';
+import 'models/enum/role.dart';
 import '../screen/services/dto/deposit_dto.dart';
 import '../screen/services/dto/member_dto.dart';
 import '../screen/services/dto/rapport_dto.dart';
@@ -102,6 +103,7 @@ class TontineProvider extends ChangeNotifier {
       int tontineId, CreateMemberDto memberDto) async {
     try {
       await _tontineService.addMemberToTontine(tontineId, memberDto);
+      await loadTontines(); // Recharger les données depuis l'API
       notifyListeners();
     } catch (e) {
       _logger.severe('Error adding member to tontine: $e');
@@ -405,5 +407,17 @@ class TontineProvider extends ChangeNotifier {
     final firstDayOfYear = DateTime(date.year, 1, 1);
     final daysSinceFirstDay = date.difference(firstDayOfYear).inDays;
     return (daysSinceFirstDay / 7).ceil();
+  }
+
+  /// Met à jour les rôles d'un membre
+  Future<void> updateMemberRoles(
+      int tontineId, int memberId, List<Role> roles) async {
+    try {
+      await _tontineService.updateMemberRoles(memberId, roles);
+      await loadTontines();
+      notifyListeners();
+    } catch (e) {
+      rethrow;
+    }
   }
 }

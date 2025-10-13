@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
 import '../../providers/models/member.dart';
+import '../../providers/models/enum/role.dart';
 import '../../services/error_catchable.dart';
 import '../services/dto/member_dto.dart';
 import '../services/member_service.dart';
@@ -8,11 +9,13 @@ import '../services/member_service.dart';
 class AddMemberForm extends StatefulWidget {
   final Function(CreateMemberDto) onSubmit;
   final bool showPassword;
+  final List<Member>? existingMembers;
 
   const AddMemberForm({
     super.key,
     required this.onSubmit,
     this.showPassword = false,
+    this.existingMembers,
   });
 
   @override
@@ -32,6 +35,7 @@ class _AddMemberFormState extends State<AddMemberForm> {
   final _searchUsernameController = TextEditingController();
   bool _isSearchMode = false;
   Member? _selectedMember;
+  List<Role> _selectedRoles = [Role.TONTINARD];
 
   @override
   Widget build(BuildContext context) {
@@ -211,6 +215,9 @@ class _AddMemberFormState extends State<AddMemberForm> {
                 border: OutlineInputBorder(),
               ),
             ),
+            const SizedBox(height: 16),
+            // Sélection des rôles
+            _buildRoleSelection(),
           ],
           const SizedBox(height: 24),
           FilledButton(
@@ -226,6 +233,93 @@ class _AddMemberFormState extends State<AddMemberForm> {
     );
   }
 
+  Widget _buildRoleSelection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Rôles (optionnel)',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: Role.values.map((role) {
+            final isSelected = _selectedRoles.contains(role);
+            final isRoleOccupied = _isRoleOccupiedByExistingMembers(role);
+            final canSelect = !isRoleOccupied || isSelected;
+
+            return FilterChip(
+              label: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(role.displayName),
+                  if (isRoleOccupied && !isSelected) ...[
+                    const SizedBox(width: 4),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 4, vertical: 1),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.withAlpha(20),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: const Text(
+                        'Occupé',
+                        style: TextStyle(
+                          fontSize: 8,
+                          color: Colors.orange,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+              selected: isSelected,
+              onSelected: canSelect
+                  ? (selected) {
+                      setState(() {
+                        if (selected) {
+                          if (!_selectedRoles.contains(role)) {
+                            _selectedRoles.add(role);
+                          }
+                        } else {
+                          // Ne pas permettre de retirer TONTINARD
+                          if (role != Role.TONTINARD) {
+                            _selectedRoles.remove(role);
+                          }
+                        }
+                      });
+                    }
+                  : null,
+              selectedColor: role.color.withAlpha(30),
+              checkmarkColor: role.color,
+              labelStyle: TextStyle(
+                color: canSelect
+                    ? (isSelected ? role.color : Colors.grey[600])
+                    : Colors.grey[400],
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+              ),
+            );
+          }).toList(),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Par défaut : ${Role.TONTINARD.displayName}',
+          style: TextStyle(
+            fontSize: 12,
+            color: Colors.grey[600],
+            fontStyle: FontStyle.italic,
+          ),
+        ),
+      ],
+    );
+  }
+
   void _clearFields() {
     _firstnameController.clear();
     _lastnameController.clear();
@@ -233,6 +327,7 @@ class _AddMemberFormState extends State<AddMemberForm> {
     _phoneController.clear();
     _countryController.text = 'FR';
     _searchUsernameController.clear();
+    _selectedRoles = [Role.TONTINARD];
   }
 
   Future<bool> checkIfUserExists(String username) async {
@@ -254,6 +349,7 @@ class _AddMemberFormState extends State<AddMemberForm> {
           email: _selectedMember?.email,
           phone: _selectedMember?.phone ?? '',
           country: _selectedMember?.country ?? 'FR',
+          roles: _selectedRoles,
         );
         widget.onSubmit(memberDto);
       } else {
@@ -283,6 +379,7 @@ class _AddMemberFormState extends State<AddMemberForm> {
                 ? _completePhoneNumber
                 : _phoneController.text,
             country: _countryController.text,
+            roles: _selectedRoles,
           );
 
           widget.onSubmit(memberDto);
@@ -321,5 +418,15 @@ class _AddMemberFormState extends State<AddMemberForm> {
     _countryController.dispose();
     _searchUsernameController.dispose();
     super.dispose();
+  }
+
+  bool _isRoleOccupiedByExistingMembers(Role role) {
+    if (role == Role.TONTINARD)
+      return false; // TONTINARD peut être attribué à plusieurs membres
+    if (widget.existingMembers == null) return false;
+
+    return widget.existingMembers!.any((member) {
+      return member.user?.roles?.contains(role) ?? false;
+    });
   }
 }

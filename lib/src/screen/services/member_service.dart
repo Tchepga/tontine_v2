@@ -1,6 +1,7 @@
 import 'package:get_storage/get_storage.dart';
 import 'dart:convert';
 import '../../providers/models/member.dart';
+import '../../providers/models/enum/role.dart';
 import 'dto/member_dto.dart';
 import 'middleware/interceptor_http.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -155,6 +156,33 @@ class MemberService {
     } catch (e) {
       _logger.severe('Error during registration: $e');
       return 500;
+    }
+  }
+
+  Future<void> updateMemberRoles(int memberId, List<Role> roles) async {
+    try {
+      if (!(await hasValidToken())) {
+        throw Exception('Token invalide');
+      }
+
+      final response = await client.put(
+        Uri.parse('$urlApi/member/$memberId/roles'),
+        headers: {
+          'Authorization': 'Bearer ${getToken()}',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'roles':
+              roles.map((role) => role.toString().split('.').last).toList(),
+        }),
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception('Erreur lors de la mise à jour des rôles');
+      }
+    } catch (e) {
+      _logger.severe('Error updating member roles: $e');
+      rethrow;
     }
   }
 }

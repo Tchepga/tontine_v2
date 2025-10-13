@@ -7,6 +7,7 @@ import '../../providers/models/tontine.dart';
 import '../../providers/models/event.dart';
 import '../../providers/models/sanction.dart';
 import '../../providers/models/rapport_meeting.dart';
+import '../../providers/models/enum/role.dart';
 import '../../services/error_catchable.dart';
 import 'dto/member_dto.dart';
 import 'middleware/interceptor_http.dart';
@@ -385,6 +386,19 @@ class TontineService {
     );
     if (response.statusCode != 201 && response.statusCode != 200) {
       throw Exception('Failed to add part');
+    }
+  }
+
+  Future<void> updateMemberRoles(int memberId, List<Role> roles) async {
+    final response = await client.put(
+      Uri.parse('$urlApi/member/$memberId/roles'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'roles': roles.map((role) => role.toString().split('.').last).toList(),
+      }),
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to update member roles');
     }
   }
 }

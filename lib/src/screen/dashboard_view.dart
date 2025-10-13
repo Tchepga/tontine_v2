@@ -4,7 +4,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:tontine_v2/src/screen/casflow/cashflow_view.dart';
 import 'package:tontine_v2/src/screen/event/event_view.dart';
 import 'package:tontine_v2/src/screen/loan/loan_view.dart';
-import 'package:tontine_v2/src/screen/member/account_view.dart';
+import 'package:tontine_v2/src/screen/member/member_view.dart';
 import 'package:tontine_v2/src/screen/rapport/rapport_view.dart';
 
 import '../providers/auth_provider.dart';
@@ -95,7 +95,7 @@ class _DashboardViewState extends State<DashboardView> {
                               context,
                               'Membres',
                               'assets/images/undraw_fans_icv6.svg',
-                              AccountView.routeName),
+                              MemberView.routeName),
                           _buildMenuCard(
                               context,
                               'Emprunts',
