@@ -88,11 +88,12 @@ class TontineService {
       },
       body: jsonEncode(memberDto.toJson()),
     );
-    if(responseCreateMember.statusCode == 400) {
+    if (responseCreateMember.statusCode == 400) {
       throw ErrorCatchable.USER_ALREADY_EXISTS;
     }
     if (responseCreateMember.statusCode != 201) {
-      _logger.severe('Failed to add member to tontine during creation: ${responseCreateMember.body}');
+      _logger.severe(
+          'Failed to add member to tontine during creation: ${responseCreateMember.body}');
       throw Exception('Failed to add member to tontine during creation');
     }
 
@@ -124,8 +125,7 @@ class TontineService {
 
   // Rapports
   Future<RapportMeeting?> createRapport(
-      int tontineId,
-      CreateMeetingRapportDto rapportDto) async {
+      int tontineId, CreateMeetingRapportDto rapportDto) async {
     try {
       final token = storage.read(MemberService.KEY_TOKEN);
       final uri = Uri.parse('$urlApi/tontine/$tontineId/rapport');
@@ -142,7 +142,7 @@ class TontineService {
       }
 
       final response = await client.post(uri,
-          headers:  {
+          headers: {
             'Authorization': 'Bearer $token',
             'Content-Type': 'application/json',
           },
@@ -151,7 +151,7 @@ class TontineService {
       if (response.statusCode == 201) {
         final rapport = RapportMeeting.fromJson(jsonDecode(response.body));
         return rapport;
-      }else {
+      } else {
         _logger.severe('Error creating rapport: ${response.body}');
         return null;
       }
@@ -189,7 +189,8 @@ class TontineService {
   Future<Sanction> createSanction(
       int tontineId, CreateSanctionDto sanctionDto) async {
     final response = await client.post(
-      Uri.parse('$urlApi/tontine/$tontineId/sanction', 
+      Uri.parse(
+        '$urlApi/tontine/$tontineId/sanction',
       ),
       body: jsonEncode(sanctionDto.toJson()),
     );
@@ -335,7 +336,7 @@ class TontineService {
       Uri.parse('$urlApi/tontine/$tontineId/rapport/$rapportId/attachment'),
       headers: {'Authorization': 'Bearer $token'},
     );
-    
+
     if (response.statusCode != 200) {
       throw Exception('Failed to download attachment');
     }
@@ -343,7 +344,7 @@ class TontineService {
     try {
       // Récupérer le nom du fichier depuis les headers
       final disposition = response.headers['content-disposition'];
-      final filename = disposition != null 
+      final filename = disposition != null
           ? disposition.split('filename=')[1].replaceAll('"', '')
           : 'downloaded_file';
 
@@ -355,7 +356,7 @@ class TontineService {
       final file = File(filePath);
       file.writeAsBytes(response.bodyBytes);
       return file;
-      
+
       // Ouvrir le fichier
       // await FileSaver.instance.saveFile(name: filename, bytes: response.bodyBytes);
     } catch (e) {
@@ -382,9 +383,8 @@ class TontineService {
       Uri.parse('$urlApi/tontine/$tontineId/config/part-order'),
       body: jsonEncode(partDto.toJson()),
     );
-    if (response.statusCode != 200) {
+    if (response.statusCode != 201 && response.statusCode != 200) {
       throw Exception('Failed to add part');
     }
   }
-
 }

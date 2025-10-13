@@ -42,13 +42,13 @@ class PartOrder {
   final int id;
   final int order;
   final Member member;
-  final DateTime? passageDate;
+  final DateTime? period;
 
   PartOrder({
     required this.id,
     required this.order,
     required this.member,
-    this.passageDate,
+    this.period,
   });
 
   factory PartOrder.fromJson(Map<String, dynamic> json) {
@@ -56,7 +56,7 @@ class PartOrder {
       id: json['id'],
       order: json['order'],
       member: Member.fromJson(json['member']),
-      passageDate: json['passageDate'] != null ? DateTime.parse(json['passageDate']) : null,
+      period: json['period'] != null ? DateTime.parse(json['period']) : null,
     );
   }
 
@@ -65,13 +65,12 @@ class PartOrder {
       'id': id,
       'order': order,
       'member': member.toJson(),
-      'passageDate': passageDate,
+      'period': period?.toIso8601String(),
     };
   }
 }
 
 class ConfigTontine {
-
   final int id;
   final double defaultLoanRate;
   final int? defaultLoanDuration;
@@ -96,7 +95,6 @@ class ConfigTontine {
     this.parts,
   });
 
-
   factory ConfigTontine.fromJson(Map<String, dynamic> json) {
     return ConfigTontine(
       id: json['id'],
@@ -114,14 +112,13 @@ class ConfigTontine {
               .map((rateMap) => RateMap.fromJson(rateMap))
               .toList()
           : [],
-      parts: json['parts'] != null
-          ? (json['parts'] as List)
+      parts: json['partOrders'] != null
+          ? (json['partOrders'] as List)
               .map((part) => PartOrder.fromJson(part))
               .toList()
           : null,
     );
   }
-
 
   Map<String, dynamic> toJson() {
     return {
@@ -190,4 +187,4 @@ class Tontine {
           : [],
     );
   }
-} 
+}

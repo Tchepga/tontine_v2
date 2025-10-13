@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:logging/logging.dart';
 import '../../providers/models/enum/event_type.dart';
 import '../../providers/models/event.dart';
 import '../../providers/tontine_provider.dart';
@@ -21,6 +22,7 @@ class EventView extends StatefulWidget {
 class _EventViewState extends State<EventView> {
   DateTime selectedDate = DateTime.now();
   final localNotificationService = LocalNotificationService();
+  final _logger = Logger('EventView');
 
   @override
   void initState() {
@@ -32,7 +34,7 @@ class _EventViewState extends State<EventView> {
           Provider.of<TontineProvider>(context, listen: false);
       if (tontineProvider.currentTontine != null) {
         eventProvider.loadEvents(tontineProvider.currentTontine!.id);
-        print('eventProvider.events: ${eventProvider.events}');
+        _logger.info('eventProvider.events: ${eventProvider.events}');
       }
     });
   }

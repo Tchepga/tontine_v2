@@ -4,240 +4,686 @@ import 'package:tontine_v2/src/providers/models/enum/role.dart';
 import 'package:tontine_v2/src/providers/models/member.dart';
 import 'package:tontine_v2/src/providers/auth_provider.dart';
 import 'package:tontine_v2/src/widgets/menu_widget.dart';
-
+import '../../theme/app_theme.dart';
 import '../services/dto/member_dto.dart';
 import '../services/member_service.dart';
 
-class AccountView extends StatelessWidget {
+class AccountView extends StatefulWidget {
   const AccountView({super.key});
   static const routeName = '/account';
+
+  @override
+  State<AccountView> createState() => _AccountViewState();
+}
+
+class _AccountViewState extends State<AccountView> {
+  final _formKey = GlobalKey<FormState>();
+  late TextEditingController _firstnameController;
+  late TextEditingController _lastnameController;
+  late TextEditingController _emailController;
+  late TextEditingController _phoneController;
+  late TextEditingController _countryController;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeControllers();
+  }
+
+  void _initializeControllers() {
+    final member =
+        Provider.of<AuthProvider>(context, listen: false).currentUser;
+    _firstnameController = TextEditingController(text: member?.firstname ?? '');
+    _lastnameController = TextEditingController(text: member?.lastname ?? '');
+    _emailController = TextEditingController(text: member?.email ?? '');
+    _phoneController = TextEditingController(text: member?.phone ?? '');
+    _countryController = TextEditingController(text: member?.country ?? '');
+  }
+
+  @override
+  void dispose() {
+    _firstnameController.dispose();
+    _lastnameController.dispose();
+    _emailController.dispose();
+    _phoneController.dispose();
+    _countryController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Consumer<AuthProvider>(
       builder: (context, authProvider, child) {
         if (authProvider.isLoading) {
-          return const Scaffold(
-            body: Center(
+          return Scaffold(
+            backgroundColor: AppColors.background,
+            body: const Center(
               child: CircularProgressIndicator(),
             ),
           );
         }
+
         final member = authProvider.currentUser;
-        final bool isPresident = member?.user?.roles?.contains(Role.PRESIDENT) ?? false;
+        final isPresident =
+            member?.user?.roles?.contains(Role.PRESIDENT) ?? false;
 
         return Scaffold(
+          backgroundColor: AppColors.background,
           appBar: AppBar(
-            title: Text(isPresident ? 'Administration' : 'Mon compte'),
+            title: const Text('Mon compte'),
+            backgroundColor: AppColors.primary,
+            elevation: 0,
+            iconTheme: const IconThemeData(color: Colors.white),
           ),
           body: SingleChildScrollView(
             padding: const EdgeInsets.all(16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildUserInfoSection(member, context),
-                const SizedBox(height: 20),
-                if (isPresident) _buildPresidentSection(context),
-                _buildCommonOptions(context),
+                _buildUserInfoSection(member, isPresident),
+                const SizedBox(height: 16),
+                _buildPasswordSection(),
+                const SizedBox(height: 16),
+                _buildLogoutSection(),
               ],
             ),
           ),
-        bottomNavigationBar: const MenuWidget(),
+          bottomNavigationBar: const MenuWidget(),
         );
       },
     );
   }
 
-  Widget _buildUserInfoSection(Member? member, BuildContext context) {
+  Widget _buildUserInfoSection(Member? member, bool isPresident) {
     return Card(
-      child: Stack(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Informations personnelles',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 10),
-                ListTile(
-                  leading: const Icon(Icons.person),
-                  title: Text('${member?.firstname ?? ''} ${member?.lastname ?? ''}'),
-                  subtitle: const Text('Nom et prénom'),
-                ),
-                ListTile(
-                  leading: const Icon(Icons.email),
-                  title: Text(member?.email ?? 'Non renseigné'),
-                  subtitle: const Text('Email'),
-                ),
-                ListTile(
-                  leading: const Icon(Icons.phone),
-                  title: Text(member?.phone ?? 'Non renseigné'),
-                  subtitle: const Text('Téléphone'),
-                ),
-              ],
-            ),
+      elevation: 3,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Colors.white,
+              Colors.grey.shade50,
+            ],
           ),
-          Positioned(
-            top: 8,
-            right: 8,
-            child: IconButton(
-              icon: const Icon(Icons.edit, color: Colors.blue),
-              onPressed: () {
-                showDialog(
-                  context: context,
-                  builder: (BuildContext context) {
-                    return AlertDialog(
-                      title: const Text('Éditer les informations personnelles'),
-                      content: SingleChildScrollView(
-                        child: ListBody(
-                          children: <Widget>[
-                            TextField(
-                              decoration: const InputDecoration(
-                                labelText: 'Prénom',
-                                border: OutlineInputBorder(),
+        ),
+        child: Stack(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: AppColors.secondary.withAlpha(20),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(
+                          Icons.person,
+                          color: AppColors.secondary,
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      const Text(
+                        'Informations personnelles',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  // Avatar et nom
+                  Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 30,
+                        backgroundColor: isPresident
+                            ? AppColors.primary
+                            : AppColors.secondary,
+                        child: Text(
+                          _getInitials(member),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '${member?.firstname ?? ''} ${member?.lastname ?? ''}',
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textPrimary,
                               ),
-                              controller: TextEditingController(text: member?.firstname),
                             ),
-                            const SizedBox(height: 10),
-                            TextField(
-                              decoration: const InputDecoration(
-                                labelText: 'Nom',
-                                border: OutlineInputBorder(),
+                            const SizedBox(height: 4),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: isPresident
+                                    ? AppColors.primary.withAlpha(20)
+                                    : AppColors.secondary.withAlpha(20),
+                                borderRadius: BorderRadius.circular(12),
                               ),
-                              controller: TextEditingController(text: member?.lastname),
-                            ),
-                            const SizedBox(height: 10),
-                            TextField(
-                              decoration: const InputDecoration(
-                                labelText: 'Email',
-                                border: OutlineInputBorder(),
+                              child: Text(
+                                isPresident ? 'Président' : 'Membre',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: isPresident
+                                      ? AppColors.primary
+                                      : AppColors.secondary,
+                                ),
                               ),
-                              controller: TextEditingController(text: member?.email),
-                            ),
-                            const SizedBox(height: 10),
-                            TextField(
-                              decoration: const InputDecoration(
-                                labelText: 'Téléphone',
-                                border: OutlineInputBorder(),
-                              ),
-                              controller: TextEditingController(text: member?.phone),
                             ),
                           ],
                         ),
                       ),
-                      actions: <Widget>[
-                        TextButton(
-                          child: const Text('Annuler'),
-                          onPressed: () {
-                            Navigator.of(context).pop();
-                          },
-                        ),
-                        TextButton(
-                          child: const Text('Sauvegarder'),
-                          onPressed: () {
-                            final firstnameController = TextEditingController(text: member?.firstname);
-                            final lastnameController = TextEditingController(text: member?.lastname);
-                            final emailController = TextEditingController(text: member?.email);
-                            final phoneController = TextEditingController(text: member?.phone);
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  // Informations détaillées
+                  _buildInfoRow(
+                      Icons.email, 'Email', member?.email ?? 'Non renseigné'),
+                  const SizedBox(height: 12),
+                  _buildInfoRow(Icons.phone, 'Téléphone',
+                      member?.phone ?? 'Non renseigné'),
+                  const SizedBox(height: 12),
+                  _buildInfoRow(Icons.location_on, 'Pays',
+                      member?.country ?? 'Non renseigné'),
+                ],
+              ),
+            ),
+            Positioned(
+              top: 16,
+              right: 16,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: AppColors.primary,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: IconButton(
+                  icon: const Icon(Icons.edit, color: Colors.white, size: 20),
+                  onPressed: () => _showEditDialog(member),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
-                            final updatedMember = CreateMemberDto(
-                              firstname: firstnameController.text,
-                              lastname: lastnameController.text,
-                              email: emailController.text,
-                              phone: phoneController.text,
-                              country: member?.country ?? '',
-                              roles: member?.user?.roles ?? [],
-                            );
+  Widget _buildInfoRow(IconData icon, String label, String value) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(6),
+          decoration: BoxDecoration(
+            color: AppColors.tertiary.withAlpha(20),
+            borderRadius: BorderRadius.circular(6),
+          ),
+          child: Icon(
+            icon,
+            color: AppColors.tertiary,
+            size: 16,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: AppColors.textSecondary,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
 
-                            MemberService().updateMemberInfo(updatedMember);
-
-                            Navigator.of(context).pop();
-                          },
-                        ),
-                      ],
+  Widget _buildPasswordSection() {
+    return Card(
+      elevation: 3,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Colors.white,
+              Colors.grey.shade50,
+            ],
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withAlpha(20),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      Icons.lock,
+                      color: AppColors.primary,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const Text(
+                    'Sécurité',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withAlpha(10),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: AppColors.primary.withAlpha(30),
+                    width: 1,
+                  ),
+                ),
+                child: ListTile(
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  leading: Icon(
+                    Icons.key,
+                    color: AppColors.primary,
+                  ),
+                  title: const Text(
+                    'Modifier le mot de passe',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  subtitle: const Text(
+                    'Changer votre mot de passe de connexion',
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 12,
+                    ),
+                  ),
+                  trailing: Icon(
+                    Icons.arrow_forward_ios,
+                    color: AppColors.primary,
+                    size: 16,
+                  ),
+                  onTap: () {
+                    // TODO: Implémenter la modification du mot de passe
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Fonctionnalité à venir'),
+                        backgroundColor: AppColors.info,
+                      ),
                     );
                   },
-                );
-              },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLogoutSection() {
+    return Card(
+      elevation: 3,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Colors.white,
+              Colors.grey.shade50,
+            ],
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.error.withAlpha(20),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      Icons.logout,
+                      color: AppColors.error,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const Text(
+                    'Déconnexion',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: AppColors.error.withAlpha(10),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: AppColors.error.withAlpha(30),
+                    width: 1,
+                  ),
+                ),
+                child: ListTile(
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  leading: Icon(
+                    Icons.exit_to_app,
+                    color: AppColors.error,
+                  ),
+                  title: const Text(
+                    'Se déconnecter',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  subtitle: const Text(
+                    'Fermer votre session et retourner à l\'écran de connexion',
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 12,
+                    ),
+                  ),
+                  trailing: Icon(
+                    Icons.arrow_forward_ios,
+                    color: AppColors.error,
+                    size: 16,
+                  ),
+                  onTap: () => _showLogoutConfirmation(),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _getInitials(Member? member) {
+    if (member?.firstname?.isNotEmpty == true &&
+        member?.lastname?.isNotEmpty == true) {
+      return '${member!.firstname!.substring(0, 1)}${member.lastname!.substring(0, 1)}'
+          .toUpperCase();
+    }
+    return '?';
+  }
+
+  void _showEditDialog(Member? member) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Éditer les informations personnelles'),
+          content: Form(
+            key: _formKey,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildStyledTextField(
+                    controller: _firstnameController,
+                    labelText: 'Prénom',
+                    icon: Icons.person,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Le prénom est requis';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  _buildStyledTextField(
+                    controller: _lastnameController,
+                    labelText: 'Nom',
+                    icon: Icons.person_outline,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Le nom est requis';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  _buildStyledTextField(
+                    controller: _emailController,
+                    labelText: 'Email',
+                    icon: Icons.email,
+                    keyboardType: TextInputType.emailAddress,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'L\'email est requis';
+                      }
+                      if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                          .hasMatch(value)) {
+                        return 'Veuillez entrer un email valide';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  _buildStyledTextField(
+                    controller: _phoneController,
+                    labelText: 'Téléphone',
+                    icon: Icons.phone,
+                    keyboardType: TextInputType.phone,
+                  ),
+                  const SizedBox(height: 16),
+                  _buildStyledTextField(
+                    controller: _countryController,
+                    labelText: 'Pays',
+                    icon: Icons.location_on,
+                  ),
+                ],
+              ),
             ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Annuler'),
+            ),
+            FilledButton(
+              onPressed: () => _saveProfile(),
+              child: const Text('Sauvegarder'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildStyledTextField({
+    required TextEditingController controller,
+    required String labelText,
+    required IconData icon,
+    TextInputType? keyboardType,
+    String? Function(String?)? validator,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.shade200,
+            blurRadius: 4,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildPresidentSection(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Administration',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+      child: TextFormField(
+        controller: controller,
+        keyboardType: keyboardType,
+        validator: validator,
+        decoration: InputDecoration(
+          labelText: labelText,
+          prefixIcon: Container(
+            margin: const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppColors.secondary.withAlpha(20),
+              borderRadius: BorderRadius.circular(8),
             ),
-            const SizedBox(height: 10),
-            ListTile(
-              leading: const Icon(Icons.group),
-              title: const Text('Gestion des utilisateurs'),
-              onTap: () {
-                // Navigation vers la gestion des utilisateurs
-              },
+            child: Icon(
+              icon,
+              color: AppColors.secondary,
+              size: 20,
             ),
-            ListTile(
-              leading: const Icon(Icons.settings),
-              title: const Text('Configuration de la tontine'),
-              onTap: () {
-                // Navigation vers la configuration de la tontine
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.analytics),
-              title: const Text('Statistiques'),
-              onTap: () {
-                // Navigation vers les statistiques
-              },
-            ),
-
-           
-          ],
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: Colors.grey.shade300),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: Colors.grey.shade300),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: AppColors.primary, width: 2),
+          ),
+          filled: true,
+          fillColor: Colors.white,
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         ),
       ),
     );
   }
 
-  Widget _buildCommonOptions(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Options',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 10),
-            ListTile(
-              leading: const Icon(Icons.lock),
-              title: const Text('Modifier le mot de passe'),
-              onTap: () {
-                // Navigation vers la modification du mot de passe
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.edit),
-              title: const Text('Modifier mes informations'),
-              onTap: () {
-                // Navigation vers la modification des informations
-              },
-            ),
-          ],
-        ),
+  Future<void> _saveProfile() async {
+    if (_formKey.currentState!.validate()) {
+      try {
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+        final currentMember = authProvider.currentUser;
+
+        final updatedMember = CreateMemberDto(
+          firstname: _firstnameController.text,
+          lastname: _lastnameController.text,
+          email: _emailController.text,
+          phone: _phoneController.text,
+          country: _countryController.text,
+          roles: currentMember?.user?.roles ?? [],
+        );
+
+        await MemberService().updateMemberInfo(updatedMember);
+
+        if (!mounted) return;
+        Navigator.of(context).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Informations mises à jour avec succès'),
+            backgroundColor: AppColors.success,
+          ),
+        );
+      } catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Erreur lors de la mise à jour'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+
+  void _showLogoutConfirmation() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) => AlertDialog(
+        title: const Text('Confirmation de déconnexion'),
+        content: const Text('Êtes-vous sûr de vouloir vous déconnecter ?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Annuler'),
+          ),
+          FilledButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              // TODO: Implémenter la déconnexion
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Déconnexion à implémenter'),
+                  backgroundColor: AppColors.info,
+                ),
+              );
+            },
+            style: FilledButton.styleFrom(backgroundColor: AppColors.error),
+            child: const Text('Déconnexion'),
+          ),
+        ],
       ),
     );
   }

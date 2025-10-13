@@ -128,11 +128,14 @@ class _CashflowViewState extends State<CashflowView> {
                 ],
               ),
               const SizedBox(height: 16),
-              ...filteredDeposits.map((deposit) => DepositListItem(
-                    deposit: deposit,
-                    tontineProvider: tontineProvider,
-                    tontineId: currentTontine!.id,
-                  )),
+              if (filteredDeposits.isEmpty)
+                const Center(child: Text('Aucun mouvement trouvé'))
+              else
+                ...filteredDeposits.map((deposit) => DepositListItem(
+                      deposit: deposit,
+                      tontineProvider: tontineProvider,
+                      tontineId: currentTontine!.id,
+                    )),
             ],
           ),
           floatingActionButton: FloatingActionButton(
@@ -184,14 +187,23 @@ class _CashflowViewState extends State<CashflowView> {
 
   void _showAddDeposit(
       BuildContext context, TontineProvider tontineProvider, int tontineId) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return const EditMouvement();
-      },
-    ).then((_) {
-      tontineProvider.loadTontines();
-      tontineProvider.loadDeposits(tontineId);
-    });
+    if (tontineProvider.canAddDeposit()) {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return const EditMouvement();
+        },
+      ).then((_) {
+        tontineProvider.loadTontines();
+        tontineProvider.loadDeposits(tontineId);
+      });
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Veuillez ajouter des membres à la tontine."),
+          backgroundColor: Colors.orange,
+        ),
+      );
+    }
   }
 }

@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import '../screen/casflow/cashflow_view.dart';
 import '../screen/event/event_view.dart';
 import '../screen/member/account_view.dart';
+import '../screen/member/member_view.dart';
+import '../screen/dashboard_view.dart';
+import '../theme/app_theme.dart';
 
 class MenuWidget extends StatelessWidget {
   const MenuWidget({super.key});
@@ -25,35 +28,56 @@ class MenuWidget extends StatelessWidget {
             bottom: 24,
             child: FloatingActionButton(
               heroTag: 'menu_fab',
-              backgroundColor: Colors.blueAccent,
+              backgroundColor: AppColors.primary,
               elevation: 4,
               onPressed: () {
-                Navigator.pushReplacementNamed(context, AccountView.routeName);
+                Navigator.pushNamed(context, DashboardView.routeName);
               },
-              child: const Icon(Icons.people_alt_outlined,
-                  color: Colors.white, size: 32),
+              child: const Icon(Icons.dashboard, color: Colors.white, size: 32),
             ),
           ),
           // Icône Cashflow à gauche
           Positioned(
-            left: 32,
+            left: 24,
             bottom: 18,
             child: IconButton(
-              icon: const Icon(Icons.balance, color: Colors.white, size: 32),
+              icon: const Icon(Icons.balance, color: Colors.white, size: 28),
               onPressed: () {
-                Navigator.pushReplacementNamed(context, CashflowView.routeName);
+                Navigator.pushNamed(context, CashflowView.routeName);
+              },
+            ),
+          ),
+          // Icône Members (gestion des membres)
+          Positioned(
+            left: 80,
+            bottom: 18,
+            child: IconButton(
+              icon: const Icon(Icons.people, color: Colors.white, size: 28),
+              onPressed: () {
+                Navigator.pushNamed(context, MemberView.routeName);
+              },
+            ),
+          ),
+          // Icône Events
+          Positioned(
+            right: 80,
+            bottom: 18,
+            child: IconButton(
+              icon: const Icon(Icons.event_available,
+                  color: Colors.white, size: 28),
+              onPressed: () {
+                Navigator.pushNamed(context, EventView.routeName);
               },
             ),
           ),
           // Icône Account à droite
           Positioned(
-            right: 32,
+            right: 24,
             bottom: 18,
             child: IconButton(
-              icon: const Icon(Icons.event_available,
-                  color: Colors.white, size: 32),
+              icon: const Icon(Icons.person, color: Colors.white, size: 28),
               onPressed: () {
-                Navigator.pushReplacementNamed(context, EventView.routeName);
+                Navigator.pushNamed(context, AccountView.routeName);
               },
             ),
           ),
@@ -67,7 +91,7 @@ class _FooterPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.amber[900]!
+      ..color = AppColors.primary
       ..style = PaintingStyle.fill;
     final path = Path();
     // Arrondi à gauche

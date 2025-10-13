@@ -21,6 +21,7 @@ import 'screen/notification/notification_view.dart';
 import 'package:tontine_v2/src/services/local_notification_service.dart';
 import 'screen/member/member_view.dart';
 import 'localization/app_localizations.dart';
+import 'theme/app_theme.dart';
 
 /// The Widget that configures your application.
 class MyApp extends StatefulWidget {
@@ -94,47 +95,7 @@ class _MyAppState extends State<MyApp> {
           // Define a light and dark color theme. Then, read the user's
           // preferred ThemeMode (light, dark, or system default) from the
           // SettingsController to display the correct theme.
-          theme: ThemeData(
-            primarySwatch: Colors.blue,
-            primaryColor: Colors.blue[400],
-            primaryColorDark: Colors.blue[700],
-            primaryColorLight: Colors.blue[200],
-            colorScheme: ColorScheme.fromSwatch().copyWith(
-              secondary: Colors.deepOrange,
-              primary: Colors.blue,
-              tertiary: Colors.green[300],
-              error: Colors.red,
-            ),
-            filledButtonTheme: const FilledButtonThemeData(
-              style: ButtonStyle(
-                backgroundColor: WidgetStatePropertyAll<Color>(Colors.orange),
-                foregroundColor: WidgetStatePropertyAll<Color>(Colors.white),
-              ),
-            ),
-            outlinedButtonTheme: const OutlinedButtonThemeData(
-              style: ButtonStyle(
-                side: WidgetStatePropertyAll<BorderSide>(
-                  BorderSide(color: Colors.orange),
-                ),
-                foregroundColor: WidgetStatePropertyAll<Color>(Colors.indigo),
-              ),
-            ),
-            elevatedButtonTheme: ElevatedButtonThemeData(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.deepOrange,
-                foregroundColor: Colors.white,
-                minimumSize: const Size.fromHeight(50),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-            ),
-            textButtonTheme: TextButtonThemeData(
-              style: TextButton.styleFrom(
-                foregroundColor: Colors.deepOrange,
-              ),
-            ),
-          ),
+          theme: AppTheme.lightTheme,
           darkTheme: ThemeData.light(),
           themeMode: widget.settingsController.themeMode,
 

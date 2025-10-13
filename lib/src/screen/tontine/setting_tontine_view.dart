@@ -6,6 +6,9 @@ import '../../providers/models/enum/type_mouvement.dart';
 import '../../providers/models/tontine.dart';
 import '../../providers/tontine_provider.dart';
 import '../services/dto/tontine_dto.dart';
+import '../../widgets/circular_order_card.dart';
+import '../../theme/app_theme.dart';
+import '../../providers/models/enum/currency.dart';
 import 'package:intl/intl.dart';
 
 class SettingTontineView extends StatefulWidget {
@@ -50,45 +53,271 @@ class _SettingTontineViewState extends State<SettingTontineView> {
     _parts = List.from(tontine.config.parts ?? []);
   }
 
+  Widget _buildStyledTextField({
+    required String initialValue,
+    required String labelText,
+    required IconData icon,
+    TextInputType? keyboardType,
+    String? Function(String?)? validator,
+    void Function(String?)? onSaved,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.shade200,
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: TextFormField(
+        initialValue: initialValue,
+        keyboardType: keyboardType,
+        validator: validator,
+        onSaved: onSaved,
+        decoration: InputDecoration(
+          labelText: labelText,
+          prefixIcon: Container(
+            margin: const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppColors.secondary.withAlpha(20),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(
+              icon,
+              color: AppColors.secondary,
+              size: 20,
+            ),
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: Colors.grey.shade300),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: Colors.grey.shade300),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: AppColors.primary, width: 2),
+          ),
+          filled: true,
+          fillColor: Colors.white,
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStyledDropdown<T>({
+    required T value,
+    required String labelText,
+    required IconData icon,
+    required List<DropdownMenuItem<T>> items,
+    required void Function(T?) onChanged,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.shade200,
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: DropdownButtonFormField<T>(
+        initialValue: value,
+        decoration: InputDecoration(
+          labelText: labelText,
+          prefixIcon: Container(
+            margin: const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppColors.secondary.withAlpha(20),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(
+              icon,
+              color: AppColors.secondary,
+              size: 20,
+            ),
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: Colors.grey.shade300),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: Colors.grey.shade300),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: AppColors.primary, width: 2),
+          ),
+          filled: true,
+          fillColor: Colors.white,
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        ),
+        items: items,
+        onChanged: onChanged,
+      ),
+    );
+  }
+
   Widget _buildRateMapSection() {
     return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Plages de taux',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+      elevation: 3,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Colors.white,
+              Colors.grey.shade50,
+            ],
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: AppColors.secondary.withAlpha(20),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(
+                          Icons.trending_up,
+                          color: AppColors.secondary,
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      const Text(
+                        'Plages de taux',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF2D3748),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.add),
-                  onPressed: () => _showRateMapDialog(),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            ..._rateMaps.map((rateMap) => Card(
-                  child: ListTile(
-                    title: Text('${rateMap.minAmount} - ${rateMap.maxAmount}'),
-                    subtitle: Text('Taux: ${rateMap.rate}%'),
-                    trailing: IconButton(
-                      icon: const Icon(Icons.delete),
-                      onPressed: () {
-                        setState(() {
-                          _rateMaps.remove(rateMap);
-                        });
-                      },
+                  Container(
+                    decoration: BoxDecoration(
+                      color: AppColors.secondary,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: IconButton(
+                      icon: const Icon(Icons.add, color: Colors.white),
+                      onPressed: () => _showRateMapDialog(),
                     ),
                   ),
-                )),
-          ],
+                ],
+              ),
+              const SizedBox(height: 20),
+              if (_rateMaps.isEmpty)
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Center(
+                    child: Text(
+                      'Aucune plage de taux configurée',
+                      style: TextStyle(
+                        color: Colors.grey,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                )
+              else
+                ..._rateMaps.map((rateMap) => Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.grey.shade200),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.shade200,
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        leading: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: AppColors.tertiary.withAlpha(30),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(
+                            Icons.attach_money,
+                            color: AppColors.tertiary,
+                            size: 20,
+                          ),
+                        ),
+                        title: Text(
+                          '${rateMap.minAmount.toStringAsFixed(0)} - ${rateMap.maxAmount.toStringAsFixed(0)} FCFA',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF2D3748),
+                          ),
+                        ),
+                        subtitle: Text(
+                          'Taux: ${rateMap.rate}%',
+                          style: TextStyle(
+                            color: Colors.grey.shade600,
+                            fontSize: 14,
+                          ),
+                        ),
+                        trailing: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.red.shade50,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: IconButton(
+                            icon: Icon(
+                              Icons.delete_outline,
+                              color: Colors.red.shade600,
+                              size: 20,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _rateMaps.remove(rateMap);
+                              });
+                            },
+                          ),
+                        ),
+                      ),
+                    )),
+            ],
+          ),
         ),
       ),
     );
@@ -160,30 +389,95 @@ class _SettingTontineViewState extends State<SettingTontineView> {
   }
 
   Widget _buildPartOrderSection(TontineProvider tontineProvider) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            Text(
-              'Ordre des parts',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+    return Column(
+      children: [
+        Card(
+          elevation: 3,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Colors.white,
+                  Colors.grey.shade50,
+                ],
+              ),
             ),
-            FilledButton(
-              onPressed: () => _showAddPartDialog(
-                  context, tontineProvider.currentTontine!, _parts),
-              child: const Text('Ajouter une part'),
-            ),
-            const SizedBox(height: 16),
-            ..._parts.map((part) => Card(
-                  child: ListTile(
-                    title: Text(part.member.firstname ?? ''),
-                    subtitle: Text(part.order.toString()),
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withAlpha(20),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Icon(
+                              Icons.people_alt,
+                              color: AppColors.primary,
+                              size: 20,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          const Text(
+                            'Ordre des parts',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF2D3748),
+                            ),
+                          ),
+                        ],
+                      ),
+                      Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [AppColors.primary, AppColors.primaryDark],
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: ElevatedButton.icon(
+                          onPressed: () => _showAddPartDialog(
+                              context, tontineProvider.currentTontine!, _parts),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.transparent,
+                            shadowColor: Colors.transparent,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
+                          ),
+                          icon: const Icon(Icons.add,
+                              color: Colors.white, size: 18),
+                          label: const Text(
+                            'Ajouter une part',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                )),
-          ],
+                ],
+              ),
+            ),
+          ),
         ),
-      ),
+        const SizedBox(height: 16),
+        CircularOrderGrid(parts: _parts),
+      ],
     );
   }
 
@@ -192,6 +486,7 @@ class _SettingTontineViewState extends State<SettingTontineView> {
     final selectedMemberId = ValueNotifier<int?>(null);
     final selectedOrder = ValueNotifier<int?>(null);
     final selectedDate = ValueNotifier<DateTime?>(null);
+    final formKey = GlobalKey<FormState>();
 
     final now = DateTime.now();
     final firstDate = now;
@@ -217,82 +512,122 @@ class _SettingTontineViewState extends State<SettingTontineView> {
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Ajouter une part'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Sélection de l'ordre
-              ValueListenableBuilder<int?>(
-                valueListenable: selectedOrder,
-                builder: (context, value, child) {
-                  return DropdownButtonFormField<int>(
-                    initialValue: value,
-                    decoration: const InputDecoration(
-                      labelText: 'Ordre de passage',
-                      hintText: 'Sélectionnez l\'ordre',
-                    ),
-                    items: availableOrders.map((order) {
-                      return DropdownMenuItem<int>(
-                        value: order,
-                        child: Text('Ordre $order'),
-                      );
-                    }).toList(),
-                    onChanged: (newValue) {
-                      selectedOrder.value = newValue;
-                    },
-                  );
-                },
-              ),
-              const SizedBox(height: 16),
-              // Sélection du membre
-              ValueListenableBuilder<int?>(
-                valueListenable: selectedMemberId,
-                builder: (context, value, child) {
-                  return DropdownButtonFormField<int>(
-                    initialValue: value,
-                    decoration: const InputDecoration(
-                      labelText: 'Membre',
-                      hintText: 'Sélectionnez un membre',
-                    ),
-                    items: availableMembers.map((member) {
-                      return DropdownMenuItem<int>(
-                        value: member.id,
+          content: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Sélection de l'ordre
+                ValueListenableBuilder<int?>(
+                  valueListenable: selectedOrder,
+                  builder: (context, value, child) {
+                    return DropdownButtonFormField<int>(
+                      initialValue: value,
+                      decoration: InputDecoration(
+                        labelText: 'Ordre de passage',
+                        hintText: 'Sélectionnez l\'ordre',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: const BorderSide(color: Colors.orange),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: const BorderSide(color: Colors.orange),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide:
+                              const BorderSide(color: Colors.orange, width: 2),
+                        ),
+                      ),
+                      items: availableOrders.map((order) {
+                        return DropdownMenuItem<int>(
+                          value: order,
+                          child: Text('Ordre $order'),
+                        );
+                      }).toList(),
+                      validator: (value) {
+                        if (value == null) {
+                          return 'Veuillez sélectionner un ordre';
+                        }
+                        return null;
+                      },
+                      onChanged: (newValue) {
+                        selectedOrder.value = newValue;
+                      },
+                    );
+                  },
+                ),
+                const SizedBox(height: 16),
+                // Sélection du membre
+                ValueListenableBuilder<int?>(
+                  valueListenable: selectedMemberId,
+                  builder: (context, value, child) {
+                    return DropdownButtonFormField<int>(
+                      initialValue: value,
+                      decoration: const InputDecoration(
+                        labelText: 'Membre',
+                        hintText: 'Sélectionnez un membre',
+                      ),
+                      items: availableMembers.map((member) {
+                        return DropdownMenuItem<int>(
+                          value: member.id,
+                          child: Text(
+                              '${member.firstname} ${member.lastname}'.trim()),
+                        );
+                      }).toList(),
+                      validator: (value) {
+                        if (value == null) {
+                          return 'Veuillez sélectionner un membre';
+                        }
+                        return null;
+                      },
+                      onChanged: (newValue) {
+                        selectedMemberId.value = newValue;
+                      },
+                    );
+                  },
+                ),
+                const SizedBox(height: 16),
+                // Sélection de la date
+                ValueListenableBuilder<DateTime?>(
+                  valueListenable: selectedDate,
+                  builder: (context, value, child) {
+                    return InkWell(
+                      onTap: () async {
+                        final picked = await showDatePicker(
+                          context: context,
+                          initialDate: value ?? now,
+                          firstDate: firstDate,
+                          lastDate: lastDate,
+                        );
+                        if (picked != null) {
+                          selectedDate.value = picked;
+                        }
+                      },
+                      child: InputDecorator(
+                        decoration: InputDecoration(
+                          labelText: 'Date de passage',
+                          hintText: 'Sélectionner une date',
+                          suffixIcon: const Icon(Icons.calendar_today),
+                          errorText: value == null
+                              ? 'Veuillez sélectionner une date'
+                              : null,
+                        ),
                         child: Text(
-                            '${member.firstname} ${member.lastname}'.trim()),
-                      );
-                    }).toList(),
-                    onChanged: (newValue) {
-                      selectedMemberId.value = newValue;
-                    },
-                  );
-                },
-              ),
-              const SizedBox(height: 16),
-              // Sélection de la date
-              ValueListenableBuilder<DateTime?>(
-                valueListenable: selectedDate,
-                builder: (context, value, child) {
-                  return ListTile(
-                    title: Text(
-                      value != null
-                          ? DateFormat('dd/MM/yyyy').format(value)
-                          : 'Sélectionner une date',
-                    ),
-                    trailing: const Icon(Icons.calendar_today),
-                    onTap: () async {
-                      final picked = await showDatePicker(
-                        context: context,
-                        initialDate: value ?? now,
-                        firstDate: firstDate,
-                        lastDate: lastDate,
-                      );
-                      if (picked != null) {
-                        selectedDate.value = picked;
-                      }
-                    },
-                  );
-                },
-              ),
-            ],
+                          value != null
+                              ? DateFormat('dd/MM/yyyy').format(value)
+                              : 'Sélectionner une date',
+                          style: TextStyle(
+                            color: value == null ? Colors.grey : null,
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
           ),
           actions: [
             TextButton(
@@ -301,8 +636,10 @@ class _SettingTontineViewState extends State<SettingTontineView> {
             ),
             FilledButton(
               onPressed: () async {
-                if (selectedMemberId.value != null &&
-                    selectedOrder.value != null) {
+                if (formKey.currentState!.validate() &&
+                    selectedMemberId.value != null &&
+                    selectedOrder.value != null &&
+                    selectedDate.value != null) {
                   try {
                     final tontineProvider =
                         Provider.of<TontineProvider>(context, listen: false);
@@ -332,6 +669,10 @@ class _SettingTontineViewState extends State<SettingTontineView> {
                   }
                 }
               },
+              style: FilledButton.styleFrom(
+                backgroundColor: Colors.orange,
+                foregroundColor: Colors.white,
+              ),
               child: const Text('Ajouter'),
             ),
           ],
@@ -348,10 +689,12 @@ class _SettingTontineViewState extends State<SettingTontineView> {
         if (currentTontine == null) return const SizedBox();
 
         return Scaffold(
+          backgroundColor: AppColors.background,
           appBar: AppBar(
             title: const Text('Paramètres de la tontine'),
-            backgroundColor: Colors.transparent,
+            backgroundColor: AppColors.primary,
             elevation: 0,
+            iconTheme: const IconThemeData(color: Colors.white),
           ),
           body: Form(
             key: _formKey,
@@ -359,178 +702,285 @@ class _SettingTontineViewState extends State<SettingTontineView> {
               padding: const EdgeInsets.all(16),
               children: [
                 Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Paramètres des prêts',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
+                  elevation: 3,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16)),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          Colors.white,
+                          Colors.grey.shade50,
+                        ],
+                      ),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: AppColors.secondary.withAlpha(20),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Icon(
+                                  Icons.account_balance,
+                                  color: AppColors.secondary,
+                                  size: 20,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              const Text(
+                                'Paramètres des prêts',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF2D3748),
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                        const SizedBox(height: 16),
-                        TextFormField(
-                          initialValue: _defaultLoanRate.toString(),
-                          decoration: const InputDecoration(
+                          const SizedBox(height: 20),
+                          // Affichage de la monnaie
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: AppColors.tertiary.withAlpha(10),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: AppColors.tertiary.withAlpha(30),
+                                width: 1,
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.tertiary.withAlpha(20),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Icon(
+                                    Icons.monetization_on,
+                                    color: AppColors.tertiary,
+                                    size: 20,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                const Text(
+                                  'Monnaie de la tontine: ',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
+                                Text(
+                                  currentTontine.cashFlow.currency.displayName,
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          _buildStyledTextField(
+                            initialValue: _defaultLoanRate.toString(),
                             labelText: 'Taux d\'intérêt par défaut (%)',
+                            icon: Icons.percent,
+                            keyboardType: TextInputType.number,
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Ce champ est requis';
+                              }
+                              final rate = double.tryParse(value);
+                              if (rate == null || rate < 0) {
+                                return 'Veuillez entrer un taux valide';
+                              }
+                              return null;
+                            },
+                            onSaved: (value) {
+                              _defaultLoanRate = double.parse(value!);
+                            },
                           ),
-                          keyboardType: TextInputType.number,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Ce champ est requis';
-                            }
-                            final rate = double.tryParse(value);
-                            if (rate == null || rate < 0) {
-                              return 'Veuillez entrer un taux valide';
-                            }
-                            return null;
-                          },
-                          onSaved: (value) {
-                            _defaultLoanRate = double.parse(value!);
-                          },
-                        ),
-                        const SizedBox(height: 8),
-                        TextFormField(
-                          initialValue: _defaultLoanDuration.toString(),
-                          decoration: const InputDecoration(
+                          const SizedBox(height: 16),
+                          _buildStyledTextField(
+                            initialValue: _defaultLoanDuration.toString(),
                             labelText: 'Durée par défaut (jours)',
+                            icon: Icons.schedule,
+                            keyboardType: TextInputType.number,
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Ce champ est requis';
+                              }
+                              final duration = int.tryParse(value);
+                              if (duration == null || duration < 1) {
+                                return 'Veuillez entrer une durée valide';
+                              }
+                              return null;
+                            },
+                            onSaved: (value) {
+                              _defaultLoanDuration = int.parse(value!);
+                            },
                           ),
-                          keyboardType: TextInputType.number,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Ce champ est requis';
-                            }
-                            final duration = int.tryParse(value);
-                            if (duration == null || duration < 1) {
-                              return 'Veuillez entrer une durée valide';
-                            }
-                            return null;
-                          },
-                          onSaved: (value) {
-                            _defaultLoanDuration = int.parse(value!);
-                          },
-                        ),
-                        const SizedBox(height: 8),
-                        TextFormField(
-                          initialValue: _minLoanAmount.toString(),
-                          decoration: const InputDecoration(
+                          const SizedBox(height: 16),
+                          _buildStyledTextField(
+                            initialValue: _minLoanAmount.toString(),
                             labelText: 'Montant minimum de prêt',
+                            icon: Icons.attach_money,
+                            keyboardType: TextInputType.number,
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Ce champ est requis';
+                              }
+                              final amount = double.tryParse(value);
+                              if (amount == null || amount < 0) {
+                                return 'Veuillez entrer un montant valide';
+                              }
+                              return null;
+                            },
+                            onSaved: (value) {
+                              _minLoanAmount = double.parse(value!);
+                            },
                           ),
-                          keyboardType: TextInputType.number,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Ce champ est requis';
-                            }
-                            final amount = double.tryParse(value);
-                            if (amount == null || amount < 0) {
-                              return 'Veuillez entrer un montant valide';
-                            }
-                            return null;
-                          },
-                          onSaved: (value) {
-                            _minLoanAmount = double.parse(value!);
-                          },
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
                 const SizedBox(height: 16),
                 Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Paramètres des mouvements',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
+                  elevation: 3,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16)),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          Colors.white,
+                          Colors.grey.shade50,
+                        ],
+                      ),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: AppColors.tertiary.withAlpha(20),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Icon(
+                                  Icons.sync,
+                                  color: AppColors.tertiary,
+                                  size: 20,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              const Text(
+                                'Paramètres des mouvements',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF2D3748),
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                        const SizedBox(height: 16),
-                        DropdownButtonFormField<LoopPeriod>(
-                          initialValue: _loopPeriod,
-                          decoration: const InputDecoration(
+                          const SizedBox(height: 20),
+                          _buildStyledDropdown<LoopPeriod>(
+                            value: _loopPeriod,
                             labelText: 'Périodicité',
+                            icon: Icons.calendar_today,
+                            items: LoopPeriod.values.map((period) {
+                              return DropdownMenuItem(
+                                value: period,
+                                child: Text(period.displayName),
+                              );
+                            }).toList(),
+                            onChanged: (value) {
+                              setState(() {
+                                _loopPeriod = value!;
+                              });
+                            },
                           ),
-                          items: LoopPeriod.values.map((period) {
-                            return DropdownMenuItem(
-                              value: period,
-                              child: Text(period.displayName),
-                            );
-                          }).toList(),
-                          onChanged: (value) {
-                            setState(() {
-                              _loopPeriod = value!;
-                            });
-                          },
-                        ),
-                        const SizedBox(height: 8),
-                        DropdownButtonFormField<MovementType>(
-                          initialValue: _movementType,
-                          decoration: const InputDecoration(
+                          const SizedBox(height: 16),
+                          _buildStyledDropdown<MovementType>(
+                            value: _movementType,
                             labelText: 'Type de mouvement',
+                            icon: Icons.swap_horiz,
+                            items: MovementType.values.map((type) {
+                              return DropdownMenuItem(
+                                value: type,
+                                child: Text(type.displayName),
+                              );
+                            }).toList(),
+                            onChanged: (value) {
+                              setState(() {
+                                _movementType = value!;
+                              });
+                            },
                           ),
-                          items: MovementType.values.map((type) {
-                            return DropdownMenuItem(
-                              value: type,
-                              child: Text(type.displayName),
-                            );
-                          }).toList(),
-                          onChanged: (value) {
-                            setState(() {
-                              _movementType = value!;
-                            });
-                          },
-                        ),
-                        const SizedBox(height: 8),
-                        TextFormField(
-                          initialValue: _countPersonPerMovement.toString(),
-                          decoration: const InputDecoration(
+                          const SizedBox(height: 16),
+                          _buildStyledTextField(
+                            initialValue: _countPersonPerMovement.toString(),
                             labelText: 'Nombre de personnes par mouvement',
+                            icon: Icons.people,
+                            keyboardType: TextInputType.number,
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Ce champ est requis';
+                              }
+                              final count = int.tryParse(value);
+                              if (count == null || count < 1) {
+                                return 'Veuillez entrer un nombre valide';
+                              }
+                              return null;
+                            },
+                            onSaved: (value) {
+                              _countPersonPerMovement = int.parse(value!);
+                            },
                           ),
-                          keyboardType: TextInputType.number,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Ce champ est requis';
-                            }
-                            final count = int.tryParse(value);
-                            if (count == null || count < 1) {
-                              return 'Veuillez entrer un nombre valide';
-                            }
-                            return null;
-                          },
-                          onSaved: (value) {
-                            _countPersonPerMovement = int.parse(value!);
-                          },
-                        ),
-                        const SizedBox(height: 8),
-                        TextFormField(
-                          initialValue: _countMaxMember.toString(),
-                          decoration: const InputDecoration(
+                          const SizedBox(height: 16),
+                          _buildStyledTextField(
+                            initialValue: _countMaxMember.toString(),
                             labelText: 'Nombre maximum de membres',
+                            icon: Icons.group,
+                            keyboardType: TextInputType.number,
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Ce champ est requis';
+                              }
+                              final count = int.tryParse(value);
+                              if (count == null || count < 1) {
+                                return 'Veuillez entrer un nombre valide';
+                              }
+                              return null;
+                            },
+                            onSaved: (value) {
+                              _countMaxMember = int.parse(value!);
+                            },
                           ),
-                          keyboardType: TextInputType.number,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Ce champ est requis';
-                            }
-                            final count = int.tryParse(value);
-                            if (count == null || count < 1) {
-                              return 'Veuillez entrer un nombre valide';
-                            }
-                            return null;
-                          },
-                          onSaved: (value) {
-                            _countMaxMember = int.parse(value!);
-                          },
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -541,46 +991,90 @@ class _SettingTontineViewState extends State<SettingTontineView> {
               ],
             ),
           ),
-          bottomNavigationBar: BottomAppBar(
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: ElevatedButton(
-                onPressed: () async {
-                  if (_formKey.currentState!.validate()) {
-                    _formKey.currentState!.save();
-                    try {
-                      await tontineProvider.updateTontineConfig(
-                          currentTontine.id,
-                          CreateConfigTontineDto(
-                            defaultLoanRate: _defaultLoanRate,
-                            defaultLoanDuration: _defaultLoanDuration,
-                            loopPeriod: _loopPeriod,
-                            minLoanAmount: _minLoanAmount,
-                            countPersonPerMovement: _countPersonPerMovement,
-                            movementType: _movementType,
-                            rateMaps: _rateMaps,
-                            countMaxMember: _countMaxMember,
-                          ));
-                      await tontineProvider.loadTontines();
-                      if (!mounted) return;
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Paramètres mis à jour avec succès'),
-                          backgroundColor: Colors.green,
-                        ),
-                      );
-                      Navigator.of(context).pop();
-                    } catch (e) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Erreur lors de la mise à jour'),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
+          bottomNavigationBar: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.shade300,
+                  blurRadius: 10,
+                  offset: const Offset(0, -2),
+                ),
+              ],
+            ),
+            child: SafeArea(
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [AppColors.primary, AppColors.primaryDark],
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: ElevatedButton(
+                  onPressed: () async {
+                    if (_formKey.currentState!.validate()) {
+                      _formKey.currentState!.save();
+                      try {
+                        await tontineProvider.updateTontineConfig(
+                            currentTontine.id,
+                            CreateConfigTontineDto(
+                              defaultLoanRate: _defaultLoanRate,
+                              defaultLoanDuration: _defaultLoanDuration,
+                              loopPeriod: _loopPeriod,
+                              minLoanAmount: _minLoanAmount,
+                              countPersonPerMovement: _countPersonPerMovement,
+                              movementType: _movementType,
+                              rateMaps: _rateMaps,
+                              countMaxMember: _countMaxMember,
+                            ));
+                        await tontineProvider.loadTontines();
+                        if (!mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Paramètres mis à jour avec succès'),
+                            backgroundColor: Colors.green,
+                          ),
+                        );
+                        Navigator.of(context).pop();
+                      } catch (e) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Erreur lors de la mise à jour'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
                     }
-                  }
-                },
-                child: const Text('Enregistrer'),
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.save,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                      SizedBox(width: 8),
+                      Text(
+                        'Enregistrer les paramètres',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),

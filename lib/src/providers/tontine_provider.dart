@@ -8,6 +8,7 @@ import 'models/deposit.dart';
 import 'models/event.dart';
 import 'models/sanction.dart';
 import 'models/tontine.dart';
+import 'models/enum/loop_period.dart';
 import '../screen/services/dto/deposit_dto.dart';
 import '../screen/services/dto/member_dto.dart';
 import '../screen/services/dto/rapport_dto.dart';
@@ -77,7 +78,7 @@ class TontineProvider extends ChangeNotifier {
         _currentTontine = _tontines[index];
         notifyListeners();
 
-        // Sauvegarder l'ID de la tontine sélectionnée
+        _logger.info('Saving selected tontine : $tontine');
         await _storage.write(KEY_SELECTED_TONTINE_ID, tontine.id);
       }
     } catch (e) {
@@ -327,5 +328,82 @@ class TontineProvider extends ChangeNotifier {
       _logger.severe('Error adding part: $e');
       rethrow;
     }
+  }
+
+  bool canAddDeposit() {
+    final config = _currentTontine?.config;
+    return _currentTontine?.members.length == config?.countMaxMember &&
+        config?.parts?.isNotEmpty == true;
+  }
+
+  /// Retourne l'ordre actuel et le suivant basé sur la période de boucle
+  Map<String, PartOrder?> getCurrentAndNextPartOrders() {
+    if (_currentTontine?.config.parts == null ||
+        _currentTontine!.config.parts!.isEmpty) {
+      return {'current': null, 'next': null};
+    }
+
+    final now = DateTime.now();
+    final parts = _currentTontine!.config.parts!;
+    final loopPeriod = _currentTontine!.config.loopPeriod;
+
+    // Trier les parts par ordre
+    final sortedParts = List<PartOrder>.from(parts)
+      ..sort((a, b) => a.order.compareTo(b.order));
+
+    PartOrder? currentPart;
+    PartOrder? nextPart;
+
+    for (int i = 0; i < sortedParts.length; i++) {
+      final part = sortedParts[i];
+      if (part.period == null) continue;
+
+      if (_isPeriodMatching(now, part.period!, loopPeriod)) {
+        currentPart = part;
+        // Le suivant est le prochain dans la liste, ou le premier si on est à la fin
+        nextPart = sortedParts[(i + 1) % sortedParts.length];
+        break;
+      }
+    }
+
+    // Si aucun ordre actuel trouvé, chercher le prochain ordre à venir
+    if (currentPart == null) {
+      for (final part in sortedParts) {
+        if (part.period != null && part.period!.isAfter(now)) {
+          nextPart = part;
+          break;
+        }
+      }
+    }
+
+    return {'current': currentPart, 'next': nextPart};
+  }
+
+  /// Vérifie si la date actuelle correspond à la période de la part selon le loopPeriod
+  bool _isPeriodMatching(
+      DateTime currentDate, DateTime partDate, LoopPeriod loopPeriod) {
+    switch (loopPeriod) {
+      case LoopPeriod.DAILY:
+        return currentDate.year == partDate.year &&
+            currentDate.month == partDate.month &&
+            currentDate.day == partDate.day;
+
+      case LoopPeriod.WEEKLY:
+        // Comparer les semaines de l'année
+        final currentWeek = _getWeekOfYear(currentDate);
+        final partWeek = _getWeekOfYear(partDate);
+        return currentDate.year == partDate.year && currentWeek == partWeek;
+
+      case LoopPeriod.MONTHLY:
+        return currentDate.year == partDate.year &&
+            currentDate.month == partDate.month;
+    }
+  }
+
+  /// Calcule le numéro de semaine dans l'année
+  int _getWeekOfYear(DateTime date) {
+    final firstDayOfYear = DateTime(date.year, 1, 1);
+    final daysSinceFirstDay = date.difference(firstDayOfYear).inDays;
+    return (daysSinceFirstDay / 7).ceil();
   }
 }

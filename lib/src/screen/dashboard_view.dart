@@ -12,6 +12,8 @@ import '../providers/tontine_provider.dart';
 import '../widgets/action_menu.dart';
 import '../widgets/annual_movements_chart.dart';
 import '../widgets/menu_widget.dart';
+import '../widgets/circular_order_card.dart';
+import '../theme/app_theme.dart';
 import 'tontine/select_tontine_view.dart';
 
 class DashboardView extends StatefulWidget {
@@ -63,7 +65,7 @@ class _DashboardViewState extends State<DashboardView> {
         } else {
           return Scaffold(
             appBar: ActionMenu(title: 'Dashboard'),
-            backgroundColor: const Color(0xFFF6F8FB),
+            backgroundColor: AppColors.background,
             body: Column(
               children: [
                 Expanded(
@@ -71,6 +73,8 @@ class _DashboardViewState extends State<DashboardView> {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
                     children: [
+                      const SizedBox(height: 24),
+                      _buildCurrentOrderSection(tontineProvider),
                       const SizedBox(height: 24),
                       AnnualMovementsChart(deposits: tontineProvider.deposits),
                       const SizedBox(height: 24),
@@ -89,9 +93,9 @@ class _DashboardViewState extends State<DashboardView> {
                               CashflowView.routeName),
                           _buildMenuCard(
                               context,
-                              'Rapports',
-                              'assets/images/undraw_uploading_nu4x.svg',
-                              RapportView.routeName),
+                              'Membres',
+                              'assets/images/undraw_fans_icv6.svg',
+                              AccountView.routeName),
                           _buildMenuCard(
                               context,
                               'Emprunts',
@@ -104,9 +108,9 @@ class _DashboardViewState extends State<DashboardView> {
                               EventView.routeName),
                           _buildMenuCard(
                               context,
-                              'Membres',
-                              'assets/images/undraw_fans_icv6.svg',
-                              AccountView.routeName),
+                              'Rapports',
+                              'assets/images/undraw_uploading_nu4x.svg',
+                              RapportView.routeName),
                         ],
                       ),
                     ],
@@ -118,6 +122,68 @@ class _DashboardViewState extends State<DashboardView> {
           );
         }
       },
+    );
+  }
+
+  Widget _buildCurrentOrderSection(TontineProvider tontineProvider) {
+    final orderData = tontineProvider.getCurrentAndNextPartOrders();
+    final currentPart = orderData['current'];
+    final nextPart = orderData['next'];
+
+    if (currentPart == null && nextPart == null) {
+      return const SizedBox.shrink();
+    }
+
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.schedule,
+                  color: AppColors.primary,
+                  size: 24,
+                ),
+                const SizedBox(width: 8),
+                const Text(
+                  'Ordre de passage',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                if (currentPart != null) ...[
+                  Expanded(
+                    child: CircularOrderCard(
+                      partOrder: currentPart,
+                      isCurrent: true,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                ],
+                if (nextPart != null) ...[
+                  Expanded(
+                    child: CircularOrderCard(
+                      partOrder: nextPart,
+                      isNext: true,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 
