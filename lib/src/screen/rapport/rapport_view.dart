@@ -6,6 +6,9 @@ import 'package:flutter_quill/flutter_quill.dart';
 import '../../providers/models/rapport_meeting.dart';
 import '../../providers/tontine_provider.dart';
 import '../../widgets/menu_widget.dart';
+import '../../widgets/modern_card.dart';
+import '../../widgets/status_badge.dart';
+import '../../theme/app_theme.dart';
 import '../services/dto/rapport_dto.dart';
 import 'package:intl/intl.dart';
 import 'package:file_picker/file_picker.dart'
@@ -295,11 +298,23 @@ class _RapportViewState extends State<RapportView>
         return Scaffold(
           appBar: AppBar(
             title: const Text('Rapports & Sanctions'),
+            backgroundColor: AppColors.primary,
+            foregroundColor: Colors.white,
+            elevation: 0,
             bottom: TabBar(
               controller: _tabController,
+              indicatorColor: Colors.white,
+              labelColor: Colors.white,
+              unselectedLabelColor: Colors.white.withAlpha(150),
               tabs: const [
-                Tab(text: 'Rapports'),
-                Tab(text: 'Sanctions'),
+                Tab(
+                  icon: Icon(Icons.description),
+                  text: 'Rapports',
+                ),
+                Tab(
+                  icon: Icon(Icons.gavel),
+                  text: 'Sanctions',
+                ),
               ],
             ),
           ),
@@ -312,18 +327,7 @@ class _RapportViewState extends State<RapportView>
                 padding: const EdgeInsets.all(16),
                 itemBuilder: (context, index) {
                   final rapport = rapports[index];
-                  return Card(
-                    child: ListTile(
-                      title: Text(rapport.title),
-                      subtitle: Text(
-                        DateFormat('dd/MM/yyyy').format(rapport.createdAt),
-                      ),
-                      trailing: rapport.attachmentFilename != null
-                          ? const Icon(Icons.attachment)
-                          : null,
-                      onTap: () => _showRapportDetails(context, rapport),
-                    ),
-                  );
+                  return _buildRapportCard(rapport);
                 },
               ),
               // Tab Sanctions
@@ -332,29 +336,7 @@ class _RapportViewState extends State<RapportView>
                 padding: const EdgeInsets.all(16),
                 itemBuilder: (context, index) {
                   final sanction = sanctions[index];
-                  return Card(
-                    child: ListTile(
-                      title: Text(
-                          '${sanction.gulty.firstname} ${sanction.gulty.lastname}'),
-                      subtitle: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(sanction.description),
-                          Chip(
-                            label: Text(
-                              sanction.type.displayName,
-                              style: const TextStyle(color: Colors.white),
-                            ),
-                            backgroundColor: _getSanctionColor(sanction.type),
-                          ),
-                        ],
-                      ),
-                      trailing: Text(
-                        DateFormat('dd/MM/yyyy')
-                            .format(sanction.startDate ?? DateTime.now()),
-                      ),
-                    ),
-                  );
+                  return _buildSanctionCard(sanction);
                 },
               ),
             ],
@@ -383,19 +365,6 @@ class _RapportViewState extends State<RapportView>
         );
       },
     );
-  }
-
-  Color _getSanctionColor(TypeSanction type) {
-    switch (type) {
-      case TypeSanction.WARNING:
-        return Colors.orange;
-      case TypeSanction.SUSPENSION:
-        return Colors.red;
-      case TypeSanction.EXCLUSION:
-        return Colors.purple;
-      default:
-        return Colors.grey;
-    }
   }
 
   void _showCreateSanctionDialog(
@@ -597,6 +566,157 @@ class _RapportViewState extends State<RapportView>
         );
       },
     );
+  }
+
+  Widget _buildRapportCard(RapportMeeting rapport) {
+    final isRecent = DateTime.now().difference(rapport.createdAt).inDays < 7;
+
+    return ModernCard(
+      type: isRecent ? ModernCardType.info : ModernCardType.secondary,
+      icon: Icons.description,
+      title: rapport.title,
+      onTap: () => _showRapportDetails(context, rapport),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      DateFormat('dd/MM/yyyy à HH:mm')
+                          .format(rapport.createdAt),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    if (rapport.attachmentFilename != null) ...[
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.attachment,
+                            size: 16,
+                            color: AppColors.textSecondary,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            rapport.attachmentFilename!,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              if (rapport.attachmentFilename != null)
+                IconButton(
+                  onPressed: () => _downloadAttachment(rapport.id, context),
+                  icon: const Icon(Icons.download),
+                  tooltip: 'Télécharger',
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSanctionCard(dynamic sanction) {
+    return ModernCard(
+      type: _getSanctionCardType(sanction.type),
+      icon: _getSanctionIcon(sanction.type),
+      title: '${sanction.gulty.firstname} ${sanction.gulty.lastname}',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            sanction.description,
+            style: const TextStyle(
+              fontSize: 14,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              _getSanctionBadge(sanction.type),
+              const Spacer(),
+              Text(
+                DateFormat('dd/MM/yyyy')
+                    .format(sanction.startDate ?? DateTime.now()),
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  ModernCardType _getSanctionCardType(TypeSanction type) {
+    switch (type) {
+      case TypeSanction.WARNING:
+        return ModernCardType.warning;
+      case TypeSanction.FINANCIAL:
+        return ModernCardType.error;
+      case TypeSanction.SUSPENSION:
+        return ModernCardType.error;
+      case TypeSanction.EXCLUSION:
+        return ModernCardType.error;
+    }
+  }
+
+  IconData _getSanctionIcon(TypeSanction type) {
+    switch (type) {
+      case TypeSanction.WARNING:
+        return Icons.warning;
+      case TypeSanction.FINANCIAL:
+        return Icons.monetization_on;
+      case TypeSanction.SUSPENSION:
+        return Icons.pause_circle;
+      case TypeSanction.EXCLUSION:
+        return Icons.block;
+    }
+  }
+
+  Widget _getSanctionBadge(TypeSanction type) {
+    switch (type) {
+      case TypeSanction.WARNING:
+        return const StatusBadge(
+          text: 'Avertissement',
+          color: AppColors.warning,
+          icon: Icons.warning,
+        );
+      case TypeSanction.FINANCIAL:
+        return const StatusBadge(
+          text: 'Sanction financière',
+          color: AppColors.error,
+          icon: Icons.monetization_on,
+        );
+      case TypeSanction.SUSPENSION:
+        return const StatusBadge(
+          text: 'Suspension',
+          color: AppColors.error,
+          icon: Icons.pause_circle,
+        );
+      case TypeSanction.EXCLUSION:
+        return const StatusBadge(
+          text: 'Exclusion',
+          color: AppColors.error,
+          icon: Icons.block,
+        );
+    }
   }
 
   Future<void> _downloadAttachment(int rapportId, BuildContext context) async {

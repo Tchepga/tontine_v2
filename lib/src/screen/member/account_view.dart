@@ -6,6 +6,7 @@ import 'package:tontine_v2/src/providers/auth_provider.dart';
 import 'package:tontine_v2/src/widgets/menu_widget.dart';
 import '../../theme/app_theme.dart';
 import '../services/dto/member_dto.dart';
+import '../services/dto/password_dto.dart';
 import '../services/member_service.dart';
 
 class AccountView extends StatefulWidget {
@@ -359,15 +360,7 @@ class _AccountViewState extends State<AccountView> {
                     color: AppColors.primary,
                     size: 16,
                   ),
-                  onTap: () {
-                    // TODO: Implémenter la modification du mot de passe
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Fonctionnalité à venir'),
-                        backgroundColor: AppColors.info,
-                      ),
-                    );
-                  },
+                  onTap: () => _showChangePasswordDialog(),
                 ),
               ),
             ],
@@ -672,12 +665,10 @@ class _AccountViewState extends State<AccountView> {
           FilledButton(
             onPressed: () {
               Navigator.of(context).pop();
-              // TODO: Implémenter la déconnexion
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Déconnexion à implémenter'),
-                  backgroundColor: AppColors.info,
-                ),
+              Provider.of<AuthProvider>(context, listen: false).logout();
+              Navigator.of(context).pushNamedAndRemoveUntil(
+                '/login',
+                (route) => false,
               );
             },
             style: FilledButton.styleFrom(backgroundColor: AppColors.error),
@@ -685,6 +676,331 @@ class _AccountViewState extends State<AccountView> {
           ),
         ],
       ),
+    );
+  }
+
+  void _showChangePasswordDialog() {
+    final currentPasswordController = TextEditingController();
+    final newPasswordController = TextEditingController();
+    final confirmPasswordController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+    bool isLoading = false;
+    bool showCurrentPassword = false;
+    bool showNewPassword = false;
+    bool showConfirmPassword = false;
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Dialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Container(
+                width: MediaQuery.of(context).size.width * 0.9,
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.of(context).size.height * 0.8,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Header
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(20),
+                          topRight: Radius.circular(20),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withAlpha(20),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(
+                              Icons.lock,
+                              color: Colors.white,
+                              size: 24,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          const Expanded(
+                            child: Text(
+                              'Changer le mot de passe',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: () => Navigator.pop(context),
+                            icon: const Icon(Icons.close, color: Colors.white),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Content
+                    Flexible(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.all(20),
+                        child: Form(
+                          key: formKey,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Mot de passe actuel
+                              _buildPasswordField(
+                                controller: currentPasswordController,
+                                label: 'Mot de passe actuel',
+                                hint: 'Entrez votre mot de passe actuel',
+                                icon: Icons.lock_outline,
+                                showPassword: showCurrentPassword,
+                                onToggleVisibility: () {
+                                  setState(() {
+                                    showCurrentPassword = !showCurrentPassword;
+                                  });
+                                },
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Le mot de passe actuel est requis';
+                                  }
+                                  return null;
+                                },
+                              ),
+                              const SizedBox(height: 16),
+
+                              // Nouveau mot de passe
+                              _buildPasswordField(
+                                controller: newPasswordController,
+                                label: 'Nouveau mot de passe',
+                                hint: 'Entrez votre nouveau mot de passe',
+                                icon: Icons.lock,
+                                showPassword: showNewPassword,
+                                onToggleVisibility: () {
+                                  setState(() {
+                                    showNewPassword = !showNewPassword;
+                                  });
+                                },
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Le nouveau mot de passe est requis';
+                                  }
+                                  if (value.length < 6) {
+                                    return 'Le mot de passe doit contenir au moins 6 caractères';
+                                  }
+                                  return null;
+                                },
+                              ),
+                              const SizedBox(height: 16),
+
+                              // Confirmation du nouveau mot de passe
+                              _buildPasswordField(
+                                controller: confirmPasswordController,
+                                label: 'Confirmer le nouveau mot de passe',
+                                hint: 'Confirmez votre nouveau mot de passe',
+                                icon: Icons.lock_reset,
+                                showPassword: showConfirmPassword,
+                                onToggleVisibility: () {
+                                  setState(() {
+                                    showConfirmPassword = !showConfirmPassword;
+                                  });
+                                },
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'La confirmation du mot de passe est requise';
+                                  }
+                                  if (value != newPasswordController.text) {
+                                    return 'Les mots de passe ne correspondent pas';
+                                  }
+                                  return null;
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    // Footer avec boutons
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: const BorderRadius.only(
+                          bottomLeft: Radius.circular(20),
+                          bottomRight: Radius.circular(20),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: isLoading
+                                  ? null
+                                  : () => Navigator.pop(context),
+                              style: OutlinedButton.styleFrom(
+                                side: const BorderSide(color: AppColors.border),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 12),
+                              ),
+                              child: const Text('Annuler'),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: FilledButton(
+                              onPressed: isLoading
+                                  ? null
+                                  : () async {
+                                      if (formKey.currentState!.validate()) {
+                                        setState(() {
+                                          isLoading = true;
+                                        });
+
+                                        try {
+                                          final passwordDto = ChangePasswordDto(
+                                            currentPassword:
+                                                currentPasswordController.text,
+                                            newPassword:
+                                                newPasswordController.text,
+                                            confirmPassword:
+                                                confirmPasswordController.text,
+                                          );
+
+                                          await Provider.of<AuthProvider>(
+                                                  context,
+                                                  listen: false)
+                                              .changePassword(passwordDto);
+
+                                          if (!context.mounted) return;
+                                          Navigator.pop(context);
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                  'Mot de passe modifié avec succès'),
+                                              backgroundColor:
+                                                  AppColors.success,
+                                            ),
+                                          );
+                                        } catch (e) {
+                                          if (!context.mounted) return;
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                  'Erreur: ${e.toString()}'),
+                                              backgroundColor: AppColors.error,
+                                            ),
+                                          );
+                                        } finally {
+                                          if (mounted) {
+                                            setState(() {
+                                              isLoading = false;
+                                            });
+                                          }
+                                        }
+                                      }
+                                    },
+                              style: FilledButton.styleFrom(
+                                backgroundColor: AppColors.primary,
+                                foregroundColor: Colors.white,
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 12),
+                              ),
+                              child: isLoading
+                                  ? const Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        SizedBox(
+                                          width: 16,
+                                          height: 16,
+                                          child: CircularProgressIndicator(
+                                            color: Colors.white,
+                                            strokeWidth: 2,
+                                          ),
+                                        ),
+                                        SizedBox(width: 8),
+                                        Text('Modification...'),
+                                      ],
+                                    )
+                                  : const Text('Modifier le mot de passe'),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildPasswordField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    required IconData icon,
+    required bool showPassword,
+    required VoidCallback onToggleVisibility,
+    String? Function(String?)? validator,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: controller,
+          obscureText: !showPassword,
+          validator: validator,
+          decoration: InputDecoration(
+            hintText: hint,
+            prefixIcon: Icon(icon, color: AppColors.primary),
+            suffixIcon: IconButton(
+              icon: Icon(
+                showPassword ? Icons.visibility_off : Icons.visibility,
+                color: AppColors.textSecondary,
+              ),
+              onPressed: onToggleVisibility,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: AppColors.border),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: AppColors.border),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: AppColors.primary, width: 2),
+            ),
+            filled: true,
+            fillColor: AppColors.surface,
+          ),
+        ),
+      ],
     );
   }
 }

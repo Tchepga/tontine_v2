@@ -514,7 +514,7 @@ class _EventViewState extends State<EventView> {
         ),
         const SizedBox(height: 8),
         DropdownButtonFormField<T>(
-          value: value,
+          initialValue: value,
           decoration: InputDecoration(
             prefixIcon: Icon(icon, color: AppColors.primary),
             border: OutlineInputBorder(

@@ -98,7 +98,7 @@ class CircularOrderCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.2),
+                  color: AppColors.primary.withAlpha(20),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
@@ -115,7 +115,7 @@ class CircularOrderCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppColors.secondary.withOpacity(0.3),
+                  color: AppColors.secondary.withAlpha(30),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(

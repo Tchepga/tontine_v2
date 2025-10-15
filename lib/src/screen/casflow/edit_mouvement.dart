@@ -39,16 +39,34 @@ class _EditMouvementState extends State<EditMouvement> {
     }
   }
 
+  List<DepositReason> _getAvailableReasons(AuthProvider authProvider) {
+    final isPresident = authProvider.isPresident();
+    final isAccountManager = authProvider.isAccountManager();
+
+    if (isPresident || isAccountManager) {
+      print('✅ Accès complet - tous les types de mouvements disponibles');
+      return DepositReason.values.toList();
+    } else {
+      print('⚠️ Accès limité - uniquement VERSEMENT disponible');
+      return [DepositReason.VERSEMENT];
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer2<AuthProvider, TontineProvider>(
       builder: (context, authProvider, tontineProvider, child) {
         final currentTontine = tontineProvider.currentTontine;
+        final availableReasons = _getAvailableReasons(authProvider);
         final isPresident = authProvider.isPresident();
+        final isAccountManager = authProvider.isAccountManager();
+        final canValidate = isPresident || isAccountManager;
 
         return Scaffold(
           appBar: AppBar(
-            title: const Text('Nouveau mouvement'),
+            title: Text(widget.deposit == null
+                ? (canValidate ? 'Nouveau mouvement' : 'Nouveau versement')
+                : 'Modifier mouvement'),
           ),
           body: Padding(
             padding: const EdgeInsets.all(16.0),
@@ -70,7 +88,7 @@ class _EditMouvementState extends State<EditMouvement> {
                     },
                   ),
                   const SizedBox(height: 16),
-                  if (isPresident) ...[
+                  if (canValidate) ...[
                     DropdownButtonFormField<Member>(
                       initialValue: _selectedAuthor,
                       decoration: const InputDecoration(
@@ -108,13 +126,37 @@ class _EditMouvementState extends State<EditMouvement> {
                       },
                     ),
                     const SizedBox(height: 16),
+                  ] else ...[
+                    // Afficher l'utilisateur actuel pour les membres normaux
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[100],
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.grey[300]!),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.person, color: Colors.grey),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Auteur: ${authProvider.currentUser?.firstname ?? ''} ${authProvider.currentUser?.lastname ?? ''}',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w500,
+                              color: Color.fromARGB(255, 36, 36, 36),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
                   ],
                   DropdownButtonFormField<DepositReason>(
                     initialValue: _selectedReason,
                     decoration: const InputDecoration(
                       labelText: 'Raison',
                     ),
-                    items: DepositReason.values.map((reason) {
+                    items: availableReasons.map((reason) {
                       return DropdownMenuItem(
                         value: reason,
                         child: Text(reason.displayName),
@@ -145,14 +187,22 @@ class _EditMouvementState extends State<EditMouvement> {
   Future<void> _handleSubmit(
       BuildContext context, TontineProvider tontineProvider) async {
     final currentTontine = tontineProvider.currentTontine;
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final isPresident = authProvider.isPresident();
+    final isAccountManager = authProvider.isAccountManager();
+    final canValidate = isPresident || isAccountManager;
+
+    // Pour les membres normaux, utiliser l'utilisateur actuel
+    final author = canValidate ? _selectedAuthor : authProvider.currentUser;
+
     if (_formKey.currentState!.validate() &&
-        _selectedAuthor != null &&
+        author != null &&
         currentTontine != null &&
-        _selectedAuthor?.id != null) {
+        author.id != null) {
       final depositDto = CreateDepositDto(
         amount: double.parse(_amountController.text),
         currency: currentTontine.cashFlow.currency,
-        memberId: _selectedAuthor!.id!,
+        memberId: author.id!,
         status: StatusDeposit.PENDING,
         cashFlowId: currentTontine.cashFlow.id,
         reasons: _selectedReason.displayName,

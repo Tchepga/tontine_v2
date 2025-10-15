@@ -4,6 +4,7 @@ import '../providers/auth_provider.dart';
 import 'services/member_service.dart';
 import 'tontine/select_tontine_view.dart';
 import 'auth/register_view.dart';
+import 'auth/forgot_password_view.dart';
 
 class LoginView extends StatefulWidget {
   static const routeName = '/login';
@@ -119,6 +120,13 @@ class _LoginViewState extends State<LoginView> {
                   child: const Text('Se connecter'),
                 ),
           const SizedBox(height: 16),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pushNamed(ForgotPasswordView.routeName);
+            },
+            child: const Text('Mot de passe oublié ?'),
+          ),
+          const SizedBox(height: 8),
           TextButton(
             onPressed: () {
               Navigator.of(context)

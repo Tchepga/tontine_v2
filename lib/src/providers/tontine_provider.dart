@@ -8,6 +8,7 @@ import 'models/deposit.dart';
 import 'models/event.dart';
 import 'models/sanction.dart';
 import 'models/tontine.dart';
+import 'models/auction.dart';
 import 'models/enum/loop_period.dart';
 import 'models/enum/role.dart';
 import '../screen/services/dto/deposit_dto.dart';
@@ -15,7 +16,9 @@ import '../screen/services/dto/member_dto.dart';
 import '../screen/services/dto/rapport_dto.dart';
 import '../screen/services/dto/sanction_dto.dart';
 import '../screen/services/dto/tontine_dto.dart';
+import '../screen/services/dto/auction_dto.dart';
 import '../screen/services/tontine_service.dart';
+import '../screen/services/auction_service.dart';
 import 'models/rapport_meeting.dart';
 import 'package:get_storage/get_storage.dart';
 import 'models/part.dart';
@@ -24,10 +27,12 @@ class TontineProvider extends ChangeNotifier {
   static const KEY_SELECTED_TONTINE_ID = 'selectedTontineId';
 
   final _tontineService = TontineService();
+  final _auctionService = AuctionService();
   final _logger = Logger('TontineProvider');
   final _storage = GetStorage();
   List<Tontine> _tontines = [];
   List<Deposit> _deposits = [];
+  List<Auction> _auctions = [];
   Tontine? _currentTontine;
   bool _isLoading = false;
   final _notificationService = LocalNotificationService();
@@ -36,6 +41,7 @@ class TontineProvider extends ChangeNotifier {
   List<Tontine> get tontines => _tontines;
   Tontine? get currentTontine => _currentTontine;
   List<Deposit> get deposits => _deposits;
+  List<Auction> get auctions => _auctions;
   bool get isLoading => _isLoading;
   List<Part> get parts => _parts;
 
@@ -420,4 +426,116 @@ class TontineProvider extends ChangeNotifier {
       rethrow;
     }
   }
+
+  // ========== MÉTHODES POUR LES ENCHÈRES ==========
+
+  Future<void> loadAuctions(int tontineId) async {
+    try {
+      final auctions = await _auctionService.getAuctions(tontineId);
+      _auctions = auctions;
+      notifyListeners();
+    } catch (e) {
+      _logger.severe('Error loading auctions: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> loadActiveAuctions(int tontineId) async {
+    try {
+      final auctions = await _auctionService.getActiveAuctions(tontineId);
+      _auctions = auctions;
+      notifyListeners();
+    } catch (e) {
+      _logger.severe('Error loading active auctions: $e');
+      rethrow;
+    }
+  }
+
+  Future<Auction?> createAuction(CreateAuctionDto auctionDto) async {
+    try {
+      final auction = await _auctionService.createAuction(auctionDto);
+      if (auction != null) {
+        await loadAuctions(auctionDto.tontineId);
+      }
+      return auction;
+    } catch (e) {
+      _logger.severe('Error creating auction: $e');
+      rethrow;
+    }
+  }
+
+  Future<Auction?> updateAuction(
+      int auctionId, UpdateAuctionDto auctionDto) async {
+    try {
+      final auction =
+          await _auctionService.updateAuction(auctionId, auctionDto);
+      if (auction != null && _currentTontine != null) {
+        await loadAuctions(_currentTontine!.id);
+      }
+      return auction;
+    } catch (e) {
+      _logger.severe('Error updating auction: $e');
+      rethrow;
+    }
+  }
+
+  Future<bool> deleteAuction(int auctionId) async {
+    try {
+      final success = await _auctionService.deleteAuction(auctionId);
+      if (success && _currentTontine != null) {
+        await loadAuctions(_currentTontine!.id);
+      }
+      return success;
+    } catch (e) {
+      _logger.severe('Error deleting auction: $e');
+      rethrow;
+    }
+  }
+
+  Future<bool> placeBid(CreateAuctionBidDto bidDto) async {
+    try {
+      final success = await _auctionService.placeBid(bidDto);
+      if (success && _currentTontine != null) {
+        await loadAuctions(_currentTontine!.id);
+      }
+      return success;
+    } catch (e) {
+      _logger.severe('Error placing bid: $e');
+      rethrow;
+    }
+  }
+
+  Future<Auction?> completeAuction(int auctionId) async {
+    try {
+      final auction = await _auctionService.completeAuction(auctionId);
+      if (auction != null && _currentTontine != null) {
+        await loadAuctions(_currentTontine!.id);
+      }
+      return auction;
+    } catch (e) {
+      _logger.severe('Error completing auction: $e');
+      rethrow;
+    }
+  }
+
+  Future<Auction?> cancelAuction(int auctionId) async {
+    try {
+      final auction = await _auctionService.cancelAuction(auctionId);
+      if (auction != null && _currentTontine != null) {
+        await loadAuctions(_currentTontine!.id);
+      }
+      return auction;
+    } catch (e) {
+      _logger.severe('Error cancelling auction: $e');
+      rethrow;
+    }
+  }
+
+  // Méthodes utilitaires pour les enchères
+  List<Auction> get activeAuctions =>
+      _auctions.where((a) => a.isActive).toList();
+  List<Auction> get completedAuctions =>
+      _auctions.where((a) => a.isCompleted).toList();
+  List<Auction> get cancelledAuctions =>
+      _auctions.where((a) => a.isCancelled).toList();
 }

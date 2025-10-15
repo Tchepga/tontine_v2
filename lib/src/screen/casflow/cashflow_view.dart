@@ -4,10 +4,14 @@ import '../../providers/models/tontine.dart';
 import '../../providers/tontine_provider.dart';
 import '../../widgets/action_menu.dart';
 import '../../widgets/menu_widget.dart';
+import '../../widgets/modern_card.dart';
+import '../../theme/app_theme.dart';
 import 'edit_mouvement.dart';
 import 'widgets/deposit_list_item.dart';
 import 'package:tontine_v2/src/providers/models/enum/currency.dart';
 import '../../providers/models/enum/deposit_reason.dart';
+import '../../providers/models/enum/status_deposit.dart';
+import '../../providers/auth_provider.dart';
 
 class CashflowView extends StatefulWidget {
   const CashflowView({super.key});
@@ -36,10 +40,11 @@ class _CashflowViewState extends State<CashflowView> {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<TontineProvider>(
-      builder: (context, tontineProvider, child) {
+    return Consumer2<TontineProvider, AuthProvider>(
+      builder: (context, tontineProvider, authProvider, child) {
         final currentTontine = tontineProvider.currentTontine;
         final deposits = tontineProvider.deposits;
+        final canValidate = authProvider.canValidateDeposits();
 
         // Filtrage
         final filteredDeposits = deposits.where((deposit) {
@@ -66,70 +71,20 @@ class _CashflowViewState extends State<CashflowView> {
             children: [
               _buildBalanceCard(currentTontine),
               const SizedBox(height: 16),
-              // Filtres
-              Row(
-                children: [
-                  Expanded(
-                    child: DropdownButtonFormField<DepositReason>(
-                      initialValue: _selectedReason,
-                      isExpanded: true,
-                      decoration: const InputDecoration(
-                        labelText: 'Type',
-                        border: OutlineInputBorder(),
-                        contentPadding:
-                            EdgeInsets.symmetric(horizontal: 8, vertical: 0),
-                      ),
-                      items: [
-                        const DropdownMenuItem<DepositReason>(
-                          value: null,
-                          child: Text('Tous'),
-                        ),
-                        ...DepositReason.values
-                            .map((reason) => DropdownMenuItem(
-                                  value: reason,
-                                  child: Text(reason.displayName),
-                                ))
-                      ],
-                      onChanged: (value) {
-                        setState(() {
-                          _selectedReason = value;
-                        });
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: TextField(
-                      decoration: const InputDecoration(
-                        labelText: 'Nom',
-                        border: OutlineInputBorder(),
-                        contentPadding:
-                            EdgeInsets.symmetric(horizontal: 8, vertical: 0),
-                      ),
-                      onChanged: (value) {
-                        setState(() {
-                          _searchName = value;
-                        });
-                      },
-                    ),
-                  ),
-                ],
-              ),
+              // Filtres modernisés
+              _buildFiltersSection(),
               const SizedBox(height: 16),
-              const Row(
-                children: [
-                  Text(
-                    'Mouvements',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
+              // Section versements en attente (si président/trésorier)
+              if (canValidate) ...[
+                _buildPendingDepositsSection(
+                    deposits, tontineProvider, currentTontine!.id),
+                const SizedBox(height: 16),
+              ],
+              // Titre de section modernisé
+              _buildSectionTitle('Mouvements', Icons.list_alt),
               const SizedBox(height: 16),
               if (filteredDeposits.isEmpty)
-                const Center(child: Text('Aucun mouvement trouvé'))
+                _buildEmptyState()
               else
                 ...filteredDeposits.map((deposit) => DepositListItem(
                       deposit: deposit,
@@ -151,36 +106,292 @@ class _CashflowViewState extends State<CashflowView> {
   }
 
   Widget _buildBalanceCard(Tontine? currentTontine) {
-    return Card(
-      child: Container(
-        decoration: const BoxDecoration(
-          color: Colors.blueGrey,
-          borderRadius: BorderRadius.all(Radius.circular(16)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black26,
-              blurRadius: 10,
-              offset: Offset(0, 2),
+    return ModernCard(
+      type: ModernCardType.primary,
+      icon: Icons.account_balance_wallet,
+      title: 'Solde actuel',
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white.withAlpha(30),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.monetization_on,
+                  color: Colors.white,
+                  size: 32,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${currentTontine?.cashFlow.amount ?? 0} ${currentTontine?.cashFlow.currency.displayName ?? ''}',
+                      style: const TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Trésorerie disponible',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.white.withAlpha(200),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFiltersSection() {
+    return ModernCard(
+      type: ModernCardType.info,
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        children: [
+          Expanded(
+            child: DropdownButtonFormField<DepositReason>(
+              initialValue: _selectedReason,
+              isExpanded: true,
+              decoration: InputDecoration(
+                labelText: 'Type',
+                prefixIcon: const Icon(Icons.filter_list),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              ),
+              items: [
+                const DropdownMenuItem<DepositReason>(
+                  value: null,
+                  child: Text('Tous'),
+                ),
+                ...DepositReason.values.map((reason) => DropdownMenuItem(
+                      value: reason,
+                      child: Text(reason.displayName),
+                    ))
+              ],
+              onChanged: (value) {
+                setState(() {
+                  _selectedReason = value;
+                });
+              },
             ),
-          ],
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: TextField(
+              decoration: InputDecoration(
+                labelText: 'Nom',
+                prefixIcon: const Icon(Icons.search),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              ),
+              onChanged: (value) {
+                setState(() {
+                  _searchName = value;
+                });
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title, IconData icon) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: AppColors.primary.withAlpha(20),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(
+            icon,
+            color: AppColors.primary,
+            size: 20,
+          ),
         ),
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            Text(
-              '${currentTontine?.cashFlow.amount ?? 0} ${currentTontine?.cashFlow.currency.displayName ?? ''}',
-              style: const TextStyle(
-                fontSize: 32,
-                fontWeight: FontWeight.w800,
-                color: Colors.white,
+        const SizedBox(width: 12),
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: AppColors.textPrimary,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPendingDepositsSection(
+      List deposits, TontineProvider tontineProvider, int tontineId) {
+    final pendingDeposits = deposits
+        .where((deposit) => deposit.status == StatusDeposit.PENDING)
+        .toList();
+
+    if (pendingDeposits.isEmpty) return const SizedBox.shrink();
+
+    return ModernCard(
+      type: ModernCardType.warning,
+      icon: Icons.pending_actions,
+      title: 'Versements en attente (${pendingDeposits.length})',
+      child: Column(
+        children: [
+          ...pendingDeposits.take(3).map((deposit) =>
+              _buildPendingDepositItem(deposit, tontineProvider, tontineId)),
+          if (pendingDeposits.length > 3)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text(
+                '+ ${pendingDeposits.length - 3} autres en attente',
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: AppColors.textSecondary,
+                  fontStyle: FontStyle.italic,
+                ),
               ),
             ),
-            const Text(
-              'Solde actuel',
-              style: TextStyle(color: Colors.white),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPendingDepositItem(
+      deposit, TontineProvider tontineProvider, int tontineId) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white.withAlpha(50),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.warning.withAlpha(50)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${deposit.author.firstname} ${deposit.author.lastname}',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                Text(
+                  '${deposit.amount} ${deposit.currency.displayName}',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+          Row(
+            children: [
+              IconButton(
+                onPressed: () =>
+                    _validateDeposit(deposit.id, tontineProvider, tontineId),
+                icon: const Icon(Icons.check_circle, color: AppColors.success),
+                tooltip: 'Valider',
+              ),
+              IconButton(
+                onPressed: () =>
+                    _rejectDeposit(deposit.id, tontineProvider, tontineId),
+                icon: const Icon(Icons.cancel, color: AppColors.error),
+                tooltip: 'Rejeter',
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return ModernCard(
+      type: ModernCardType.info,
+      padding: const EdgeInsets.all(32),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.textSecondary.withAlpha(20),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.inbox,
+              size: 48,
+              color: AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            'Aucun mouvement trouvé',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Ajustez vos filtres ou ajoutez un nouveau mouvement',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 14,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _validateDeposit(
+      int depositId, TontineProvider tontineProvider, int tontineId) {
+    // TODO: Implémenter la validation du dépôt
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Validation du versement...'),
+        backgroundColor: AppColors.success,
+      ),
+    );
+  }
+
+  void _rejectDeposit(
+      int depositId, TontineProvider tontineProvider, int tontineId) {
+    // TODO: Implémenter le rejet du dépôt
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Rejet du versement...'),
+        backgroundColor: AppColors.error,
       ),
     );
   }

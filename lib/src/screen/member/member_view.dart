@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/tontine_provider.dart';
 import '../../providers/models/enum/role.dart';
+import '../../providers/models/enum/system_type.dart';
 import '../../providers/models/member.dart';
 import '../../providers/models/tontine.dart';
 import '../../widgets/menu_widget.dart';
@@ -83,6 +86,15 @@ class _MemberViewState extends State<MemberView> {
             backgroundColor: AppColors.primary,
             elevation: 0,
             iconTheme: const IconThemeData(color: Colors.white),
+            actions: [
+              if (isPresident)
+                IconButton(
+                  onPressed: () =>
+                      _shareInvitationLink(context, currentTontine),
+                  icon: const Icon(Icons.share, color: Colors.white),
+                  tooltip: 'Partager le lien d\'invitation',
+                ),
+            ],
           ),
           body: Column(
             children: [
@@ -192,7 +204,7 @@ class _MemberViewState extends State<MemberView> {
                   .map((role) {
                 final member = bureauMembers[role];
                 return _buildBureauMember(member, role);
-              }).toList(),
+              }),
             ],
           ),
         ),
@@ -859,13 +871,193 @@ class _MemberViewState extends State<MemberView> {
 
   bool _isRoleOccupiedByOtherMember(
       Role role, Member currentMember, Tontine tontine) {
-    if (role == Role.TONTINARD)
-      return false; // TONTINARD peut être attribué à plusieurs membres
+    // TONTINARD peut être attribué à plusieurs membres
+    if (role == Role.TONTINARD) {
+      return false;
+    }
 
     return tontine.members.any((member) {
-      if (member.id == currentMember.id)
+      if (member.id == currentMember.id) {
         return false; // Exclure le membre actuel
+      }
       return member.user?.roles?.contains(role) ?? false;
     });
+  }
+
+  void _shareInvitationLink(BuildContext context, Tontine tontine) {
+    // Générer le lien d'invitation (à adapter selon votre logique backend)
+    final invitationLink = 'https://votre-app.com/join/${tontine.id}';
+
+    // Message personnalisé pour WhatsApp
+    final message = '''
+🏦 *Invitation à rejoindre la tontine "${tontine.title}"*
+
+Bonjour ! Vous êtes invité(e) à rejoindre notre tontine "${tontine.title}".
+
+📱 *Pour vous connecter :*
+1. Téléchargez l'application Tontine
+2. Utilisez ces identifiants temporaires :
+   👤 *Nom d'utilisateur :* ${tontine.title.toLowerCase().replaceAll(' ', '_')}_membre
+   🔑 *Mot de passe :* changeme
+3. Connectez-vous et rejoignez-nous !
+
+🔐 *IMPORTANT - Sécurité :*
+⚠️ *Changez votre mot de passe dès votre première connexion !*
+• Allez dans "Mon compte" → "Modifier le mot de passe"
+• Choisissez un mot de passe fort (8+ caractères, majuscules, chiffres)
+• Ne partagez jamais vos identifiants
+
+💰 *Détails de la tontine :*
+• Nom : ${tontine.title}
+• Membres actuels : ${tontine.members.length}
+• Système : ${tontine.config.systemType.displayName}
+
+Rejoignez-nous pour participer à cette aventure financière collective ! 🚀
+
+---
+*Message envoyé depuis l'application Tontine*
+''';
+
+    // Afficher un dialog pour choisir le mode de partage
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withAlpha(20),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.share,
+                  color: AppColors.primary,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Text('Partager l\'invitation'),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Choisissez comment partager le lien d\'invitation :',
+                style: TextStyle(fontSize: 16),
+              ),
+              const SizedBox(height: 16),
+              _buildShareOption(
+                context,
+                'WhatsApp',
+                Icons.message,
+                Colors.green,
+                () => _shareViaWhatsApp(message),
+              ),
+              const SizedBox(height: 12),
+              _buildShareOption(
+                context,
+                'Autres applications',
+                Icons.share,
+                AppColors.primary,
+                () => _shareViaOtherApps(message),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Annuler'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildShareOption(
+    BuildContext context,
+    String title,
+    IconData icon,
+    Color color,
+    VoidCallback onTap,
+  ) {
+    return InkWell(
+      onTap: () {
+        Navigator.of(context).pop();
+        onTap();
+      },
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          border: Border.all(color: color.withAlpha(50)),
+          borderRadius: BorderRadius.circular(12),
+          color: color.withAlpha(10),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: color.withAlpha(20),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(icon, color: color, size: 20),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const Spacer(),
+            Icon(
+              Icons.arrow_forward_ios,
+              size: 16,
+              color: AppColors.textSecondary,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _shareViaWhatsApp(String message) async {
+    try {
+      // Encoder le message pour l'URL
+      final encodedMessage = Uri.encodeComponent(message);
+      final whatsappUrl = 'https://wa.me/?text=$encodedMessage';
+
+      if (await canLaunchUrl(Uri.parse(whatsappUrl))) {
+        await launchUrl(Uri.parse(whatsappUrl));
+      } else {
+        // Fallback vers l'application de partage générale
+        await Share.share(message);
+      }
+    } catch (e) {
+      // En cas d'erreur, utiliser le partage général
+      await Share.share(message);
+    }
+  }
+
+  void _shareViaOtherApps(String message) async {
+    try {
+      await Share.share(
+        message,
+        subject: 'Invitation à rejoindre la tontine',
+      );
+    } catch (e) {
+      // Gérer l'erreur si nécessaire
+      print('Erreur lors du partage: $e');
+    }
   }
 }

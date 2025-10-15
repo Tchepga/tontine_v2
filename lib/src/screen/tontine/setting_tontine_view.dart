@@ -973,6 +973,20 @@ class _SettingTontineViewState extends State<SettingTontineView> {
                               if (count == null || count < 1) {
                                 return 'Veuillez entrer un nombre valide';
                               }
+
+                              // Vérifier que le nombre max n'est pas inférieur au nombre de membres actuels
+                              final currentTontine =
+                                  Provider.of<TontineProvider>(context,
+                                          listen: false)
+                                      .currentTontine;
+                              if (currentTontine != null) {
+                                final currentMemberCount =
+                                    currentTontine.members.length;
+                                if (count < currentMemberCount) {
+                                  return 'Le nombre maximum ne peut pas être inférieur au nombre de membres actuels ($currentMemberCount)';
+                                }
+                              }
+
                               return null;
                             },
                             onSaved: (value) {

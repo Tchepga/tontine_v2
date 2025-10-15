@@ -5,20 +5,21 @@ import 'dart:convert';
 import 'models/enum/role.dart';
 import 'models/member.dart';
 import '../screen/services/dto/member_dto.dart';
+import '../screen/services/dto/password_dto.dart';
 import '../screen/services/member_service.dart';
 
 class AuthProvider extends ChangeNotifier {
   final _memberService = MemberService();
   final _storage = GetStorage();
   static const String KEY_PROFILE = 'user_profile';
-  
+
   Member? _currentUser;
   bool _isLoading = false;
   Logger logger = Logger('AuthProvider');
 
   Member? get currentUser {
     if (_currentUser != null) return _currentUser;
-    
+
     // Vérifier d'abord dans le storage
     try {
       final storedProfile = _storage.read(KEY_PROFILE);
@@ -120,6 +121,14 @@ class AuthProvider extends ChangeNotifier {
     return _currentUser?.user?.roles?.contains(Role.PRESIDENT) ?? false;
   }
 
+  bool isAccountManager() {
+    return _currentUser?.user?.roles?.contains(Role.ACCOUNT_MANAGER) ?? false;
+  }
+
+  bool canValidateDeposits() {
+    return isPresident() || isAccountManager();
+  }
+
   Future<bool> register(CreateMemberDto memberDto) async {
     _isLoading = true;
     notifyListeners();
@@ -148,7 +157,7 @@ class AuthProvider extends ChangeNotifier {
 
   Future<Member?> getCurrentUser() async {
     if (_currentUser != null) return _currentUser;
-    
+
     // Vérifier d'abord dans le storage
     try {
       final storedProfile = _storage.read(KEY_PROFILE);
@@ -173,5 +182,50 @@ class AuthProvider extends ChangeNotifier {
 
     return _currentUser;
   }
-}
 
+  // Méthodes pour la gestion des mots de passe
+  Future<void> changePassword(ChangePasswordDto passwordDto) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      await _memberService.changePassword(passwordDto);
+    } catch (e) {
+      logger.severe('Error changing password: $e');
+      rethrow;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> forgotPassword(ForgotPasswordDto forgotPasswordDto) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      await _memberService.forgotPassword(forgotPasswordDto);
+    } catch (e) {
+      logger.severe('Error requesting password reset: $e');
+      rethrow;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> resetPassword(ResetPasswordDto resetPasswordDto) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      await _memberService.resetPassword(resetPasswordDto);
+    } catch (e) {
+      logger.severe('Error resetting password: $e');
+      rethrow;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+}

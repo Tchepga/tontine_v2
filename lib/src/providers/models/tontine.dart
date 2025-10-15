@@ -1,5 +1,6 @@
 import 'enum/loop_period.dart';
 import 'enum/type_mouvement.dart';
+import 'enum/system_type.dart';
 import 'member.dart';
 import 'cashflow.dart';
 import 'event.dart';
@@ -80,6 +81,7 @@ class ConfigTontine {
   final int countPersonPerMovement;
   final MovementType movementType;
   final int countMaxMember;
+  final SystemType systemType;
   final List<PartOrder>? parts;
 
   ConfigTontine({
@@ -91,6 +93,7 @@ class ConfigTontine {
     this.countPersonPerMovement = 1,
     this.movementType = MovementType.ROTATIVE,
     this.countMaxMember = 12,
+    this.systemType = SystemType.PART,
     this.rateMaps = const [],
     this.parts,
   });
@@ -107,6 +110,9 @@ class ConfigTontine {
       movementType: MovementType.values.firstWhere(
           (e) => e.toString() == 'MovementType.${json['movementType']}'),
       countMaxMember: json['countMaxMember'] ?? 12,
+      systemType: json['systemType'] != null
+          ? systemTypeFromString(json['systemType'])
+          : SystemType.PART,
       rateMaps: json['rateMaps'] != null
           ? (json['rateMaps'] as List)
               .map((rateMap) => RateMap.fromJson(rateMap))
@@ -131,6 +137,7 @@ class ConfigTontine {
       'countPersonPerMovement': countPersonPerMovement,
       'movementType': movementType.toString(),
       'countMaxMember': countMaxMember,
+      'systemType': systemType.value,
     };
   }
 }

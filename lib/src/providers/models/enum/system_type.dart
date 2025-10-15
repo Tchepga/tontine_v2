@@ -4,19 +4,41 @@ enum SystemType {
 }
 
 extension SystemTypeExtension on SystemType {
-  String get name {
+  String get displayName {
     switch (this) {
       case SystemType.PART:
-        return 'Part';
+        return 'Système de part';
       case SystemType.AUCTION:
-        return 'Enchère';
+        return 'Système d\'enchère';
+    }
+  }
+
+  String get description {
+    switch (this) {
+      case SystemType.PART:
+        return 'Les membres reçoivent leur part selon un ordre prédéfini';
+      case SystemType.AUCTION:
+        return 'Les membres enchérissent pour obtenir les fonds disponibles';
+    }
+  }
+
+  String get value {
+    switch (this) {
+      case SystemType.PART:
+        return 'PART';
+      case SystemType.AUCTION:
+        return 'AUCTION';
     }
   }
 }
 
-SystemType fromStringToSystemType(String status) {
-  return SystemType.values.firstWhere((s) => s.toString().split('.').last == status.toUpperCase());
+SystemType systemTypeFromString(String value) {
+  switch (value.toUpperCase()) {
+    case 'PART':
+      return SystemType.PART;
+    case 'AUCTION':
+      return SystemType.AUCTION;
+    default:
+      return SystemType.PART; // Valeur par défaut
+  }
 }
-
-
-

@@ -421,8 +421,9 @@ class _AddMemberFormState extends State<AddMemberForm> {
   }
 
   bool _isRoleOccupiedByExistingMembers(Role role) {
-    if (role == Role.TONTINARD)
+    if (role == Role.TONTINARD) {
       return false; // TONTINARD peut être attribué à plusieurs membres
+    }
     if (widget.existingMembers == null) return false;
 
     return widget.existingMembers!.any((member) {

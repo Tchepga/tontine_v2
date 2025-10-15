@@ -3,6 +3,7 @@ import 'dart:convert';
 import '../../providers/models/member.dart';
 import '../../providers/models/enum/role.dart';
 import 'dto/member_dto.dart';
+import 'dto/password_dto.dart';
 import 'middleware/interceptor_http.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:logging/logging.dart';
@@ -182,6 +183,70 @@ class MemberService {
       }
     } catch (e) {
       _logger.severe('Error updating member roles: $e');
+      rethrow;
+    }
+  }
+
+  // Méthodes pour la gestion des mots de passe
+  Future<void> changePassword(ChangePasswordDto passwordDto) async {
+    try {
+      if (!(await hasValidToken())) {
+        throw Exception('Token invalide');
+      }
+
+      final response = await client.put(
+        Uri.parse('$urlApi/auth/change-password'),
+        headers: {
+          'Authorization': 'Bearer ${getToken()}',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(passwordDto.toJson()),
+      );
+
+      if (response.statusCode != 200) {
+        final errorBody = response.body;
+        throw Exception(
+            'Erreur lors du changement de mot de passe: $errorBody');
+      }
+    } catch (e) {
+      _logger.severe('Error changing password: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> forgotPassword(ForgotPasswordDto forgotPasswordDto) async {
+    try {
+      final response = await client.post(
+        Uri.parse('$urlApi/auth/forgot-password'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(forgotPasswordDto.toJson()),
+      );
+
+      if (response.statusCode != 200) {
+        final errorBody = response.body;
+        throw Exception(
+            'Erreur lors de la demande de réinitialisation: $errorBody');
+      }
+    } catch (e) {
+      _logger.severe('Error requesting password reset: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> resetPassword(ResetPasswordDto resetPasswordDto) async {
+    try {
+      final response = await client.post(
+        Uri.parse('$urlApi/auth/reset-password'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(resetPasswordDto.toJson()),
+      );
+
+      if (response.statusCode != 200) {
+        final errorBody = response.body;
+        throw Exception('Erreur lors de la réinitialisation: $errorBody');
+      }
+    } catch (e) {
+      _logger.severe('Error resetting password: $e');
       rethrow;
     }
   }
