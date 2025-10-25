@@ -87,8 +87,14 @@ class AuthProvider extends ChangeNotifier {
       final success = await _memberService.login(username, password);
       if (success) {
         await loadProfile();
+        logger.info('Login successful for user: $username');
+      } else {
+        logger.warning('Login failed for user: $username');
       }
       return success;
+    } catch (e) {
+      logger.severe('Login error: $e');
+      return false;
     } finally {
       _isLoading = false;
       notifyListeners();

@@ -44,10 +44,10 @@ class _EditMouvementState extends State<EditMouvement> {
     final isAccountManager = authProvider.isAccountManager();
 
     if (isPresident || isAccountManager) {
-      print('✅ Accès complet - tous les types de mouvements disponibles');
+      debugPrint('✅ Accès complet - tous les types de mouvements disponibles');
       return DepositReason.values.toList();
     } else {
-      print('⚠️ Accès limité - uniquement VERSEMENT disponible');
+      debugPrint('⚠️ Accès limité - uniquement VERSEMENT disponible');
       return [DepositReason.VERSEMENT];
     }
   }

@@ -6,6 +6,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/models/auction.dart';
 import '../../providers/models/enum/system_type.dart';
 import '../../providers/models/enum/auction_status.dart';
+import '../../providers/models/enum/currency.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/menu_widget.dart';
 import 'create_auction_dialog.dart';
@@ -201,7 +202,7 @@ class _AuctionViewState extends State<AuctionView> {
                   children: [
                     Expanded(
                       child: Text(
-                        '${auction.amount.toStringAsFixed(0)} ${auction.currency.name}',
+                        '${auction.amount.toStringAsFixed(0)} ${auction.currency.displayName}',
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -276,7 +277,7 @@ class _AuctionViewState extends State<AuctionView> {
                     const Spacer(),
                     if (auction.hasBids)
                       Text(
-                        'Meilleure: ${auction.highestBid.toStringAsFixed(0)} ${auction.currency.name}',
+                        'Meilleure: ${auction.highestBid.toStringAsFixed(0)} ${auction.currency.displayName}',
                         style: const TextStyle(
                           color: AppColors.success,
                           fontSize: 12,

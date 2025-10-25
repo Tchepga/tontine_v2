@@ -653,6 +653,7 @@ class _SettingTontineViewState extends State<SettingTontineView> {
 
                     if (!mounted) return;
                     Navigator.of(context).pop();
+                    if (!mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text('Part ajoutée avec succès'),
@@ -660,6 +661,7 @@ class _SettingTontineViewState extends State<SettingTontineView> {
                       ),
                     );
                   } catch (e) {
+                    if (!mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text('Erreur lors de l\'ajout de la part'),
@@ -1050,8 +1052,10 @@ class _SettingTontineViewState extends State<SettingTontineView> {
                             backgroundColor: Colors.green,
                           ),
                         );
+                        if (!mounted) return;
                         Navigator.of(context).pop();
                       } catch (e) {
+                        if (!mounted) return;
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             content: Text('Erreur lors de la mise à jour'),

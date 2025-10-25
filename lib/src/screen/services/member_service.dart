@@ -24,23 +24,40 @@ class MemberService {
 
   Future<bool> login(String username, String password) async {
     try {
+      // Validation des paramètres d'entrée
+      if (username.trim().isEmpty || password.trim().isEmpty) {
+        _logger.warning('Username or password is empty');
+        return false;
+      }
+
       final response = await client.post(
         Uri.parse('$urlApi/auth/login'),
-        body: {
-          'username': username,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'username': username.trim(),
           'password': password,
-        },
+        }),
       );
+
+      _logger.info('Login response status: ${response.statusCode}');
+
       if (response.statusCode == 201) {
         final data = jsonDecode(response.body);
-        if (data['token'] != null) {
-          storage.write(KEY_TOKEN, data['token']);
+        if (data['token'] != null && data['token'].toString().isNotEmpty) {
+          await storage.write(KEY_TOKEN, data['token']);
+          _logger.info('Token saved successfully');
           return true;
+        } else {
+          _logger.warning('Token is null or empty in response');
+          return false;
         }
+      } else {
+        _logger.warning(
+            'Login failed with status: ${response.statusCode}, body: ${response.body}');
+        return false;
       }
-      return false;
     } catch (e) {
-      _logger.severe('Error: $e');
+      _logger.severe('Login error: $e');
       return false;
     }
   }

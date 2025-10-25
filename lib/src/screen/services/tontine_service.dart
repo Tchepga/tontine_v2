@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:get_storage/get_storage.dart';
 import 'package:tontine_v2/src/screen/services/member_service.dart';
 import '../../providers/models/deposit.dart';
+import '../../providers/models/enum/status_deposit.dart';
 import '../../providers/models/tontine.dart';
 import '../../providers/models/event.dart';
 import '../../providers/models/sanction.dart';
@@ -301,6 +302,22 @@ class TontineService {
     );
     if (response.statusCode != 200) {
       throw Exception('Failed to delete deposit');
+    }
+  }
+
+  Future<void> validateDeposit(
+      int tontineId, int depositId, StatusDeposit status) async {
+    final token = storage.read(MemberService.KEY_TOKEN);
+    final response = await client.patch(
+      Uri.parse('$urlApi/tontine/$tontineId/deposit/$depositId/status'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({'status': status.toString().split('.').last}),
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to validate deposit');
     }
   }
 

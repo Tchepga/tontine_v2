@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:tontine_v2/src/providers/models/enum/currency.dart';
 import '../providers/models/tontine.dart';
 import '../screen/casflow/cashflow_view.dart';
+import '../utils/currency_utils.dart';
 
 class BalanceCard extends StatelessWidget {
   final Tontine tontine;
@@ -57,15 +57,8 @@ class BalanceCard extends StatelessWidget {
               Row(
                 children: [
                   Text(
-                    tontine.cashFlow.currency.displayName,
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Text(
-                    ' ${tontine.cashFlow.amount.toStringAsFixed(2)}',
+                    CurrencyUtils.formatAmountForCard(
+                        tontine.cashFlow.amount, tontine.cashFlow.currency),
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 32,
@@ -95,7 +88,7 @@ class BalanceCard extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                'Objectif mensuel: ${tontine.cashFlow.currency.displayName}$monthlyTarget',
+                'Objectif mensuel: ${CurrencyUtils.formatAmountForCard(monthlyTarget, tontine.cashFlow.currency)}',
                 style: TextStyle(
                   color: Colors.white70,
                   fontSize: 14,

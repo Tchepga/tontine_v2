@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import '../../../providers/models/deposit.dart';
 import '../../../providers/models/enum/deposit_reason.dart';
 import '../../../providers/models/enum/status_deposit.dart';
+import '../../../providers/models/enum/currency.dart';
 import '../../../providers/tontine_provider.dart';
 import '../../../theme/app_theme.dart';
 import 'deposit_details_dialog.dart';
@@ -127,7 +128,7 @@ class DepositListItem extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      '${deposit.amount.toStringAsFixed(0)} ${deposit.currency.name}',
+                      '${deposit.amount.toStringAsFixed(0)} ${deposit.currency.displayName}',
                       style: TextStyle(
                         color: _getAmountColor(),
                         fontSize: 16,

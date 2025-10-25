@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:tontine_v2/src/providers/models/enum/status_deposit.dart';
+import 'package:tontine_v2/src/providers/models/enum/currency.dart';
 import '../../../providers/models/deposit.dart';
 import '../../../providers/tontine_provider.dart';
 import '../../../providers/auth_provider.dart';
@@ -96,7 +97,7 @@ class DepositDetailsDialog extends StatelessWidget {
                     ),
                     const SizedBox(height: 16),
                     _buildDetailRow('Montant',
-                        '${deposit.amount} ${deposit.currency.name}'),
+                        '${deposit.amount} ${deposit.currency.displayName}'),
                     _buildDetailRow(
                         'Date',
                         DateFormat('dd/MM/yyyy à HH:mm')

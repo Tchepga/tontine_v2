@@ -140,7 +140,7 @@ class _CreateAuctionDialogState extends State<CreateAuctionDialog> {
 
               // Devise
               DropdownButtonFormField<Currency>(
-                value: _selectedCurrency,
+                initialValue: _selectedCurrency,
                 decoration: InputDecoration(
                   labelText: 'Devise',
                   prefixIcon: const Icon(Icons.currency_exchange,

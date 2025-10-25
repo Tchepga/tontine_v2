@@ -1,8 +1,6 @@
 import '../../../providers/models/enum/currency.dart';
 import '../../../providers/models/enum/status_deposit.dart';
 
-
-
 class CreateDepositDto {
   final double amount;
   final Currency currency;
@@ -10,6 +8,7 @@ class CreateDepositDto {
   final StatusDeposit status;
   final int cashFlowId;
   final String? reasons;
+  final String? comment;
 
   CreateDepositDto({
     required this.amount,
@@ -18,6 +17,7 @@ class CreateDepositDto {
     required this.status,
     required this.cashFlowId,
     this.reasons,
+    this.comment,
   });
 
   Map<String, dynamic> toJson() {
@@ -28,6 +28,7 @@ class CreateDepositDto {
       'status': status.toString().split('.').last,
       'cashFlowId': cashFlowId,
       if (reasons != null) 'reasons': reasons,
+      if (comment != null) 'comment': comment,
     };
   }
 }

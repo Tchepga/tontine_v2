@@ -4,6 +4,7 @@ import '../../providers/tontine_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/models/auction.dart';
 import '../../providers/models/enum/auction_status.dart';
+import '../../providers/models/enum/currency.dart';
 import '../../theme/app_theme.dart';
 import '../services/dto/auction_dto.dart';
 
@@ -80,7 +81,7 @@ class _AuctionDetailsDialogState extends State<AuctionDetailsDialog> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '${widget.auction.amount.toStringAsFixed(0)} ${widget.auction.currency.name}',
+                        '${widget.auction.amount.toStringAsFixed(0)} ${widget.auction.currency.displayName}',
                         style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -158,7 +159,7 @@ class _AuctionDetailsDialogState extends State<AuctionDetailsDialog> {
         ),
         const SizedBox(height: 12),
         _buildInfoRow('Montant',
-            '${widget.auction.amount.toStringAsFixed(0)} ${widget.auction.currency.name}'),
+            '${widget.auction.amount.toStringAsFixed(0)} ${widget.auction.currency.displayName}'),
         _buildInfoRow('Début',
             DateFormat('dd/MM/yyyy à HH:mm').format(widget.auction.startDate)),
         _buildInfoRow('Fin',
@@ -172,7 +173,7 @@ class _AuctionDetailsDialogState extends State<AuctionDetailsDialog> {
               '${widget.auction.winner!.firstname} ${widget.auction.winner!.lastname}'),
         if (widget.auction.winningBid != null)
           _buildInfoRow('Enchère gagnante',
-              '${widget.auction.winningBid!.toStringAsFixed(0)} ${widget.auction.currency.name}'),
+              '${widget.auction.winningBid!.toStringAsFixed(0)} ${widget.auction.currency.displayName}'),
       ],
     );
   }
@@ -305,7 +306,7 @@ class _AuctionDetailsDialogState extends State<AuctionDetailsDialog> {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                '${bid.amount.toStringAsFixed(0)} ${widget.auction.currency.name}',
+                '${bid.amount.toStringAsFixed(0)} ${widget.auction.currency.displayName}',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   color:

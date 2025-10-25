@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/models/tontine.dart';
+import '../../providers/models/deposit.dart';
 import '../../providers/tontine_provider.dart';
 import '../../widgets/action_menu.dart';
 import '../../widgets/menu_widget.dart';
@@ -9,6 +10,7 @@ import '../../theme/app_theme.dart';
 import 'edit_mouvement.dart';
 import 'widgets/deposit_list_item.dart';
 import 'package:tontine_v2/src/providers/models/enum/currency.dart';
+import '../../utils/currency_utils.dart';
 import '../../providers/models/enum/deposit_reason.dart';
 import '../../providers/models/enum/status_deposit.dart';
 import '../../providers/auth_provider.dart';
@@ -133,7 +135,9 @@ class _CashflowViewState extends State<CashflowView> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '${currentTontine?.cashFlow.amount ?? 0} ${currentTontine?.cashFlow.currency.displayName ?? ''}',
+                      CurrencyUtils.formatAmountForCard(
+                          currentTontine?.cashFlow.amount ?? 0,
+                          currentTontine?.cashFlow.currency ?? Currency.EUR),
                       style: const TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.bold,
@@ -247,7 +251,7 @@ class _CashflowViewState extends State<CashflowView> {
   }
 
   Widget _buildPendingDepositsSection(
-      List deposits, TontineProvider tontineProvider, int tontineId) {
+      List<Deposit> deposits, TontineProvider tontineProvider, int tontineId) {
     final pendingDeposits = deposits
         .where((deposit) => deposit.status == StatusDeposit.PENDING)
         .toList();
@@ -280,7 +284,7 @@ class _CashflowViewState extends State<CashflowView> {
   }
 
   Widget _buildPendingDepositItem(
-      deposit, TontineProvider tontineProvider, int tontineId) {
+      Deposit deposit, TontineProvider tontineProvider, int tontineId) {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
@@ -303,7 +307,8 @@ class _CashflowViewState extends State<CashflowView> {
                   ),
                 ),
                 Text(
-                  '${deposit.amount} ${deposit.currency.displayName}',
+                  CurrencyUtils.formatAmountForCard(
+                      deposit.amount, deposit.currency),
                   style: const TextStyle(
                     fontSize: 14,
                     color: AppColors.textSecondary,
@@ -315,8 +320,11 @@ class _CashflowViewState extends State<CashflowView> {
           Row(
             children: [
               IconButton(
-                onPressed: () =>
-                    _validateDeposit(deposit.id, tontineProvider, tontineId),
+                onPressed: () => _validateDeposit(
+                  deposit.id,
+                  tontineProvider,
+                  tontineId,
+                ),
                 icon: const Icon(Icons.check_circle, color: AppColors.success),
                 tooltip: 'Valider',
               ),
@@ -374,26 +382,50 @@ class _CashflowViewState extends State<CashflowView> {
     );
   }
 
-  void _validateDeposit(
-      int depositId, TontineProvider tontineProvider, int tontineId) {
-    // TODO: Implémenter la validation du dépôt
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Validation du versement...'),
-        backgroundColor: AppColors.success,
-      ),
-    );
+  Future<void> _validateDeposit(
+      int depositId, TontineProvider tontineProvider, int tontineId) async {
+    try {
+      await tontineProvider.validateDeposit(
+          tontineId, depositId, StatusDeposit.VALIDATED);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Versement validé avec succès'),
+          backgroundColor: AppColors.success,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Erreur lors de la validation: ${e.toString()}'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    }
   }
 
-  void _rejectDeposit(
-      int depositId, TontineProvider tontineProvider, int tontineId) {
-    // TODO: Implémenter le rejet du dépôt
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Rejet du versement...'),
-        backgroundColor: AppColors.error,
-      ),
-    );
+  Future<void> _rejectDeposit(
+      int depositId, TontineProvider tontineProvider, int tontineId) async {
+    try {
+      await tontineProvider.validateDeposit(
+          tontineId, depositId, StatusDeposit.REJECTED);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Versement rejeté avec succès'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Erreur lors du rejet: ${e.toString()}'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    }
   }
 
   void _showAddDeposit(

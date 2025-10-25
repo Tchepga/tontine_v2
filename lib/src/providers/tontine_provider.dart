@@ -5,6 +5,7 @@ import 'package:logging/logging.dart';
 import 'package:tontine_v2/src/screen/services/dto/event_dto.dart';
 import '../services/local_notification_service.dart';
 import 'models/deposit.dart';
+import 'models/enum/status_deposit.dart';
 import 'models/event.dart';
 import 'models/sanction.dart';
 import 'models/tontine.dart';
@@ -295,6 +296,18 @@ class TontineProvider extends ChangeNotifier {
       int tontineId, int depositId, CreateDepositDto depositDto) async {
     await _tontineService.updateDeposit(tontineId, depositId, depositDto);
     await loadDeposits(tontineId);
+  }
+
+  Future<void> validateDeposit(
+      int tontineId, int depositId, StatusDeposit status) async {
+    try {
+      await _tontineService.validateDeposit(tontineId, depositId, status);
+      await loadDeposits(tontineId);
+      await getCurrentTontine(); // Recharger les données de la tontine
+    } catch (e) {
+      _logger.severe('Error validating deposit: $e');
+      rethrow;
+    }
   }
 
   Future<void> deleteRapport(int tontineId, int rapportId) async {

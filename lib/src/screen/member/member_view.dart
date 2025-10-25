@@ -82,7 +82,7 @@ class _MemberViewState extends State<MemberView> {
         return Scaffold(
           backgroundColor: AppColors.background,
           appBar: AppBar(
-            title: const Text('Membres'),
+            title: Text('Membres', style: TextStyle(color: Colors.white)),
             backgroundColor: AppColors.primary,
             elevation: 0,
             iconTheme: const IconThemeData(color: Colors.white),
@@ -456,6 +456,24 @@ class _MemberViewState extends State<MemberView> {
                       tontineProvider,
                       tontineId,
                     ),
+                  ),
+                ),
+                const SizedBox(width: 4),
+                // Bouton partager l'invitation
+                Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.success.withAlpha(20),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: IconButton(
+                    icon: Icon(
+                      Icons.share,
+                      color: AppColors.success,
+                      size: 20,
+                    ),
+                    onPressed: () => _shareIndividualInvitation(
+                        context, member, tontineProvider.currentTontine!),
+                    tooltip: 'Partager l\'invitation',
                   ),
                 ),
                 const SizedBox(width: 4),
@@ -885,9 +903,6 @@ class _MemberViewState extends State<MemberView> {
   }
 
   void _shareInvitationLink(BuildContext context, Tontine tontine) {
-    // Générer le lien d'invitation (à adapter selon votre logique backend)
-    final invitationLink = 'https://votre-app.com/join/${tontine.id}';
-
     // Message personnalisé pour WhatsApp
     final message = '''
 🏦 *Invitation à rejoindre la tontine "${tontine.title}"*
@@ -918,67 +933,8 @@ Rejoignez-nous pour participer à cette aventure financière collective ! 🚀
 *Message envoyé depuis l'application Tontine*
 ''';
 
-    // Afficher un dialog pour choisir le mode de partage
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          title: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withAlpha(20),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(
-                  Icons.share,
-                  color: AppColors.primary,
-                  size: 24,
-                ),
-              ),
-              const SizedBox(width: 12),
-              const Text('Partager l\'invitation'),
-            ],
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Choisissez comment partager le lien d\'invitation :',
-                style: TextStyle(fontSize: 16),
-              ),
-              const SizedBox(height: 16),
-              _buildShareOption(
-                context,
-                'WhatsApp',
-                Icons.message,
-                Colors.green,
-                () => _shareViaWhatsApp(message),
-              ),
-              const SizedBox(height: 12),
-              _buildShareOption(
-                context,
-                'Autres applications',
-                Icons.share,
-                AppColors.primary,
-                () => _shareViaOtherApps(message),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Annuler'),
-            ),
-          ],
-        );
-      },
-    );
+    // Afficher les options de partage
+    _showShareOptionsDialog(context, message);
   }
 
   Widget _buildShareOption(
@@ -1057,7 +1013,114 @@ Rejoignez-nous pour participer à cette aventure financière collective ! 🚀
       );
     } catch (e) {
       // Gérer l'erreur si nécessaire
-      print('Erreur lors du partage: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erreur lors du partage: ${e.toString()}'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
     }
+  }
+
+  void _shareIndividualInvitation(
+      BuildContext context, Member member, Tontine tontine) {
+    final username = member.user?.username ?? 'non_defini';
+
+    final message = '''
+🏦 *Invitation personnelle - Tontine "${tontine.title}"*
+
+Bonjour ${member.firstname} ${member.lastname} !
+
+Vous êtes invité(e) à rejoindre notre tontine "${tontine.title}".
+
+📱 *Vos identifiants de connexion :*
+   👤 *Nom d'utilisateur :* $username
+   🔑 *Mot de passe temporaire :* changeme
+
+🔐 *IMPORTANT - Sécurité :*
+⚠️ *Changez votre mot de passe dès votre première connexion !*
+• Téléchargez l'application Tontine
+• Connectez-vous avec les identifiants ci-dessus
+• Allez dans "Mon compte" → "Modifier le mot de passe"
+• Choisissez un mot de passe fort (8+ caractères, majuscules, chiffres)
+
+💰 *Détails de la tontine :*
+• Nom : ${tontine.title}
+• Membres actuels : ${tontine.members.length}
+• Système : ${tontine.config.systemType.displayName}
+
+Bienvenue dans notre tontine ! 🚀
+
+---
+*Message envoyé depuis l'application Tontine*
+''';
+
+    // Afficher les options de partage
+    _showShareOptionsDialog(context, message);
+  }
+
+  void _showShareOptionsDialog(BuildContext context, String message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withAlpha(20),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.share,
+                  color: AppColors.primary,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Text('Partager l\'invitation'),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Choisissez comment partager :',
+                style: TextStyle(fontSize: 16),
+              ),
+              const SizedBox(height: 16),
+              _buildShareOption(
+                context,
+                'WhatsApp',
+                Icons.message,
+                Colors.green,
+                () => _shareViaWhatsApp(message),
+              ),
+              const SizedBox(height: 12),
+              _buildShareOption(
+                context,
+                'Autres applications',
+                Icons.share,
+                AppColors.primary,
+                () => _shareViaOtherApps(message),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Annuler'),
+            ),
+          ],
+        );
+      },
+    );
   }
 }

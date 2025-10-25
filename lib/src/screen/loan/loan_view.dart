@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:tontine_v2/src/providers/models/enum/status_loan.dart';
 import 'package:tontine_v2/src/providers/models/enum/role.dart';
+import 'package:tontine_v2/src/providers/models/enum/currency.dart';
 import 'package:tontine_v2/src/providers/models/member.dart';
 import '../../providers/models/loan.dart';
 import '../../providers/models/tontine.dart';
@@ -104,7 +105,7 @@ class _LoanViewState extends State<LoanView> {
     return ModernCard(
       type: _getLoanCardType(loan.status),
       icon: _getLoanIcon(loan.status),
-      title: '${loan.amount} ${loan.currency.name}',
+      title: '${loan.amount} ${loan.currency.displayName}',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -618,7 +619,7 @@ class _LoanViewState extends State<LoanView> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Prêt de ${loan.amount} ${loan.currency.name}',
+                      'Prêt de ${loan.amount} ${loan.currency.displayName}',
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -655,45 +656,45 @@ class _LoanViewState extends State<LoanView> {
                 ),
               ),
               const SizedBox(height: 8),
-              ...StatusLoan.values.map((status) {
-                // Filtrer les statuts selon le statut actuel
-                bool canSelect = _canChangeToStatus(loan.status, status);
-                return Container(
-                  margin: const EdgeInsets.only(bottom: 8),
-                  child: RadioListTile<StatusLoan>(
-                    value: status,
-                    groupValue: selectedStatus,
-                    onChanged: canSelect
-                        ? (StatusLoan? value) {
-                            setState(() {
-                              selectedStatus = value!;
-                            });
-                          }
-                        : null,
-                    title: Text(
-                      status.displayName,
-                      style: TextStyle(
-                        color: canSelect
-                            ? AppColors.textPrimary
-                            : AppColors.textSecondary,
+              RadioGroup<StatusLoan>(
+                groupValue: selectedStatus,
+                onChanged: (StatusLoan? value) {
+                  if (value != null && _canChangeToStatus(loan.status, value)) {
+                    setState(() {
+                      selectedStatus = value;
+                    });
+                  }
+                },
+                child: Column(
+                  children: StatusLoan.values.map((status) {
+                    bool canSelect = _canChangeToStatus(loan.status, status);
+                    return RadioListTile<StatusLoan>(
+                      value: status,
+                      title: Text(
+                        status.displayName,
+                        style: TextStyle(
+                          color: canSelect
+                              ? AppColors.textPrimary
+                              : AppColors.textSecondary,
+                        ),
                       ),
-                    ),
-                    subtitle: Text(
-                      _getStatusDescription(status),
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: canSelect
-                            ? AppColors.textSecondary
-                            : AppColors.textLight,
+                      subtitle: Text(
+                        _getStatusDescription(status),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: canSelect
+                              ? AppColors.textSecondary
+                              : AppColors.textLight,
+                        ),
                       ),
-                    ),
-                    activeColor: AppColors.primary,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                );
-              }).toList(),
+                      activeColor: AppColors.primary,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
             ],
           ),
           actions: [
