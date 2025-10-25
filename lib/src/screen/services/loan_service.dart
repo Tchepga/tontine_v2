@@ -95,16 +95,18 @@ class LoanService {
     }
   }
 
-  Future<void> voteLoan(int id) async {
+  Future<void> voteLoan(int loanId) async {
     final token = storage.read(MemberService.KEY_TOKEN);
     final response = await client.patch(
-      Uri.parse('$urlApi/loan/$id/vote'),
+      Uri.parse('$urlApi/loan/$loanId/vote'),
       headers: {
         'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
       },
+      body: jsonEncode({'voter': loanId}),
     );
     if (response.statusCode != 200) {
       throw Exception('Failed to vote for loan');
     }
   }
-} 
+}

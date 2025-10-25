@@ -44,7 +44,6 @@ class LoanProvider extends ChangeNotifier {
       _logger.severe('Error creating loan: $e');
       rethrow;
     }
-
   }
 
   Future<void> updateLoan(int id, UpdateLoanDto loanDto) async {
@@ -60,7 +59,6 @@ class LoanProvider extends ChangeNotifier {
       if (loan.tontineId != null) {
         await loadLoans(loan.tontineId!);
       }
-
     } catch (e) {
       _logger.severe('Error updating loan: $e');
       rethrow;
@@ -80,7 +78,6 @@ class LoanProvider extends ChangeNotifier {
       if (loan.tontineId != null) {
         await loadLoans(loan.tontineId!);
       }
-
     } catch (e) {
       _logger.severe('Error deleting loan: $e');
       rethrow;
@@ -100,4 +97,4 @@ class LoanProvider extends ChangeNotifier {
       rethrow;
     }
   }
-} 
+}

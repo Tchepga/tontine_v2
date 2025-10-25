@@ -63,6 +63,9 @@ class _RapportViewState extends State<RapportView>
         builder: (context) => Scaffold(
           appBar: AppBar(
             title: const Text('Nouveau rapport'),
+            backgroundColor: AppColors.primary,
+            foregroundColor: Colors.white,
+            elevation: 0,
             leading: IconButton(
               icon: const Icon(Icons.close),
               onPressed: () => Navigator.pop(context),
@@ -77,9 +80,17 @@ class _RapportViewState extends State<RapportView>
                 children: [
                   TextFormField(
                     controller: titleController,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: 'Titre',
-                      border: OutlineInputBorder(),
+                      prefixIcon: const Icon(Icons.title),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(
+                            color: AppColors.primary, width: 2),
+                      ),
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
@@ -89,21 +100,41 @@ class _RapportViewState extends State<RapportView>
                     },
                   ),
                   const SizedBox(height: 16),
-                  const Text(
-                    'Contenu',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(
+                          Icons.edit_note,
+                          color: AppColors.primary,
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      const Text(
+                        'Contenu',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 8),
                   Container(
                     height: MediaQuery.of(context).size.height * 0.5,
                     decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey),
-                      borderRadius: BorderRadius.circular(4),
+                      border: Border.all(color: AppColors.border),
+                      borderRadius: BorderRadius.circular(12),
+                      color: AppColors.surface,
                     ),
                     child: Column(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         QuillSimpleToolbar(
                           controller: _controller,
@@ -155,9 +186,27 @@ class _RapportViewState extends State<RapportView>
               ),
             ),
           ),
-          bottomNavigationBar: Padding(
+          bottomNavigationBar: Container(
             padding: const EdgeInsets.all(16),
-            child: FilledButton(
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.1),
+                  blurRadius: 8,
+                  offset: const Offset(0, -2),
+                ),
+              ],
+            ),
+            child: FilledButton.icon(
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
               onPressed: () async {
                 if (formKey.currentState!.validate()) {
                   try {
@@ -176,24 +225,34 @@ class _RapportViewState extends State<RapportView>
 
                     if (!context.mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Rapport créé avec succès'),
-                        backgroundColor: Colors.green,
+                      SnackBar(
+                        content: const Text('Rapport créé avec succès'),
+                        backgroundColor: AppColors.success,
+                        behavior: SnackBarBehavior.fixed,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                       ),
                     );
                     Navigator.of(context).pop();
                   } catch (e) {
                     _logger.log(Level.SEVERE, 'Error creating rapport: $e');
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Erreur lors de la création du rapport.'),
-                        backgroundColor: Colors.red,
+                      SnackBar(
+                        content: const Text(
+                            'Erreur lors de la création du rapport.'),
+                        backgroundColor: AppColors.error,
+                        behavior: SnackBarBehavior.fixed,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                       ),
                     );
                   }
                 }
               },
-              child: const Text('Enregistrer'),
+              icon: const Icon(Icons.save),
+              label: const Text('Enregistrer le rapport'),
             ),
           ),
         ),
@@ -205,22 +264,41 @@ class _RapportViewState extends State<RapportView>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Pièce jointe',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-          ),
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(
+                Icons.attach_file,
+                color: AppColors.primary,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Text(
+              'Pièce jointe',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary,
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 8),
         Row(
           children: [
             Expanded(
               child: Container(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey),
-                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(color: AppColors.border),
+                  borderRadius: BorderRadius.circular(12),
+                  color: AppColors.surface,
                 ),
                 child: Row(
                   children: [
@@ -228,7 +306,7 @@ class _RapportViewState extends State<RapportView>
                       _selectedFile != null
                           ? Icons.file_present
                           : Icons.attach_file,
-                      color: Colors.grey,
+                      color: AppColors.textSecondary,
                     ),
                     const SizedBox(width: 8),
                     Expanded(
@@ -247,9 +325,17 @@ class _RapportViewState extends State<RapportView>
               ),
             ),
             const SizedBox(width: 8),
-            OutlinedButton(
+            OutlinedButton.icon(
               onPressed: _pickFile,
-              child: const Text('Choisir'),
+              icon: const Icon(Icons.folder_open),
+              label: const Text('Choisir'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.primary,
+                side: const BorderSide(color: AppColors.primary),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
             ),
           ],
         ),
@@ -273,9 +359,13 @@ class _RapportViewState extends State<RapportView>
       _logger.log(Level.INFO, 'Error picking file: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Erreur lors de la sélection du fichier'),
-            backgroundColor: Colors.red,
+          SnackBar(
+            content: const Text('Erreur lors de la sélection du fichier'),
+            backgroundColor: AppColors.error,
+            behavior: SnackBarBehavior.fixed,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
           ),
         );
       }
@@ -322,23 +412,47 @@ class _RapportViewState extends State<RapportView>
             controller: _tabController,
             children: [
               // Tab Rapports
-              ListView.builder(
-                itemCount: rapports.length,
-                padding: const EdgeInsets.all(16),
-                itemBuilder: (context, index) {
-                  final rapport = rapports[index];
-                  return _buildRapportCard(rapport);
-                },
-              ),
+              rapports.isEmpty
+                  ? _buildEmptyState(
+                      title: 'Aucun rapport',
+                      message:
+                          'Il n\'y a pas encore de rapport de réunion.\nCréez le premier rapport pour commencer.',
+                      icon: Icons.description_outlined,
+                      onActionPressed: canEdit
+                          ? () =>
+                              _showCreateRapportDialog(context, tontineProvider)
+                          : null,
+                      actionLabel: canEdit ? 'Créer un rapport' : null,
+                    )
+                  : ListView.builder(
+                      itemCount: rapports.length,
+                      padding: const EdgeInsets.all(16),
+                      itemBuilder: (context, index) {
+                        final rapport = rapports[index];
+                        return _buildRapportCard(rapport);
+                      },
+                    ),
               // Tab Sanctions
-              ListView.builder(
-                itemCount: sanctions.length,
-                padding: const EdgeInsets.all(16),
-                itemBuilder: (context, index) {
-                  final sanction = sanctions[index];
-                  return _buildSanctionCard(sanction);
-                },
-              ),
+              sanctions.isEmpty
+                  ? _buildEmptyState(
+                      title: 'Aucune sanction',
+                      message:
+                          'Il n\'y a pas encore de sanction enregistrée.\nToutes les sanctions seront affichées ici.',
+                      icon: Icons.gavel_outlined,
+                      onActionPressed: canEdit
+                          ? () => _showCreateSanctionDialog(
+                              context, tontineProvider)
+                          : null,
+                      actionLabel: canEdit ? 'Créer une sanction' : null,
+                    )
+                  : ListView.builder(
+                      itemCount: sanctions.length,
+                      padding: const EdgeInsets.all(16),
+                      itemBuilder: (context, index) {
+                        final sanction = sanctions[index];
+                        return _buildSanctionCard(sanction);
+                      },
+                    ),
             ],
           ),
           floatingActionButton: canEdit
@@ -347,6 +461,8 @@ class _RapportViewState extends State<RapportView>
                   children: [
                     FloatingActionButton(
                       heroTag: 'btn1',
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
                       onPressed: () =>
                           _showCreateRapportDialog(context, tontineProvider),
                       child: const Icon(Icons.description),
@@ -354,6 +470,8 @@ class _RapportViewState extends State<RapportView>
                     const SizedBox(height: 16),
                     FloatingActionButton(
                       heroTag: 'btn2',
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
                       onPressed: () =>
                           _showCreateSanctionDialog(context, tontineProvider),
                       child: const Icon(Icons.gavel),
@@ -473,16 +591,26 @@ class _RapportViewState extends State<RapportView>
                               if (!context.mounted) return;
                               Navigator.pop(context);
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Sanction créée avec succès'),
-                                  backgroundColor: Colors.green,
+                                SnackBar(
+                                  content:
+                                      const Text('Sanction créée avec succès'),
+                                  backgroundColor: AppColors.success,
+                                  behavior: SnackBarBehavior.fixed,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
                                 ),
                               );
                             } catch (e) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Erreur lors de la création'),
-                                  backgroundColor: Colors.red,
+                                SnackBar(
+                                  content:
+                                      const Text('Erreur lors de la création'),
+                                  backgroundColor: AppColors.error,
+                                  behavior: SnackBarBehavior.fixed,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
                                 ),
                               );
                             }
@@ -509,6 +637,7 @@ class _RapportViewState extends State<RapportView>
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
+          backgroundColor: AppColors.surface,
           child: Stack(
             children: [
               Padding(
@@ -521,40 +650,93 @@ class _RapportViewState extends State<RapportView>
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Expanded(
-                          child: Text(
-                            rapport.title,
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color:
+                                      AppColors.primary.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Icon(
+                                  Icons.description,
+                                  color: AppColors.primary,
+                                  size: 20,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  rapport.title,
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                         IconButton(
                           icon: const Icon(Icons.close),
+                          color: AppColors.textSecondary,
                           onPressed: () => Navigator.of(context).pop(),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 8),
-                    Text(rapport.content),
+                    const SizedBox(height: 16),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppColors.background,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppColors.border),
+                      ),
+                      child: Text(
+                        rapport.content,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: AppColors.textPrimary,
+                          height: 1.5,
+                        ),
+                      ),
+                    ),
                     if (rapport.attachmentFilename != null) ...[
                       const SizedBox(height: 16),
-                      InkWell(
-                        onTap: () => _downloadAttachment(rapport.id, context),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.attachment, color: Colors.blue),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                rapport.attachmentFilename!,
-                                style: const TextStyle(
-                                  color: Colors.blue,
-                                  decoration: TextDecoration.underline,
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                              color: AppColors.primary.withValues(alpha: 0.3)),
+                        ),
+                        child: InkWell(
+                          onTap: () => _downloadAttachment(rapport.id, context),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.attachment,
+                                  color: AppColors.primary),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  rapport.attachmentFilename!,
+                                  style: const TextStyle(
+                                    color: AppColors.primary,
+                                    fontWeight: FontWeight.w500,
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
+                              const Icon(
+                                Icons.download,
+                                color: AppColors.primary,
+                                size: 16,
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ],
@@ -719,6 +901,68 @@ class _RapportViewState extends State<RapportView>
     }
   }
 
+  Widget _buildEmptyState({
+    required String title,
+    required String message,
+    required IconData icon,
+    VoidCallback? onActionPressed,
+    String? actionLabel,
+  }) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                icon,
+                size: 64,
+                color: AppColors.primary,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              message,
+              style: const TextStyle(
+                fontSize: 14,
+                color: AppColors.textSecondary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            if (onActionPressed != null && actionLabel != null) ...[
+              const SizedBox(height: 24),
+              FilledButton.icon(
+                onPressed: onActionPressed,
+                icon: const Icon(Icons.add),
+                label: Text(actionLabel),
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
   Future<void> _downloadAttachment(int rapportId, BuildContext context) async {
     final tontineProvider =
         Provider.of<TontineProvider>(context, listen: false);
@@ -735,9 +979,13 @@ class _RapportViewState extends State<RapportView>
     } catch (e) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Erreur lors du téléchargement'),
-          backgroundColor: Colors.red,
+        SnackBar(
+          content: const Text('Erreur lors du téléchargement'),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.fixed,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
         ),
       );
     }

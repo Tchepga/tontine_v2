@@ -157,10 +157,18 @@ class _LoanViewState extends State<LoanView> {
                                     false
                                 ? Icons.how_to_vote
                                 : Icons.how_to_vote_outlined,
-                            color: AppColors.primary,
+                            color: loan.voters?.any(
+                                        (voter) => voter == currentUser?.id) ??
+                                    false
+                                ? AppColors.success
+                                : AppColors.primary,
                           ),
-                          onPressed: () => _handleVote(loan),
-                          tooltip: 'Voter',
+                          onPressed: () => _handleVote(loan, currentUser),
+                          tooltip: loan.voters?.any(
+                                      (voter) => voter == currentUser?.id) ??
+                                  false
+                              ? 'Vous avez voté'
+                              : 'Voter',
                         ),
                       // Bouton de gestion de statut pour trésorier/président
                       if (canManageStatus &&
@@ -234,7 +242,21 @@ class _LoanViewState extends State<LoanView> {
     }
   }
 
-  Future<void> _handleVote(Loan loan) async {
+  Future<void> _handleVote(Loan loan, Member? currentUser) async {
+    if (currentUser?.id == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Utilisateur non connecté'),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
+      );
+      return;
+    }
+
     try {
       await Provider.of<LoanProvider>(context, listen: false).voteLoan(loan.id);
       if (!mounted) return;
