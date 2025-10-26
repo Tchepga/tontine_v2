@@ -255,7 +255,12 @@ class TontineProvider extends ChangeNotifier {
 
   Future<List<Sanction>> getSanctionsForTontine(int tontineId) async {
     try {
-      return await _tontineService.getSanctions(tontineId);
+      final sanctions = await _tontineService.getSanctions(tontineId);
+      if (_currentTontine != null) {
+        _currentTontine!.sanctions.addAll(sanctions);
+        notifyListeners();
+      }
+      return sanctions;
     } catch (e) {
       _logger.severe('Error getting sanctions: $e');
       return [];
@@ -465,6 +470,20 @@ class TontineProvider extends ChangeNotifier {
       notifyListeners();
     } catch (e) {
       _logger.severe('Error deleting sanction: $e');
+
+      // Solution temporaire : suppression locale si l'API n'est pas encore implémentée
+      if (e.toString().contains('404') ||
+          e.toString().contains('501') ||
+          e.toString().contains('non implémenté')) {
+        _logger.info('API not implemented, removing sanction locally');
+        if (_currentTontine != null) {
+          _currentTontine!.sanctions
+              .removeWhere((sanction) => sanction.id == sanctionId);
+          notifyListeners();
+          return;
+        }
+      }
+
       rethrow;
     }
   }

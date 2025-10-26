@@ -551,7 +551,7 @@ class _RapportViewState extends State<RapportView>
                         items: TypeSanction.values.map((type) {
                           return DropdownMenuItem(
                             value: type,
-                            child: Text(type.displayName),
+                            child: Text(_getSanctionTypeName(type)),
                           );
                         }).toList(),
                         onChanged: (value) => selectedType = value!,
@@ -988,6 +988,19 @@ class _RapportViewState extends State<RapportView>
     }
   }
 
+  String _getSanctionTypeName(TypeSanction type) {
+    switch (type) {
+      case TypeSanction.WARNING:
+        return 'Avertissement';
+      case TypeSanction.FINANCIAL:
+        return 'Sanction financière';
+      case TypeSanction.SUSPENSION:
+        return 'Suspension';
+      case TypeSanction.EXCLUSION:
+        return 'Exclusion';
+    }
+  }
+
   Widget _getSanctionBadge(TypeSanction type) {
     switch (type) {
       case TypeSanction.WARNING:
@@ -1130,7 +1143,7 @@ class _RapportViewState extends State<RapportView>
                   const SizedBox(height: 8),
                   Text(
                       '• Membre : ${sanction.gulty.firstname} ${sanction.gulty.lastname}'),
-                  Text('• Type : ${sanction.type.displayName}'),
+                  Text('• Type : ${_getSanctionTypeName(sanction.type)}'),
                   Text('• Description : ${sanction.description}'),
                   Text(
                       '• Date : ${DateFormat('dd/MM/yyyy').format(sanction.startDate ?? DateTime.now())}'),
