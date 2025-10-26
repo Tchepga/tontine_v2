@@ -233,20 +233,9 @@ class TontineService {
       },
     );
 
-    // Log pour diagnostic
-    print(
-        'DELETE sanction response: ${response.statusCode} - ${response.body}');
-
     if (response.statusCode == 403) {
       throw Exception(
           'Seuls les membres du bureau peuvent supprimer une sanction');
-    }
-    if (response.statusCode == 404) {
-      throw Exception('Endpoint de suppression de sanction non trouvé (404)');
-    }
-    if (response.statusCode == 501) {
-      throw Exception(
-          'Endpoint de suppression de sanction non implémenté (501)');
     }
     if (response.statusCode != 200) {
       throw Exception(

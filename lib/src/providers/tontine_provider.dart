@@ -257,6 +257,7 @@ class TontineProvider extends ChangeNotifier {
     try {
       final sanctions = await _tontineService.getSanctions(tontineId);
       if (_currentTontine != null) {
+        _currentTontine!.sanctions.clear();
         _currentTontine!.sanctions.addAll(sanctions);
         notifyListeners();
       }
@@ -470,20 +471,6 @@ class TontineProvider extends ChangeNotifier {
       notifyListeners();
     } catch (e) {
       _logger.severe('Error deleting sanction: $e');
-
-      // Solution temporaire : suppression locale si l'API n'est pas encore implémentée
-      if (e.toString().contains('404') ||
-          e.toString().contains('501') ||
-          e.toString().contains('non implémenté')) {
-        _logger.info('API not implemented, removing sanction locally');
-        if (_currentTontine != null) {
-          _currentTontine!.sanctions
-              .removeWhere((sanction) => sanction.id == sanctionId);
-          notifyListeners();
-          return;
-        }
-      }
-
       rethrow;
     }
   }
