@@ -788,9 +788,6 @@ class _LoanViewState extends State<LoanView> {
       final tontineProvider =
           Provider.of<TontineProvider>(context, listen: false);
 
-      // TODO: Implémenter la méthode updateLoanStatus dans LoanProvider
-      // await loanProvider.updateLoanStatus(loan.id, newStatus);
-
       // Pour l'instant, on simule la mise à jour
       await Future.delayed(const Duration(seconds: 1));
 

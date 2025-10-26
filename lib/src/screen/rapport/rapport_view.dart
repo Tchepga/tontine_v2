@@ -376,8 +376,11 @@ class _RapportViewState extends State<RapportView>
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final currentUser = authProvider.currentUser;
-    final canEdit = currentUser?.user?.roles
-            ?.any((role) => role == Role.PRESIDENT || role == Role.SECRETARY) ??
+    final canEdit = currentUser?.user?.roles?.any((role) =>
+            role == Role.PRESIDENT ||
+            role == Role.SECRETARY ||
+            role == Role.ACCOUNT_MANAGER ||
+            role == Role.OFFICE_MANAGER) ??
         false;
 
     return Consumer<TontineProvider>(
@@ -416,7 +419,7 @@ class _RapportViewState extends State<RapportView>
                   ? _buildEmptyState(
                       title: 'Aucun rapport',
                       message:
-                          'Il n\'y a pas encore de rapport de réunion.\nCréez le premier rapport pour commencer.',
+                          'Il n\'y a pas encore de rapport de réunion.\nSeuls les membres du bureau peuvent créer des rapports.',
                       icon: Icons.description_outlined,
                       onActionPressed: canEdit
                           ? () =>
@@ -437,7 +440,7 @@ class _RapportViewState extends State<RapportView>
                   ? _buildEmptyState(
                       title: 'Aucune sanction',
                       message:
-                          'Il n\'y a pas encore de sanction enregistrée.\nToutes les sanctions seront affichées ici.',
+                          'Il n\'y a pas encore de sanction enregistrée.\nSeuls les membres du bureau peuvent créer des sanctions.',
                       icon: Icons.gavel_outlined,
                       onActionPressed: canEdit
                           ? () => _showCreateSanctionDialog(
@@ -450,7 +453,7 @@ class _RapportViewState extends State<RapportView>
                       padding: const EdgeInsets.all(16),
                       itemBuilder: (context, index) {
                         final sanction = sanctions[index];
-                        return _buildSanctionCard(sanction);
+                        return _buildSanctionCard(sanction, tontineProvider);
                       },
                     ),
             ],
@@ -497,133 +500,218 @@ class _RapportViewState extends State<RapportView>
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return Dialog(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Form(
-              key: formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text(
-                    'Nouvelle sanction',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  DropdownButtonFormField<int>(
-                    decoration: const InputDecoration(
-                      labelText: 'Membre',
-                      border: OutlineInputBorder(),
-                    ),
-                    items:
-                        tontineProvider.currentTontine?.members.map((member) {
-                      return DropdownMenuItem(
-                        value: member.id,
-                        child: Text('${member.firstname} ${member.lastname}'),
-                      );
-                    }).toList(),
-                    onChanged: (value) => selectedMemberId = value,
-                    validator: (value) {
-                      if (value == null) return 'Sélectionnez un membre';
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  DropdownButtonFormField<TypeSanction>(
-                    decoration: const InputDecoration(
-                      labelText: 'Type de sanction',
-                      border: OutlineInputBorder(),
-                    ),
-                    initialValue: selectedType,
-                    items: TypeSanction.values.map((type) {
-                      return DropdownMenuItem(
-                        value: type,
-                        child: Text(type.displayName),
-                      );
-                    }).toList(),
-                    onChanged: (value) => selectedType = value!,
-                  ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: descriptionController,
-                    decoration: const InputDecoration(
-                      labelText: 'Description',
-                      border: OutlineInputBorder(),
-                    ),
-                    maxLines: 3,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'La description est requise';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 24),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Dialog(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Form(
+                  key: formKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: const Text('Annuler'),
+                      const Text(
+                        'Nouvelle sanction',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                      FilledButton(
-                        onPressed: () async {
-                          if (formKey.currentState!.validate() &&
-                              selectedMemberId != null) {
-                            try {
-                              final sanctionDto = CreateSanctionDto(
-                                type: selectedType,
-                                description: descriptionController.text,
-                                startDate: startDate,
-                                endDate: endDate,
-                                memberId: selectedMemberId!,
-                              );
-
-                              final tontineId =
-                                  tontineProvider.currentTontine!.id;
-                              await tontineProvider.addSanction(
-                                  tontineId, sanctionDto);
-                              await tontineProvider
-                                  .getSanctionsForTontine(tontineId);
-                              if (!context.mounted) return;
-                              Navigator.pop(context);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content:
-                                      const Text('Sanction créée avec succès'),
-                                  backgroundColor: AppColors.success,
-                                  behavior: SnackBarBehavior.fixed,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                ),
-                              );
-                            } catch (e) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content:
-                                      const Text('Erreur lors de la création'),
-                                  backgroundColor: AppColors.error,
-                                  behavior: SnackBarBehavior.fixed,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                ),
-                              );
-                            }
-                          }
+                      const SizedBox(height: 16),
+                      DropdownButtonFormField<int>(
+                        decoration: const InputDecoration(
+                          labelText: 'Membre',
+                          border: OutlineInputBorder(
+                            borderSide: BorderSide(color: AppColors.primary),
+                          ),
+                        ),
+                        items: tontineProvider.currentTontine?.members
+                            .map((member) {
+                          return DropdownMenuItem(
+                            value: member.id,
+                            child:
+                                Text('${member.firstname} ${member.lastname}'),
+                          );
+                        }).toList(),
+                        onChanged: (value) => selectedMemberId = value,
+                        validator: (value) {
+                          if (value == null) return 'Sélectionnez un membre';
+                          return null;
                         },
-                        child: const Text('Créer'),
+                      ),
+                      const SizedBox(height: 16),
+                      DropdownButtonFormField<TypeSanction>(
+                        decoration: const InputDecoration(
+                          labelText: 'Type de sanction',
+                          border: OutlineInputBorder(
+                            borderSide: BorderSide(color: AppColors.primary),
+                          ),
+                        ),
+                        initialValue: selectedType,
+                        items: TypeSanction.values.map((type) {
+                          return DropdownMenuItem(
+                            value: type,
+                            child: Text(type.displayName),
+                          );
+                        }).toList(),
+                        onChanged: (value) => selectedType = value!,
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextFormField(
+                              readOnly: true,
+                              decoration: InputDecoration(
+                                labelText: 'Date de début',
+                                prefixIcon: const Icon(Icons.calendar_today),
+                                border: const OutlineInputBorder(
+                                  borderSide:
+                                      BorderSide(color: AppColors.primary),
+                                ),
+                                suffixText:
+                                    DateFormat('dd/MM/yyyy').format(startDate),
+                              ),
+                              onTap: () async {
+                                final DateTime? picked = await showDatePicker(
+                                  context: context,
+                                  initialDate: startDate,
+                                  firstDate: DateTime.now()
+                                      .subtract(const Duration(days: 365)),
+                                  lastDate: DateTime.now()
+                                      .add(const Duration(days: 365)),
+                                );
+                                if (picked != null) {
+                                  setState(() {
+                                    startDate = picked;
+                                  });
+                                }
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: TextFormField(
+                              readOnly: true,
+                              decoration: InputDecoration(
+                                labelText: 'Date de fin (optionnel)',
+                                prefixIcon: const Icon(Icons.calendar_today),
+                                border: const OutlineInputBorder(
+                                  borderSide:
+                                      BorderSide(color: AppColors.primary),
+                                ),
+                                suffixText: endDate != null
+                                    ? DateFormat('dd/MM/yyyy').format(endDate!)
+                                    : 'Non définie',
+                              ),
+                              onTap: () async {
+                                final DateTime? picked = await showDatePicker(
+                                  context: context,
+                                  initialDate: endDate ??
+                                      startDate.add(const Duration(days: 30)),
+                                  firstDate: startDate,
+                                  lastDate: DateTime.now()
+                                      .add(const Duration(days: 365)),
+                                );
+                                if (picked != null) {
+                                  setState(() {
+                                    endDate = picked;
+                                  });
+                                }
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: descriptionController,
+                        decoration: const InputDecoration(
+                          labelText: 'Description',
+                          border: OutlineInputBorder(
+                            borderSide: BorderSide(color: AppColors.primary),
+                          ),
+                        ),
+                        maxLines: 3,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'La description est requise';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 24),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text(
+                              'Annuler',
+                              style: TextStyle(color: AppColors.primary),
+                            ),
+                          ),
+                          FilledButton(
+                            style: FilledButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              foregroundColor: Colors.white,
+                            ),
+                            onPressed: () async {
+                              if (formKey.currentState!.validate() &&
+                                  selectedMemberId != null) {
+                                try {
+                                  final sanctionDto = CreateSanctionDto(
+                                    type: selectedType,
+                                    description: descriptionController.text,
+                                    startDate: startDate,
+                                    endDate: endDate,
+                                    memberId: selectedMemberId!,
+                                  );
+
+                                  final tontineId =
+                                      tontineProvider.currentTontine!.id;
+                                  await tontineProvider.addSanction(
+                                      tontineId, sanctionDto);
+                                  await tontineProvider
+                                      .getSanctionsForTontine(tontineId);
+                                  if (!context.mounted) return;
+                                  Navigator.pop(context);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: const Text(
+                                          'Sanction créée avec succès'),
+                                      backgroundColor: AppColors.success,
+                                      behavior: SnackBarBehavior.fixed,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                    ),
+                                  );
+                                } catch (e) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: const Text(
+                                          'Erreur lors de la création'),
+                                      backgroundColor: AppColors.error,
+                                      behavior: SnackBarBehavior.fixed,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                    ),
+                                  );
+                                }
+                              }
+                            },
+                            child: const Text('Créer'),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                ],
+                ),
               ),
-            ),
-          ),
+            );
+          },
         );
       },
     );
@@ -811,7 +899,16 @@ class _RapportViewState extends State<RapportView>
     );
   }
 
-  Widget _buildSanctionCard(dynamic sanction) {
+  Widget _buildSanctionCard(dynamic sanction, TontineProvider tontineProvider) {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final currentUser = authProvider.currentUser;
+    final canDelete = currentUser?.user?.roles?.any((role) =>
+            role == Role.PRESIDENT ||
+            role == Role.SECRETARY ||
+            role == Role.ACCOUNT_MANAGER ||
+            role == Role.OFFICE_MANAGER) ??
+        false;
+
     return ModernCard(
       type: _getSanctionCardType(sanction.type),
       icon: _getSanctionIcon(sanction.type),
@@ -839,6 +936,25 @@ class _RapportViewState extends State<RapportView>
                   color: AppColors.textSecondary,
                 ),
               ),
+              if (canDelete) ...[
+                const SizedBox(width: 8),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.red.withAlpha(20),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: IconButton(
+                    icon: Icon(
+                      Icons.delete_outline,
+                      color: Colors.red.shade600,
+                      size: 20,
+                    ),
+                    onPressed: () => _showDeleteSanctionConfirmation(
+                        context, sanction, tontineProvider),
+                    tooltip: 'Supprimer la sanction',
+                  ),
+                ),
+              ],
             ],
           ),
         ],
@@ -961,6 +1077,141 @@ class _RapportViewState extends State<RapportView>
         ),
       ),
     );
+  }
+
+  void _showDeleteSanctionConfirmation(
+      BuildContext context, dynamic sanction, TontineProvider tontineProvider) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: Row(
+          children: [
+            Icon(
+              Icons.warning,
+              color: Colors.red.shade600,
+              size: 24,
+            ),
+            const SizedBox(width: 8),
+            const Text('Confirmation de suppression'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Êtes-vous sûr de vouloir supprimer cette sanction ?',
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.red.shade50,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.red.shade200),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Sanction à supprimer :',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: Colors.red.shade700,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                      '• Membre : ${sanction.gulty.firstname} ${sanction.gulty.lastname}'),
+                  Text('• Type : ${sanction.type.displayName}'),
+                  Text('• Description : ${sanction.description}'),
+                  Text(
+                      '• Date : ${DateFormat('dd/MM/yyyy').format(sanction.startDate ?? DateTime.now())}'),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text(
+              'Annuler',
+              style: TextStyle(color: AppColors.textSecondary),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () =>
+                _handleDeleteSanction(context, sanction, tontineProvider),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red.shade600,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Supprimer'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _handleDeleteSanction(BuildContext context, dynamic sanction,
+      TontineProvider tontineProvider) async {
+    try {
+      Navigator.of(context).pop(); // Fermer le dialog de confirmation
+
+      // Afficher un indicateur de chargement
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) => const AlertDialog(
+          content: Row(
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(width: 16),
+              Text('Suppression en cours...'),
+            ],
+          ),
+        ),
+      );
+
+      final tontineId = tontineProvider.currentTontine!.id;
+      await tontineProvider.deleteSanction(tontineId, sanction.id);
+
+      if (!mounted) return;
+      Navigator.of(context).pop(); // Fermer l'indicateur de chargement
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Sanction supprimée avec succès'),
+          backgroundColor: AppColors.success,
+          behavior: SnackBarBehavior.fixed,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      Navigator.of(context).pop(); // Fermer l'indicateur de chargement
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Erreur lors de la suppression : ${e.toString()}'),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.fixed,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
+      );
+    }
   }
 
   Future<void> _downloadAttachment(int rapportId, BuildContext context) async {

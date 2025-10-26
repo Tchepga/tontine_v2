@@ -1,7 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:get_storage/get_storage.dart';
-import 'package:tontine_v2/src/screen/services/member_service.dart';
+import 'package:intl/intl.dart';
+import 'member_service.dart';
 import '../../providers/models/deposit.dart';
 import '../../providers/models/enum/status_deposit.dart';
 import '../../providers/models/tontine.dart';
@@ -223,6 +224,27 @@ class TontineService {
     }
   }
 
+  Future<void> deleteSanction(int tontineId, int sanctionId) async {
+    final token = storage.read(MemberService.KEY_TOKEN);
+    final response = await client.delete(
+      Uri.parse('$urlApi/tontine/$tontineId/sanction/$sanctionId'),
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    );
+    if (response.statusCode == 403) {
+      throw Exception(
+          'Seuls les membres du bureau peuvent supprimer une sanction');
+    }
+    if (response.statusCode != 200) {
+      throw Exception('Failed to delete sanction');
+    }
+  }
+
+  String formatDate(DateTime date) {
+    return DateFormat('dd/MM/yyyy').format(date);
+  }
+
   // Events
   Future<Event> createEvent(int tontineId, CreateEventDto eventDto) async {
     final response = await client.post(
@@ -416,6 +438,22 @@ class TontineService {
     );
     if (response.statusCode != 200) {
       throw Exception('Failed to update member roles');
+    }
+  }
+
+  Future<void> deleteTontine(int tontineId) async {
+    final token = storage.read(MemberService.KEY_TOKEN);
+    final response = await client.delete(
+      Uri.parse('$urlApi/tontine/$tontineId'),
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    );
+    if (response.statusCode == 403) {
+      throw Exception('Seul le président peut supprimer la tontine');
+    }
+    if (response.statusCode != 200) {
+      throw Exception('Failed to delete tontine');
     }
   }
 }

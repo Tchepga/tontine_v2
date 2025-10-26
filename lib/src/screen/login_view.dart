@@ -5,6 +5,7 @@ import 'services/member_service.dart';
 import 'tontine/select_tontine_view.dart';
 import 'auth/register_view.dart';
 import 'auth/forgot_password_view.dart';
+import '../theme/app_theme.dart';
 
 class LoginView extends StatefulWidget {
   static const routeName = '/login';
@@ -43,9 +44,13 @@ class _LoginViewState extends State<LoginView> {
     // Validation des champs
     if (_usernameController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Veuillez saisir votre nom d\'utilisateur'),
-          backgroundColor: Colors.orange,
+        SnackBar(
+          content: const Text('Veuillez saisir votre nom d\'utilisateur'),
+          backgroundColor: AppColors.warning,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
         ),
       );
       return;
@@ -53,9 +58,13 @@ class _LoginViewState extends State<LoginView> {
 
     if (_passwordController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Veuillez saisir votre mot de passe'),
-          backgroundColor: Colors.orange,
+        SnackBar(
+          content: const Text('Veuillez saisir votre mot de passe'),
+          backgroundColor: AppColors.warning,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
         ),
       );
       return;
@@ -81,9 +90,14 @@ class _LoginViewState extends State<LoginView> {
         if (mounted) {
           // Afficher un message d'erreur si la connexion échoue
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Nom d\'utilisateur ou mot de passe incorrect'),
-              backgroundColor: Colors.orange,
+            SnackBar(
+              content:
+                  const Text('Nom d\'utilisateur ou mot de passe incorrect'),
+              backgroundColor: AppColors.warning,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
           );
         }
@@ -91,9 +105,13 @@ class _LoginViewState extends State<LoginView> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Une erreur est survenue. Veuillez réessayer.'),
-            backgroundColor: Colors.red,
+          SnackBar(
+            content: const Text('Une erreur est survenue. Veuillez réessayer.'),
+            backgroundColor: AppColors.error,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
           ),
         );
       }
@@ -112,7 +130,7 @@ class _LoginViewState extends State<LoginView> {
     final colorScheme = theme.colorScheme;
 
     return Scaffold(
-      backgroundColor: colorScheme.surface,
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
@@ -149,7 +167,7 @@ class _LoginViewState extends State<LoginView> {
                   'Connexion',
                   style: theme.textTheme.headlineMedium?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: colorScheme.primary,
+                    color: AppColors.primary,
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -157,7 +175,7 @@ class _LoginViewState extends State<LoginView> {
                 Text(
                   'Connectez-vous à votre compte',
                   style: theme.textTheme.bodyLarge?.copyWith(
-                    color: colorScheme.onSurface.withAlpha(60),
+                    color: AppColors.textSecondary,
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -168,13 +186,13 @@ class _LoginViewState extends State<LoginView> {
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: colorScheme.outline.withAlpha(30),
+                      color: AppColors.border,
                     ),
-                    color: colorScheme.surface,
+                    color: AppColors.surface,
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withAlpha(2),
-                        blurRadius: 4,
+                        color: Colors.black.withValues(alpha: 0.05),
+                        blurRadius: 8,
                         offset: const Offset(0, 2),
                       ),
                     ],
@@ -183,13 +201,13 @@ class _LoginViewState extends State<LoginView> {
                     controller: _usernameController,
                     decoration: InputDecoration(
                       labelText: 'Nom d\'utilisateur',
-                      prefixIcon: Icon(Icons.person_outline,
-                          color: colorScheme.primary),
+                      prefixIcon: const Icon(Icons.person_outline,
+                          color: AppColors.primary),
                       border: InputBorder.none,
                       contentPadding: const EdgeInsets.symmetric(
                           horizontal: 16, vertical: 16),
                       labelStyle:
-                          TextStyle(color: colorScheme.onSurface.withAlpha(60)),
+                          const TextStyle(color: AppColors.textSecondary),
                     ),
                   ),
                 ),
@@ -200,13 +218,13 @@ class _LoginViewState extends State<LoginView> {
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: colorScheme.outline.withAlpha(30),
+                      color: AppColors.border,
                     ),
-                    color: colorScheme.surface,
+                    color: AppColors.surface,
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withAlpha(2),
-                        blurRadius: 4,
+                        color: Colors.black.withValues(alpha: 0.05),
+                        blurRadius: 8,
                         offset: const Offset(0, 2),
                       ),
                     ],
@@ -216,13 +234,13 @@ class _LoginViewState extends State<LoginView> {
                     obscureText: true,
                     decoration: InputDecoration(
                       labelText: 'Mot de passe',
-                      prefixIcon:
-                          Icon(Icons.lock_outline, color: colorScheme.primary),
+                      prefixIcon: const Icon(Icons.lock_outline,
+                          color: AppColors.primary),
                       border: InputBorder.none,
                       contentPadding: const EdgeInsets.symmetric(
                           horizontal: 16, vertical: 16),
                       labelStyle:
-                          TextStyle(color: colorScheme.onSurface.withAlpha(60)),
+                          const TextStyle(color: AppColors.textSecondary),
                     ),
                   ),
                 ),
@@ -231,8 +249,8 @@ class _LoginViewState extends State<LoginView> {
                 // Bouton de connexion
                 _isLoading
                     ? Center(
-                        child: CircularProgressIndicator(
-                          color: colorScheme.primary,
+                        child: const CircularProgressIndicator(
+                          color: AppColors.primary,
                         ),
                       )
                     : Container(
@@ -240,14 +258,14 @@ class _LoginViewState extends State<LoginView> {
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             colors: [
-                              colorScheme.primary,
-                              colorScheme.primary.withAlpha(80)
+                              AppColors.primary,
+                              AppColors.primary.withValues(alpha: 0.8)
                             ],
                           ),
                           borderRadius: BorderRadius.circular(16),
                           boxShadow: [
                             BoxShadow(
-                              color: colorScheme.primary.withAlpha(30),
+                              color: AppColors.primary.withValues(alpha: 0.3),
                               blurRadius: 12,
                               offset: const Offset(0, 4),
                             ),
@@ -256,10 +274,10 @@ class _LoginViewState extends State<LoginView> {
                         child: FilledButton(
                           onPressed: _isLoading ? null : _handleLogin,
                           style: FilledButton.styleFrom(
-                            backgroundColor: colorScheme.primary,
+                            backgroundColor: AppColors.primary,
                             shadowColor: Colors.transparent,
                             foregroundColor: Colors.white,
-                            disabledBackgroundColor: Colors.grey,
+                            disabledBackgroundColor: AppColors.textLight,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16),
                             ),
@@ -286,8 +304,8 @@ class _LoginViewState extends State<LoginView> {
                   ),
                   child: Text(
                     'Mot de passe oublié ?',
-                    style: TextStyle(
-                      color: colorScheme.primary,
+                    style: const TextStyle(
+                      color: AppColors.primary,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -307,13 +325,13 @@ class _LoginViewState extends State<LoginView> {
                     text: TextSpan(
                       text: 'Pas encore de compte ? ',
                       style: theme.textTheme.bodyLarge?.copyWith(
-                        color: colorScheme.onSurface.withAlpha(60),
+                        color: AppColors.textSecondary,
                       ),
                       children: [
                         TextSpan(
                           text: 'S\'inscrire',
-                          style: TextStyle(
-                            color: colorScheme.primary,
+                          style: const TextStyle(
+                            color: AppColors.primary,
                             fontWeight: FontWeight.w600,
                           ),
                         ),

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/models/enum/loop_period.dart';
 import '../../providers/models/enum/type_mouvement.dart';
+import '../../providers/models/enum/role.dart';
 import '../../providers/models/tontine.dart';
 import '../../providers/tontine_provider.dart';
 import '../services/dto/tontine_dto.dart';
@@ -683,6 +684,286 @@ class _SettingTontineViewState extends State<SettingTontineView> {
     );
   }
 
+  Widget _buildDangerousActionsSection(TontineProvider tontineProvider,
+      Tontine currentTontine, AuthProvider authProvider) {
+    final currentUser = authProvider.currentUser;
+    final isPresident =
+        currentUser?.user?.roles?.any((role) => role == Role.PRESIDENT) ??
+            false;
+    return Card(
+      elevation: 3,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Colors.red.shade50,
+              Colors.red.shade100,
+            ],
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.red.withAlpha(20),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      Icons.warning,
+                      color: Colors.red.shade600,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const Text(
+                    'Actions dangereuses',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF2D3748),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.red.shade100,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.red.shade200),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Supprimer la tontine',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF2D3748),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Cette action est irréversible. Toutes les données de la tontine seront définitivement supprimées.',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.red,
+                      ),
+                    ),
+                    if (!isPresident) ...[
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.orange.shade100,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.orange.shade300),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.lock,
+                              color: Colors.orange.shade700,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Seul le président peut supprimer la tontine',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.orange.shade700,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: isPresident
+                            ? () => _showDeleteConfirmation(
+                                context, tontineProvider, currentTontine)
+                            : null,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: isPresident
+                              ? Colors.red.shade600
+                              : Colors.grey.shade400,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        icon: const Icon(Icons.delete_forever, size: 18),
+                        label: const Text('Supprimer la tontine'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showDeleteConfirmation(BuildContext context,
+      TontineProvider tontineProvider, Tontine currentTontine) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: Row(
+          children: [
+            Icon(
+              Icons.warning,
+              color: Colors.red.shade600,
+              size: 24,
+            ),
+            const SizedBox(width: 8),
+            const Text('Confirmation de suppression'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Êtes-vous sûr de vouloir supprimer la tontine "${currentTontine.title}" ?',
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.red.shade50,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.red.shade200),
+              ),
+              child: const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '⚠️ Cette action supprimera définitivement :',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: Colors.red,
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  Text('• Tous les membres et leurs données'),
+                  Text('• Tous les prêts et transactions'),
+                  Text('• Tous les rapports et sanctions'),
+                  Text('• Toutes les configurations'),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text(
+              'Annuler',
+              style: TextStyle(color: AppColors.textSecondary),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () =>
+                _handleDeleteTontine(context, tontineProvider, currentTontine),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red.shade600,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Supprimer définitivement'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _handleDeleteTontine(BuildContext context,
+      TontineProvider tontineProvider, Tontine currentTontine) async {
+    try {
+      Navigator.of(context).pop(); // Fermer le dialog de confirmation
+
+      // Afficher un indicateur de chargement
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) => const AlertDialog(
+          content: Row(
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(width: 16),
+              Text('Suppression en cours...'),
+            ],
+          ),
+        ),
+      );
+
+      await tontineProvider.deleteTontine(currentTontine.id);
+
+      if (!mounted) return;
+      Navigator.of(context).pop(); // Fermer l'indicateur de chargement
+
+      // Rediriger vers la sélection de tontine
+      Navigator.of(context).pushNamedAndRemoveUntil(
+        '/select-tontine',
+        (route) => false,
+      );
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Tontine supprimée avec succès'),
+          backgroundColor: AppColors.success,
+          behavior: SnackBarBehavior.fixed,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      Navigator.of(context).pop(); // Fermer l'indicateur de chargement
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Erreur lors de la suppression de la tontine'),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.fixed,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer2<TontineProvider, AuthProvider>(
@@ -1004,6 +1285,9 @@ class _SettingTontineViewState extends State<SettingTontineView> {
                 _buildRateMapSection(),
                 const SizedBox(height: 16),
                 _buildPartOrderSection(tontineProvider),
+                const SizedBox(height: 16),
+                _buildDangerousActionsSection(
+                    tontineProvider, currentTontine, authProvider),
               ],
             ),
           ),

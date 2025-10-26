@@ -440,6 +440,35 @@ class TontineProvider extends ChangeNotifier {
     }
   }
 
+  /// Supprime une tontine
+  Future<void> deleteTontine(int tontineId) async {
+    try {
+      await _tontineService.deleteTontine(tontineId);
+      await loadTontines();
+      // Si la tontine supprimée était la tontine courante, la désélectionner
+      if (_currentTontine?.id == tontineId) {
+        _currentTontine = null;
+        _storage.remove(KEY_SELECTED_TONTINE_ID);
+      }
+      notifyListeners();
+    } catch (e) {
+      _logger.severe('Error deleting tontine: $e');
+      rethrow;
+    }
+  }
+
+  /// Supprime une sanction
+  Future<void> deleteSanction(int tontineId, int sanctionId) async {
+    try {
+      await _tontineService.deleteSanction(tontineId, sanctionId);
+      await getSanctionsForTontine(tontineId);
+      notifyListeners();
+    } catch (e) {
+      _logger.severe('Error deleting sanction: $e');
+      rethrow;
+    }
+  }
+
   // ========== MÉTHODES POUR LES ENCHÈRES ==========
 
   Future<void> loadAuctions(int tontineId) async {
