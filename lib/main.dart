@@ -18,14 +18,13 @@ import 'src/providers/notification_provider.dart';
 // If you want to load multiple dotenv files or name your dotenv object differently, you can do the following and import the singleton into the relavant files:
 // DotEnv another_dotenv = DotEnv()
 
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized(); // Important !
-  
+
   await dotenv.load(fileName: ".env");
 
   await GetStorage.init();
-  
+
   // Initialiser les notifications locales
   await LocalNotificationService().init();
 

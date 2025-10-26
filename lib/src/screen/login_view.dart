@@ -5,6 +5,8 @@ import 'services/member_service.dart';
 import 'tontine/select_tontine_view.dart';
 import 'auth/register_view.dart';
 import 'auth/forgot_password_view.dart';
+import '../services/first_launch_service.dart';
+import 'features_explanation_view.dart';
 import '../theme/app_theme.dart';
 
 class LoginView extends StatefulWidget {
@@ -83,8 +85,19 @@ class _LoginViewState extends State<LoginView> {
 
       if (success) {
         if (mounted) {
-          Navigator.of(context)
-              .pushReplacementNamed(SelectTontineView.routeName);
+          // Vérifier si c'est le premier lancement
+          final firstLaunchService = FirstLaunchService();
+          if (firstLaunchService.isFirstLaunch()) {
+            // Premier lancement: afficher les explications
+            await firstLaunchService.markAppAsLaunched();
+            Navigator.of(context).pushReplacementNamed(
+              FeaturesExplanationView.routeName,
+            );
+          } else {
+            // Lancement suivant: aller à SelectTontineView
+            Navigator.of(context)
+                .pushReplacementNamed(SelectTontineView.routeName);
+          }
         }
       } else {
         if (mounted) {
@@ -106,8 +119,8 @@ class _LoginViewState extends State<LoginView> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Une erreur est survenue. Veuillez réessayer.'),
-            backgroundColor: AppColors.error,
+            content: Text('Erreur: $e'),
+            backgroundColor: AppColors.warning,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8),

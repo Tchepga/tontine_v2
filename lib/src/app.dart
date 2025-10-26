@@ -8,6 +8,7 @@ import 'package:tontine_v2/src/screen/auth/reset_password_view.dart';
 import 'package:tontine_v2/src/screen/login_view.dart';
 import 'package:tontine_v2/src/screen/member/account_view.dart';
 import 'package:tontine_v2/src/screen/splash_view.dart';
+import 'package:tontine_v2/src/screen/features_explanation_view.dart';
 
 import 'screen/selected_language_view.dart';
 import 'screen/tontine/add_members_view.dart';
@@ -146,6 +147,8 @@ class _MyAppState extends State<MyApp> {
                     return const ForgotPasswordView();
                   case ResetPasswordView.routeName:
                     return const ResetPasswordView();
+                  case FeaturesExplanationView.routeName:
+                    return const FeaturesExplanationView();
                   default:
                     return const SplashView();
                 }
