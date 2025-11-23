@@ -124,7 +124,7 @@ class _FeaturesExplanationViewState extends State<FeaturesExplanationView>
                   vertical: 8,
                 ),
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.5),
+                  color: Colors.black.withValues(alpha: 0.5),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: const Text(
@@ -157,8 +157,8 @@ class _FeaturesExplanationViewState extends State<FeaturesExplanationView>
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            feature.color.withOpacity(0.1),
-            feature.color.withOpacity(0.05),
+            feature.color.withValues(alpha: 0.1),
+            feature.color.withValues(alpha: 0.05),
           ],
         ),
       ),
@@ -180,12 +180,12 @@ class _FeaturesExplanationViewState extends State<FeaturesExplanationView>
                     end: Alignment.bottomRight,
                     colors: [
                       feature.color,
-                      feature.color.withOpacity(0.6),
+                      feature.color.withValues(alpha: 0.6),
                     ],
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: feature.color.withOpacity(0.4),
+                      color: feature.color.withValues(alpha: 0.4),
                       blurRadius: 20,
                       offset: const Offset(0, 8),
                     ),

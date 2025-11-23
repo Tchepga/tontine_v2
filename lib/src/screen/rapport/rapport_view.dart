@@ -8,6 +8,8 @@ import '../../providers/tontine_provider.dart';
 import '../../widgets/menu_widget.dart';
 import '../../widgets/modern_card.dart';
 import '../../widgets/status_badge.dart';
+import '../../widgets/responsive_padding.dart';
+import '../../utils/responsive_helper.dart';
 import '../../theme/app_theme.dart';
 import '../services/dto/rapport_dto.dart';
 import 'package:intl/intl.dart';
@@ -72,7 +74,7 @@ class _RapportViewState extends State<RapportView>
             ),
           ),
           body: SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
+            padding: ResponsiveHelper.getAdaptivePadding(context, all: 16.0),
             child: Form(
               key: formKey,
               child: Column(
@@ -99,7 +101,7 @@ class _RapportViewState extends State<RapportView>
                       return null;
                     },
                   ),
-                  const SizedBox(height: 16),
+                  ResponsiveSpacing(height: 16),
                   Row(
                     children: [
                       Container(
@@ -125,7 +127,7 @@ class _RapportViewState extends State<RapportView>
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
+                  ResponsiveSpacing(height: 8),
                   Container(
                     height: MediaQuery.of(context).size.height * 0.5,
                     decoration: BoxDecoration(
@@ -180,7 +182,7 @@ class _RapportViewState extends State<RapportView>
                       ],
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  ResponsiveSpacing(height: 16),
                   _buildAttachmentSection(),
                 ],
               ),
@@ -289,7 +291,7 @@ class _RapportViewState extends State<RapportView>
             ),
           ],
         ),
-        const SizedBox(height: 8),
+        ResponsiveSpacing(height: 8),
         Row(
           children: [
             Expanded(
@@ -470,7 +472,7 @@ class _RapportViewState extends State<RapportView>
                           _showCreateRapportDialog(context, tontineProvider),
                       child: const Icon(Icons.description),
                     ),
-                    const SizedBox(height: 16),
+                    ResponsiveSpacing(height: 16),
                     FloatingActionButton(
                       heroTag: 'btn2',
                       backgroundColor: AppColors.primary,
@@ -517,7 +519,7 @@ class _RapportViewState extends State<RapportView>
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      const SizedBox(height: 16),
+                      ResponsiveSpacing(height: 16),
                       DropdownButtonFormField<int>(
                         decoration: const InputDecoration(
                           labelText: 'Membre',
@@ -539,7 +541,7 @@ class _RapportViewState extends State<RapportView>
                           return null;
                         },
                       ),
-                      const SizedBox(height: 16),
+                      ResponsiveSpacing(height: 16),
                       DropdownButtonFormField<TypeSanction>(
                         decoration: const InputDecoration(
                           labelText: 'Type de sanction',
@@ -556,7 +558,7 @@ class _RapportViewState extends State<RapportView>
                         }).toList(),
                         onChanged: (value) => selectedType = value!,
                       ),
-                      const SizedBox(height: 16),
+                      ResponsiveSpacing(height: 16),
                       Row(
                         children: [
                           Expanded(
@@ -623,7 +625,7 @@ class _RapportViewState extends State<RapportView>
                           ),
                         ],
                       ),
-                      const SizedBox(height: 16),
+                      ResponsiveSpacing(height: 16),
                       TextFormField(
                         controller: descriptionController,
                         decoration: const InputDecoration(
@@ -774,7 +776,7 @@ class _RapportViewState extends State<RapportView>
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
+                    ResponsiveSpacing(height: 16),
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(16),
@@ -793,7 +795,7 @@ class _RapportViewState extends State<RapportView>
                       ),
                     ),
                     if (rapport.attachmentFilename != null) ...[
-                      const SizedBox(height: 16),
+                      ResponsiveSpacing(height: 16),
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
@@ -923,7 +925,7 @@ class _RapportViewState extends State<RapportView>
               color: AppColors.textPrimary,
             ),
           ),
-          const SizedBox(height: 8),
+          ResponsiveSpacing(height: 8),
           Row(
             children: [
               _getSanctionBadge(sanction.type),
@@ -1140,7 +1142,7 @@ class _RapportViewState extends State<RapportView>
                       color: Colors.red.shade700,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  ResponsiveSpacing(height: 8),
                   Text(
                       '• Membre : ${sanction.gulty.firstname} ${sanction.gulty.lastname}'),
                   Text('• Type : ${_getSanctionTypeName(sanction.type)}'),

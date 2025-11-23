@@ -10,6 +10,8 @@ import '../../providers/models/member.dart';
 import '../../providers/models/tontine.dart';
 import '../../widgets/menu_widget.dart';
 import '../../widgets/role_badge.dart';
+import '../../widgets/responsive_padding.dart';
+import '../../utils/responsive_helper.dart';
 import '../../theme/app_theme.dart';
 import '../tontine/add_member_form.dart';
 import '../../services/local_notification_service.dart';
@@ -63,6 +65,7 @@ class _MemberViewState extends State<MemberView> {
         final currentUser = authProvider.currentUser;
         final isPresident =
             currentUser?.user?.roles?.contains(Role.PRESIDENT) ?? false;
+        final isTontineFull = tontineProvider.isTontineFull();
 
         if (currentTontine == null) {
           return Scaffold(
@@ -99,20 +102,25 @@ class _MemberViewState extends State<MemberView> {
           body: Column(
             children: [
               // Section Bureau de la tontine
-              _buildBureauSection(currentTontine),
-              const SizedBox(height: 16),
+              _buildBureauSection(context, currentTontine),
+              ResponsiveSpacing(height: 16),
               // En-tête avec les statistiques
-              _buildStatisticsSection(currentTontine),
-              const SizedBox(height: 16),
+              _buildStatisticsSection(context, currentTontine),
+              ResponsiveSpacing(height: 16),
               // Liste des membres
               Expanded(
                 child: ListView.builder(
-                  padding: const EdgeInsets.only(
-                      top: 16, left: 16, right: 16, bottom: 56),
+                  padding: EdgeInsets.only(
+                    top: 16.0,
+                    left: 16.0,
+                    right: 16.0,
+                    bottom: 56.0,
+                  ),
                   itemCount: currentTontine.members.length,
                   itemBuilder: (context, index) {
                     final member = currentTontine.members[index];
                     return _buildMemberCard(
+                      context,
                       member,
                       isPresident,
                       tontineProvider,
@@ -124,7 +132,7 @@ class _MemberViewState extends State<MemberView> {
             ],
           ),
           // Bouton d'ajout uniquement pour le président
-          floatingActionButton: isPresident
+          floatingActionButton: isPresident || isTontineFull
               ? FloatingActionButton(
                   heroTag: 'member_fab',
                   backgroundColor: AppColors.primary,
@@ -149,11 +157,16 @@ class _MemberViewState extends State<MemberView> {
     );
   }
 
-  Widget _buildBureauSection(Tontine tontine) {
+  Widget _buildBureauSection(BuildContext context, Tontine tontine) {
     final bureauMembers = _getBureauMembers(tontine.members);
+    final cardMargin = ResponsiveHelper.getAdaptivePadding(context, all: 16.0);
+    final cardPadding = ResponsiveHelper.getAdaptivePadding(context, all: 20.0);
+    final iconPadding = ResponsiveHelper.getAdaptivePadding(context, all: 8.0);
+    final iconSize = ResponsiveHelper.getAdaptiveIconSize(context, base: 20.0);
+    final spacing = ResponsiveHelper.getAdaptiveSpacing(context, base: 12.0);
 
     return Card(
-      margin: const EdgeInsets.all(16),
+      margin: cardMargin,
       elevation: 3,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Container(
@@ -169,14 +182,14 @@ class _MemberViewState extends State<MemberView> {
           ),
         ),
         child: Padding(
-          padding: const EdgeInsets.all(20),
+          padding: cardPadding,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(8),
+                    padding: iconPadding,
                     decoration: BoxDecoration(
                       color: AppColors.primary.withAlpha(20),
                       borderRadius: BorderRadius.circular(8),
@@ -184,26 +197,31 @@ class _MemberViewState extends State<MemberView> {
                     child: Icon(
                       Icons.business,
                       color: AppColors.primary,
-                      size: 20,
+                      size: iconSize,
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  const Text(
+                  SizedBox(width: spacing),
+                  Text(
                     'Bureau de la tontine',
                     style: TextStyle(
-                      fontSize: 18,
+                      fontSize: ResponsiveHelper.getAdaptiveValue(
+                        context,
+                        small: 16.0,
+                        medium: 17.0,
+                        large: 18.0,
+                      ),
                       fontWeight: FontWeight.bold,
                       color: AppColors.textPrimary,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
+              ResponsiveSpacing(height: 16),
               ...Role.values
                   .where((role) => role != Role.TONTINARD)
                   .map((role) {
                 final member = bureauMembers[role];
-                return _buildBureauMember(member, role);
+                return _buildBureauMember(context, member, role);
               }),
             ],
           ),
@@ -212,10 +230,16 @@ class _MemberViewState extends State<MemberView> {
     );
   }
 
-  Widget _buildBureauMember(Member? member, Role role) {
+  Widget _buildBureauMember(BuildContext context, Member? member, Role role) {
+    final itemMargin = ResponsiveHelper.getAdaptiveSpacing(context, base: 8.0);
+    final itemPadding = ResponsiveHelper.getAdaptivePadding(context, all: 12.0);
+    final iconPadding = ResponsiveHelper.getAdaptivePadding(context, all: 8.0);
+    final iconSize = ResponsiveHelper.getAdaptiveIconSize(context, base: 20.0);
+    final spacing = ResponsiveHelper.getAdaptiveSpacing(context, base: 12.0);
+
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(12),
+      margin: EdgeInsets.only(bottom: itemMargin),
+      padding: itemPadding,
       decoration: BoxDecoration(
         color: role.color.withAlpha(10),
         borderRadius: BorderRadius.circular(12),
@@ -227,7 +251,7 @@ class _MemberViewState extends State<MemberView> {
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(8),
+            padding: iconPadding,
             decoration: BoxDecoration(
               color: role.color.withAlpha(20),
               borderRadius: BorderRadius.circular(8),
@@ -235,10 +259,10 @@ class _MemberViewState extends State<MemberView> {
             child: Icon(
               role.icon,
               color: role.color,
-              size: 20,
+              size: iconSize,
             ),
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: spacing),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -272,9 +296,13 @@ class _MemberViewState extends State<MemberView> {
     );
   }
 
-  Widget _buildStatisticsSection(Tontine tontine) {
+  Widget _buildStatisticsSection(BuildContext context, Tontine tontine) {
+    final cardMargin =
+        ResponsiveHelper.getAdaptivePadding(context, horizontal: 16.0);
+    final cardPadding = ResponsiveHelper.getAdaptivePadding(context, all: 20.0);
+
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
+      margin: cardMargin,
       elevation: 3,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Container(
@@ -290,17 +318,19 @@ class _MemberViewState extends State<MemberView> {
           ),
         ),
         child: Padding(
-          padding: const EdgeInsets.all(20),
+          padding: cardPadding,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _buildStatistic(
+                context,
                 'Total membres',
                 tontine.members.length.toString(),
                 Icons.people,
                 AppColors.primary,
               ),
               _buildStatistic(
+                context,
                 'Places restantes',
                 (tontine.config.countMaxMember - tontine.members.length)
                     .toString(),
@@ -314,12 +344,27 @@ class _MemberViewState extends State<MemberView> {
     );
   }
 
-  Widget _buildStatistic(
-      String label, String value, IconData icon, Color color) {
+  Widget _buildStatistic(BuildContext context, String label, String value,
+      IconData icon, Color color) {
+    final iconPadding = ResponsiveHelper.getAdaptivePadding(context, all: 12.0);
+    final iconSize = ResponsiveHelper.getAdaptiveIconSize(context, base: 24.0);
+    final valueFontSize = ResponsiveHelper.getAdaptiveValue(
+      context,
+      small: 20.0,
+      medium: 22.0,
+      large: 24.0,
+    );
+    final labelFontSize = ResponsiveHelper.getAdaptiveValue(
+      context,
+      small: 11.0,
+      medium: 11.5,
+      large: 12.0,
+    );
+
     return Column(
       children: [
         Container(
-          padding: const EdgeInsets.all(12),
+          padding: iconPadding,
           decoration: BoxDecoration(
             color: color.withAlpha(20),
             borderRadius: BorderRadius.circular(12),
@@ -327,23 +372,23 @@ class _MemberViewState extends State<MemberView> {
           child: Icon(
             icon,
             color: color,
-            size: 24,
+            size: iconSize,
           ),
         ),
-        const SizedBox(height: 8),
+        ResponsiveSpacing(height: 8),
         Text(
           value,
           style: TextStyle(
-            fontSize: 24,
+            fontSize: valueFontSize,
             fontWeight: FontWeight.bold,
             color: color,
           ),
         ),
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             color: AppColors.textSecondary,
-            fontSize: 12,
+            fontSize: labelFontSize,
           ),
         ),
       ],
@@ -351,6 +396,7 @@ class _MemberViewState extends State<MemberView> {
   }
 
   Widget _buildMemberCard(
+    BuildContext context,
     Member member,
     bool isPresident,
     TontineProvider tontineProvider,
@@ -359,9 +405,18 @@ class _MemberViewState extends State<MemberView> {
     final roles = member.user?.roles ?? [Role.TONTINARD];
     final primaryRole =
         roles.contains(Role.PRESIDENT) ? Role.PRESIDENT : roles.first;
+    final cardMargin = ResponsiveHelper.getAdaptiveSpacing(context, base: 12.0);
+    final cardPadding = ResponsiveHelper.getAdaptivePadding(context, all: 16.0);
+    final spacing = ResponsiveHelper.getAdaptiveSpacing(context, base: 16.0);
+    final avatarRadius = ResponsiveHelper.getAdaptiveValue(
+      context,
+      small: 22.0,
+      medium: 24.0,
+      large: 25.0,
+    );
 
     return Card(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: EdgeInsets.only(bottom: cardMargin),
       elevation: 3,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Container(
@@ -377,23 +432,28 @@ class _MemberViewState extends State<MemberView> {
           ),
         ),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: cardPadding,
           child: Row(
             children: [
               // Avatar
               CircleAvatar(
-                radius: 25,
+                radius: avatarRadius,
                 backgroundColor: primaryRole.color,
                 child: Text(
                   _getInitials(member),
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: Colors.white,
-                    fontSize: 16,
+                    fontSize: ResponsiveHelper.getAdaptiveValue(
+                      context,
+                      small: 14.0,
+                      medium: 15.0,
+                      large: 16.0,
+                    ),
                     fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
-              const SizedBox(width: 16),
+              SizedBox(width: spacing),
               // Informations du membre
               Expanded(
                 child: Column(
@@ -401,36 +461,59 @@ class _MemberViewState extends State<MemberView> {
                   children: [
                     Text(
                       '${member.firstname} ${member.lastname}',
-                      style: const TextStyle(
-                        fontSize: 16,
+                      style: TextStyle(
+                        fontSize: ResponsiveHelper.getAdaptiveValue(
+                          context,
+                          small: 14.0,
+                          medium: 15.0,
+                          large: 16.0,
+                        ),
                         fontWeight: FontWeight.bold,
                         color: AppColors.textPrimary,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    ResponsiveSpacing(height: 4),
                     Text(
                       member.user?.username ?? 'Pas de nom d\'utilisateur',
-                      style: const TextStyle(
-                        fontSize: 12,
+                      style: TextStyle(
+                        fontSize: ResponsiveHelper.getAdaptiveValue(
+                          context,
+                          small: 11.0,
+                          medium: 11.5,
+                          large: 12.0,
+                        ),
                         color: AppColors.textSecondary,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    ResponsiveSpacing(height: 4),
                     Text(
                       member.phone ?? 'Pas de numéro de téléphone',
-                      style: const TextStyle(
-                        fontSize: 12,
+                      style: TextStyle(
+                        fontSize: ResponsiveHelper.getAdaptiveValue(
+                          context,
+                          small: 11.0,
+                          medium: 11.5,
+                          large: 12.0,
+                        ),
                         color: AppColors.textSecondary,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    ResponsiveSpacing(height: 8),
                     // Badges des rôles
                     RoleBadgeList(
                       roles: roles,
                       showIcon: true,
-                      fontSize: 10,
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 6, vertical: 2),
+                      fontSize: ResponsiveHelper.getAdaptiveValue(
+                        context,
+                        small: 9.0,
+                        medium: 9.5,
+                        large: 10.0,
+                      ),
+                      padding: ResponsiveHelper.getAdaptivePadding(
+                        context,
+                        horizontal: 6.0,
+                        vertical: 2.0,
+                      ),
                     ),
                   ],
                 ),

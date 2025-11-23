@@ -5,6 +5,8 @@ import '../../providers/models/enum/event_type.dart';
 import '../../providers/models/event.dart';
 import '../../providers/tontine_provider.dart';
 import '../../widgets/menu_widget.dart';
+import '../../widgets/responsive_padding.dart';
+import '../../utils/responsive_helper.dart';
 import 'package:intl/intl.dart';
 import '../services/dto/event_dto.dart';
 import '../../providers/event_provider.dart';
@@ -204,7 +206,7 @@ class _EventViewState extends State<EventView> {
                       )
                     : eventsForTontine.isEmpty
                         ? Card(
-                            margin: const EdgeInsets.all(16),
+                            margin: ResponsiveHelper.getAdaptivePadding(context, all: 16.0),
                             elevation: 4,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16),
@@ -222,33 +224,38 @@ class _EventViewState extends State<EventView> {
                                 ),
                               ),
                               child: Padding(
-                                padding: const EdgeInsets.all(24),
+                                padding: ResponsiveHelper.getAdaptivePadding(context, all: 24.0),
                                 child: Column(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Container(
-                                      padding: const EdgeInsets.all(16),
+                                      padding: ResponsiveHelper.getAdaptivePadding(context, all: 16.0),
                                       decoration: BoxDecoration(
                                         color: AppColors.primary.withAlpha(20),
                                         shape: BoxShape.circle,
                                       ),
-                                      child: const Icon(
+                                      child: Icon(
                                         Icons.event_busy,
-                                        size: 48,
+                                        size: ResponsiveHelper.getAdaptiveIconSize(context, base: 48.0),
                                         color: AppColors.primary,
                                       ),
                                     ),
-                                    const SizedBox(height: 20),
+                                    ResponsiveSpacing(height: 20),
                                     Text(
                                       'Aucun événement le ${DateFormat('dd/MM/yyyy').format(selectedDate)}',
                                       textAlign: TextAlign.center,
-                                      style: const TextStyle(
-                                        fontSize: 16,
+                                      style: TextStyle(
+                                        fontSize: ResponsiveHelper.getAdaptiveValue(
+                                          context,
+                                          small: 14.0,
+                                          medium: 15.0,
+                                          large: 16.0,
+                                        ),
                                         color: AppColors.textPrimary,
                                         fontWeight: FontWeight.w500,
                                       ),
                                     ),
-                                    const SizedBox(height: 20),
+                                    ResponsiveSpacing(height: 20),
                                     FilledButton.icon(
                                       onPressed: _isCreatingEvent
                                           ? null
@@ -272,9 +279,10 @@ class _EventViewState extends State<EventView> {
                                       style: FilledButton.styleFrom(
                                         backgroundColor: AppColors.primary,
                                         foregroundColor: Colors.white,
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 24,
-                                          vertical: 12,
+                                        padding: ResponsiveHelper.getAdaptivePadding(
+                                          context,
+                                          horizontal: 24.0,
+                                          vertical: 12.0,
                                         ),
                                       ),
                                     ),
@@ -285,11 +293,13 @@ class _EventViewState extends State<EventView> {
                           )
                         : ListView.builder(
                             itemCount: eventsForTontine.length,
-                            padding: const EdgeInsets.all(16),
+                            padding: ResponsiveHelper.getAdaptivePadding(context, all: 16.0),
                             itemBuilder: (context, index) {
                               final event = eventsForTontine[index];
                               return Card(
-                                margin: const EdgeInsets.only(bottom: 12),
+                                margin: EdgeInsets.only(
+                                  bottom: ResponsiveHelper.getAdaptiveSpacing(context, base: 12.0),
+                                ),
                                 elevation: 2,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
@@ -307,11 +317,11 @@ class _EventViewState extends State<EventView> {
                                     ),
                                   ),
                                   child: ListTile(
-                                    contentPadding: const EdgeInsets.all(16),
+                                    contentPadding: ResponsiveHelper.getAdaptivePadding(context, all: 16.0),
                                     onTap: () => _showEventDetails(context,
                                         event, tontineProvider, eventProvider),
                                     leading: Container(
-                                      padding: const EdgeInsets.all(8),
+                                      padding: ResponsiveHelper.getAdaptivePadding(context, all: 8.0),
                                       decoration: BoxDecoration(
                                         color: _getChipColor(event.type)
                                             .withAlpha(20),
@@ -320,31 +330,42 @@ class _EventViewState extends State<EventView> {
                                       child: Icon(
                                         _getEventIcon(event.type),
                                         color: _getChipColor(event.type),
-                                        size: 24,
+                                        size: ResponsiveHelper.getAdaptiveIconSize(context, base: 24.0),
                                       ),
                                     ),
                                     title: Text(
                                       event.title,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontWeight: FontWeight.w600,
                                         color: AppColors.textPrimary,
+                                        fontSize: ResponsiveHelper.getAdaptiveValue(
+                                          context,
+                                          small: 14.0,
+                                          medium: 15.0,
+                                          large: 16.0,
+                                        ),
                                       ),
                                     ),
                                     subtitle: Column(
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: [
-                                        const SizedBox(height: 4),
+                                        ResponsiveSpacing(height: 4),
                                         Text(
                                           event.description,
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                             color: AppColors.textSecondary,
-                                            fontSize: 14,
+                                            fontSize: ResponsiveHelper.getAdaptiveValue(
+                                              context,
+                                              small: 12.0,
+                                              medium: 13.0,
+                                              large: 14.0,
+                                            ),
                                           ),
                                           maxLines: 2,
                                           overflow: TextOverflow.ellipsis,
                                         ),
-                                        const SizedBox(height: 8),
+                                        ResponsiveSpacing(height: 8),
                                         Row(
                                           children: [
                                             Container(
@@ -746,7 +767,7 @@ class _EventViewState extends State<EventView> {
                     // Content
                     Flexible(
                       child: SingleChildScrollView(
-                        padding: const EdgeInsets.all(20),
+                        padding: ResponsiveHelper.getAdaptivePadding(context, all: 20.0),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -757,7 +778,7 @@ class _EventViewState extends State<EventView> {
                               hint: 'Ex: Réunion mensuelle',
                               icon: Icons.title,
                             ),
-                            const SizedBox(height: 16),
+                            ResponsiveSpacing(height: 16),
 
                             // Description
                             _buildStyledTextField(
@@ -767,7 +788,7 @@ class _EventViewState extends State<EventView> {
                               icon: Icons.description,
                               maxLines: 3,
                             ),
-                            const SizedBox(height: 16),
+                            ResponsiveSpacing(height: 16),
 
                             // Type d'événement
                             _buildStyledDropdown<EventType>(
@@ -796,7 +817,7 @@ class _EventViewState extends State<EventView> {
                                 });
                               },
                             ),
-                            const SizedBox(height: 16),
+                            ResponsiveSpacing(height: 16),
 
                             // Date de début
                             _buildDateSelector(
@@ -817,7 +838,7 @@ class _EventViewState extends State<EventView> {
                                 }
                               },
                             ),
-                            const SizedBox(height: 16),
+                            ResponsiveSpacing(height: 16),
 
                             // Date de fin (optionnel)
                             _buildDateSelector(
@@ -838,7 +859,7 @@ class _EventViewState extends State<EventView> {
                                 }
                               },
                             ),
-                            const SizedBox(height: 16),
+                            ResponsiveSpacing(height: 16),
 
                             // Participants
                             _buildParticipantsSelector(

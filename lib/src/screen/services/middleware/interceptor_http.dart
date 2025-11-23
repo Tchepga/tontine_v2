@@ -29,7 +29,8 @@ class AuthInterceptor implements InterceptorContract {
   }
 
   @override
-  Future<BaseResponse> interceptResponse({required BaseResponse response}) async {
+  Future<BaseResponse> interceptResponse(
+      {required BaseResponse response}) async {
     return response;
   }
 
@@ -44,9 +45,58 @@ class AuthInterceptor implements InterceptorContract {
   }
 }
 
+class RequestTimeoutConfig {
+  static const Duration fast = Duration(seconds: 10);
+  static const Duration normal = Duration(seconds: 30);
+  static const Duration long = Duration(seconds: 60);
+  static const Duration veryLong = Duration(seconds: 120);
+}
+
 class ApiClient {
   static final client = InterceptedClient.build(
     interceptors: [AuthInterceptor()],
-    requestTimeout: const Duration(seconds: 30),
+    requestTimeout: RequestTimeoutConfig.normal,
   );
+  static final fastClient = InterceptedClient.build(
+    interceptors: [AuthInterceptor()],
+    requestTimeout: RequestTimeoutConfig.fast,
+  );
+
+  static final longClient = InterceptedClient.build(
+    interceptors: [AuthInterceptor()],
+    requestTimeout: RequestTimeoutConfig.long,
+  );
+
+  static final veryLongClient = InterceptedClient.build(
+    interceptors: [AuthInterceptor()],
+    requestTimeout: RequestTimeoutConfig.veryLong,
+  );
+
+  static InterceptedClient createCustomClient(Duration timeout) {
+    return InterceptedClient.build(
+      interceptors: [AuthInterceptor()],
+      requestTimeout: timeout,
+    );
+  }
+
+  static InterceptedClient getClientForUrl(String url) {
+    if (url.contains('/auth/login') ||
+        url.contains('/auth/verify') ||
+        url.contains('/auth/register')) {
+      return fastClient;
+    }
+
+    if (url.contains('/rapport') ||
+        url.contains('/download') ||
+        url.contains('/upload') ||
+        url.contains('/export') ||
+        url.contains('/attachment')) {
+      return longClient;
+    }
+
+    if (url.contains('/export') && url.contains('full')) {
+      return veryLongClient;
+    }
+    return client;
+  }
 }

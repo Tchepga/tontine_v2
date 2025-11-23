@@ -363,6 +363,12 @@ class TontineProvider extends ChangeNotifier {
         config?.parts?.isNotEmpty == true;
   }
 
+  bool isTontineFull() {
+    final config = _currentTontine?.config;
+    return _currentTontine != null &&
+        _currentTontine!.members.length >= config!.countMaxMember;
+  }
+
   /// Retourne l'ordre actuel et le suivant basé sur la période de boucle
   Map<String, PartOrder?> getCurrentAndNextPartOrders() {
     if (_currentTontine?.config.parts == null ||

@@ -399,7 +399,7 @@ class _RegisterViewState extends State<RegisterView> {
         ],
       ),
       child: DropdownButtonFormField<String>(
-        value: _selectedCountry,
+        initialValue: _selectedCountry,
         decoration: InputDecoration(
           labelText: 'Pays',
           prefixIcon: Icon(Icons.flag_outlined, color: colorScheme.primary),

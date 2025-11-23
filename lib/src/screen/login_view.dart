@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
+import '../utils/responsive_helper.dart';
+import '../widgets/responsive_padding.dart';
 import 'services/member_service.dart';
 import 'tontine/select_tontine_view.dart';
 import 'auth/register_view.dart';
@@ -22,6 +24,7 @@ class _LoginViewState extends State<LoginView> {
   final _memberService = MemberService();
 
   bool _isLoading = false;
+  bool _obscurePassword = true;
 
   @override
   void initState() {
@@ -140,41 +143,38 @@ class _LoginViewState extends State<LoginView> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
 
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
         child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
+          child: ResponsivePadding(
+            all: 24.0,
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const SizedBox(height: 40),
-                // Logo de l'application
+                ResponsiveSpacing(height: 20),
+                // Illustration de connexion
                 Container(
-                  height: 120,
-                  width: 120,
+                  height: ResponsiveHelper.getAdaptiveValue(
+                    context,
+                    small: 200.0,
+                    medium: 250.0,
+                    large: 300.0,
+                  ),
+                  width: double.infinity,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: colorScheme.primary.withAlpha(10),
-                        blurRadius: 20,
-                        offset: const Offset(0, 10),
-                      ),
-                    ],
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(20),
                     child: Image.asset(
-                      'assets/images/logo.png',
+                      'assets/images/illustration_login.png',
                       fit: BoxFit.contain,
                     ),
                   ),
                 ),
-                const SizedBox(height: 40),
+                ResponsiveSpacing(height: 32),
 
                 // Titre
                 Text(
@@ -182,130 +182,176 @@ class _LoginViewState extends State<LoginView> {
                   style: theme.textTheme.headlineMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: AppColors.primary,
+                    fontSize: ResponsiveHelper.getAdaptiveValue(
+                      context,
+                      small: 26.0,
+                      medium: 28.0,
+                      large: 30.0,
+                    ),
                   ),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 8),
+                ResponsiveSpacing(height: 8),
                 Text(
                   'Connectez-vous à votre compte',
                   style: theme.textTheme.bodyLarge?.copyWith(
                     color: AppColors.textSecondary,
+                    fontSize: ResponsiveHelper.getAdaptiveValue(
+                      context,
+                      small: 14.0,
+                      medium: 15.0,
+                      large: 16.0,
+                    ),
                   ),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 40),
+                ResponsiveSpacing(height: 40),
 
-                // Champ nom d'utilisateur
-                Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: AppColors.border,
-                    ),
-                    color: AppColors.surface,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: TextField(
-                    controller: _usernameController,
-                    decoration: InputDecoration(
-                      labelText: 'Nom d\'utilisateur',
-                      prefixIcon: const Icon(Icons.person_outline,
-                          color: AppColors.primary),
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 16),
-                      labelStyle:
-                          const TextStyle(color: AppColors.textSecondary),
+                // Formulaire avec largeur contrainte
+                ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: ResponsiveHelper.getAdaptiveValue(
+                      context,
+                      small: double.infinity,
+                      medium: 450.0,
+                      large: 500.0,
                     ),
                   ),
-                ),
-                const SizedBox(height: 20),
-
-                // Champ mot de passe
-                Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: AppColors.border,
-                    ),
-                    color: AppColors.surface,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: TextField(
-                    controller: _passwordController,
-                    obscureText: true,
-                    decoration: InputDecoration(
-                      labelText: 'Mot de passe',
-                      prefixIcon: const Icon(Icons.lock_outline,
-                          color: AppColors.primary),
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 16),
-                      labelStyle:
-                          const TextStyle(color: AppColors.textSecondary),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 32),
-
-                // Bouton de connexion
-                _isLoading
-                    ? Center(
-                        child: const CircularProgressIndicator(
-                          color: AppColors.primary,
-                        ),
-                      )
-                    : Container(
-                        height: 56,
+                  child: Column(
+                    children: [
+                      // Champ nom d'utilisateur
+                      Container(
                         decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              AppColors.primary,
-                              AppColors.primary.withValues(alpha: 0.8)
-                            ],
-                          ),
                           borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: AppColors.border,
+                          ),
+                          color: AppColors.surface,
                           boxShadow: [
                             BoxShadow(
-                              color: AppColors.primary.withValues(alpha: 0.3),
-                              blurRadius: 12,
-                              offset: const Offset(0, 4),
+                              color: Colors.black.withValues(alpha: 0.05),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
                             ),
                           ],
                         ),
-                        child: FilledButton(
-                          onPressed: _isLoading ? null : _handleLogin,
-                          style: FilledButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                            shadowColor: Colors.transparent,
-                            foregroundColor: Colors.white,
-                            disabledBackgroundColor: AppColors.textLight,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                          ),
-                          child: Text(
-                            'Se connecter',
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w600,
-                            ),
+                        child: TextField(
+                          controller: _usernameController,
+                          decoration: InputDecoration(
+                            labelText: 'Nom d\'utilisateur',
+                            prefixIcon: const Icon(Icons.person_outline,
+                                color: AppColors.primary),
+                            border: InputBorder.none,
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 16),
+                            labelStyle:
+                                const TextStyle(color: AppColors.textSecondary),
                           ),
                         ),
                       ),
-                const SizedBox(height: 24),
+                      ResponsiveSpacing(height: 20),
+
+                      // Champ mot de passe
+                      Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: AppColors.border,
+                          ),
+                          color: AppColors.surface,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.05),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: TextField(
+                          controller: _passwordController,
+                          obscureText: _obscurePassword,
+                          decoration: InputDecoration(
+                            labelText: 'Mot de passe',
+                            prefixIcon: const Icon(Icons.lock_outline,
+                                color: AppColors.primary),
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _obscurePassword
+                                    ? Icons.visibility_outlined
+                                    : Icons.visibility_off_outlined,
+                                color: AppColors.textSecondary,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _obscurePassword = !_obscurePassword;
+                                });
+                              },
+                            ),
+                            border: InputBorder.none,
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 16),
+                            labelStyle:
+                                const TextStyle(color: AppColors.textSecondary),
+                          ),
+                        ),
+                      ),
+                      ResponsiveSpacing(height: 32),
+
+                      // Bouton de connexion
+                      _isLoading
+                          ? const Center(
+                              child: CircularProgressIndicator(
+                                color: AppColors.primary,
+                              ),
+                            )
+                          : SizedBox(
+                              width: double.infinity,
+                              height: 56,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      AppColors.primary,
+                                      AppColors.primary.withValues(alpha: 0.8)
+                                    ],
+                                  ),
+                                  borderRadius: BorderRadius.circular(16),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: AppColors.primary
+                                          .withValues(alpha: 0.3),
+                                      blurRadius: 12,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                child: FilledButton(
+                                  onPressed: _isLoading ? null : _handleLogin,
+                                  style: FilledButton.styleFrom(
+                                    backgroundColor: Colors.transparent,
+                                    shadowColor: Colors.transparent,
+                                    foregroundColor: Colors.white,
+                                    disabledBackgroundColor:
+                                        AppColors.textLight,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    'Se connecter',
+                                    style:
+                                        theme.textTheme.titleMedium?.copyWith(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                    ],
+                  ),
+                ),
+                ResponsiveSpacing(height: 24),
 
                 // Lien mot de passe oublié
                 TextButton(
@@ -324,7 +370,7 @@ class _LoginViewState extends State<LoginView> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 16),
+                ResponsiveSpacing(height: 16),
 
                 // Lien inscription
                 TextButton(
@@ -353,7 +399,7 @@ class _LoginViewState extends State<LoginView> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 20),
+                ResponsiveSpacing(height: 20),
               ],
             ),
           ),

@@ -4,6 +4,8 @@ import 'package:tontine_v2/src/providers/models/enum/role.dart';
 import 'package:tontine_v2/src/providers/models/member.dart';
 import 'package:tontine_v2/src/providers/auth_provider.dart';
 import 'package:tontine_v2/src/widgets/menu_widget.dart';
+import '../../widgets/responsive_padding.dart';
+import '../../utils/responsive_helper.dart';
 import '../../theme/app_theme.dart';
 import '../services/dto/member_dto.dart';
 import '../services/dto/password_dto.dart';
@@ -77,15 +79,15 @@ class _AccountViewState extends State<AccountView> {
             iconTheme: const IconThemeData(color: Colors.white),
           ),
           body: SingleChildScrollView(
-            padding: const EdgeInsets.all(16.0),
+            padding: ResponsiveHelper.getAdaptivePadding(context, all: 16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildUserInfoSection(member, isPresident),
-                const SizedBox(height: 16),
-                _buildPasswordSection(),
-                const SizedBox(height: 16),
-                _buildLogoutSection(),
+                _buildUserInfoSection(context, member, isPresident),
+                ResponsiveSpacing(height: 16),
+                _buildPasswordSection(context),
+                ResponsiveSpacing(height: 16),
+                _buildLogoutSection(context),
               ],
             ),
           ),
@@ -95,7 +97,19 @@ class _AccountViewState extends State<AccountView> {
     );
   }
 
-  Widget _buildUserInfoSection(Member? member, bool isPresident) {
+  Widget _buildUserInfoSection(
+      BuildContext context, Member? member, bool isPresident) {
+    final cardPadding = ResponsiveHelper.getAdaptivePadding(context, all: 20.0);
+    final iconPadding = ResponsiveHelper.getAdaptivePadding(context, all: 8.0);
+    final iconSize = ResponsiveHelper.getAdaptiveIconSize(context, base: 20.0);
+    final spacing = ResponsiveHelper.getAdaptiveSpacing(context, base: 12.0);
+    final fontSize = ResponsiveHelper.getAdaptiveValue(
+      context,
+      small: 16.0,
+      medium: 17.0,
+      large: 18.0,
+    );
+
     return Card(
       elevation: 3,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -114,14 +128,14 @@ class _AccountViewState extends State<AccountView> {
         child: Stack(
           children: [
             Padding(
-              padding: const EdgeInsets.all(20.0),
+              padding: cardPadding,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(8),
+                        padding: iconPadding,
                         decoration: BoxDecoration(
                           color: AppColors.secondary.withAlpha(20),
                           borderRadius: BorderRadius.circular(8),
@@ -129,14 +143,14 @@ class _AccountViewState extends State<AccountView> {
                         child: Icon(
                           Icons.person,
                           color: AppColors.secondary,
-                          size: 20,
+                          size: iconSize,
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      const Text(
+                      SizedBox(width: spacing),
+                      Text(
                         'Informations personnelles',
                         style: TextStyle(
-                          fontSize: 18,
+                          fontSize: fontSize,
                           fontWeight: FontWeight.bold,
                           color: AppColors.textPrimary,
                         ),
@@ -277,7 +291,23 @@ class _AccountViewState extends State<AccountView> {
     );
   }
 
-  Widget _buildPasswordSection() {
+  Widget _buildPasswordSection(BuildContext context) {
+    final cardPadding = ResponsiveHelper.getAdaptivePadding(context, all: 20.0);
+    final iconPadding = ResponsiveHelper.getAdaptivePadding(context, all: 8.0);
+    final iconSize = ResponsiveHelper.getAdaptiveIconSize(context, base: 20.0);
+    final spacing = ResponsiveHelper.getAdaptiveSpacing(context, base: 12.0);
+    final fontSize = ResponsiveHelper.getAdaptiveValue(
+      context,
+      small: 16.0,
+      medium: 17.0,
+      large: 18.0,
+    );
+    final listTilePadding = ResponsiveHelper.getAdaptivePadding(
+      context,
+      horizontal: 16.0,
+      vertical: 8.0,
+    );
+
     return Card(
       elevation: 3,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -294,14 +324,14 @@ class _AccountViewState extends State<AccountView> {
           ),
         ),
         child: Padding(
-          padding: const EdgeInsets.all(20.0),
+          padding: cardPadding,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(8),
+                    padding: iconPadding,
                     decoration: BoxDecoration(
                       color: AppColors.primary.withAlpha(20),
                       borderRadius: BorderRadius.circular(8),
@@ -309,21 +339,21 @@ class _AccountViewState extends State<AccountView> {
                     child: Icon(
                       Icons.lock,
                       color: AppColors.primary,
-                      size: 20,
+                      size: iconSize,
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  const Text(
+                  SizedBox(width: spacing),
+                  Text(
                     'Sécurité',
                     style: TextStyle(
-                      fontSize: 18,
+                      fontSize: fontSize,
                       fontWeight: FontWeight.bold,
                       color: AppColors.textPrimary,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
+              ResponsiveSpacing(height: 16),
               Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
@@ -335,8 +365,7 @@ class _AccountViewState extends State<AccountView> {
                   ),
                 ),
                 child: ListTile(
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  contentPadding: listTilePadding,
                   leading: Icon(
                     Icons.key,
                     color: AppColors.primary,
@@ -370,7 +399,18 @@ class _AccountViewState extends State<AccountView> {
     );
   }
 
-  Widget _buildLogoutSection() {
+  Widget _buildLogoutSection(BuildContext context) {
+    final cardPadding = ResponsiveHelper.getAdaptivePadding(context, all: 20.0);
+    final iconPadding = ResponsiveHelper.getAdaptivePadding(context, all: 8.0);
+    final iconSize = ResponsiveHelper.getAdaptiveIconSize(context, base: 20.0);
+    final spacing = ResponsiveHelper.getAdaptiveSpacing(context, base: 12.0);
+    final fontSize = ResponsiveHelper.getAdaptiveValue(
+      context,
+      small: 16.0,
+      medium: 17.0,
+      large: 18.0,
+    );
+
     return Card(
       elevation: 3,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -387,14 +427,14 @@ class _AccountViewState extends State<AccountView> {
           ),
         ),
         child: Padding(
-          padding: const EdgeInsets.all(20.0),
+          padding: cardPadding,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(8),
+                    padding: iconPadding,
                     decoration: BoxDecoration(
                       color: AppColors.error.withAlpha(20),
                       borderRadius: BorderRadius.circular(8),
@@ -402,21 +442,21 @@ class _AccountViewState extends State<AccountView> {
                     child: Icon(
                       Icons.logout,
                       color: AppColors.error,
-                      size: 20,
+                      size: iconSize,
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  const Text(
+                  SizedBox(width: spacing),
+                  Text(
                     'Déconnexion',
                     style: TextStyle(
-                      fontSize: 18,
+                      fontSize: fontSize,
                       fontWeight: FontWeight.bold,
                       color: AppColors.textPrimary,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
+              ResponsiveSpacing(height: 16),
               Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
@@ -428,8 +468,11 @@ class _AccountViewState extends State<AccountView> {
                   ),
                 ),
                 child: ListTile(
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  contentPadding: ResponsiveHelper.getAdaptivePadding(
+                    context,
+                    horizontal: 16.0,
+                    vertical: 8.0,
+                  ),
                   leading: Icon(
                     Icons.exit_to_app,
                     color: AppColors.error,

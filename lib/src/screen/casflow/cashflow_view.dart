@@ -6,6 +6,8 @@ import '../../providers/tontine_provider.dart';
 import '../../widgets/action_menu.dart';
 import '../../widgets/menu_widget.dart';
 import '../../widgets/modern_card.dart';
+import '../../widgets/responsive_padding.dart';
+import '../../utils/responsive_helper.dart';
 import '../../theme/app_theme.dart';
 import 'edit_mouvement.dart';
 import 'widgets/deposit_list_item.dart';
@@ -69,24 +71,24 @@ class _CashflowViewState extends State<CashflowView> {
         return Scaffold(
           appBar: ActionMenu(title: 'Trésorerie', showBackButton: true),
           body: ListView(
-            padding: const EdgeInsets.all(16),
+            padding: ResponsiveHelper.getAdaptivePadding(context, all: 16.0),
             children: [
-              _buildBalanceCard(currentTontine),
-              const SizedBox(height: 16),
+              _buildBalanceCard(context, currentTontine),
+              ResponsiveSpacing(height: 16),
               // Filtres modernisés
-              _buildFiltersSection(),
-              const SizedBox(height: 16),
+              _buildFiltersSection(context),
+              ResponsiveSpacing(height: 16),
               // Section versements en attente (si président/trésorier)
               if (canValidate) ...[
                 _buildPendingDepositsSection(
-                    deposits, tontineProvider, currentTontine!.id),
-                const SizedBox(height: 16),
+                    context, deposits, tontineProvider, currentTontine!.id),
+                ResponsiveSpacing(height: 16),
               ],
               // Titre de section modernisé
-              _buildSectionTitle('Mouvements', Icons.list_alt),
-              const SizedBox(height: 16),
+              _buildSectionTitle(context, 'Mouvements', Icons.list_alt),
+              ResponsiveSpacing(height: 16),
               if (filteredDeposits.isEmpty)
-                _buildEmptyState()
+                _buildEmptyState(context)
               else
                 ...filteredDeposits.map((deposit) => DepositListItem(
                       deposit: deposit,
@@ -107,29 +109,40 @@ class _CashflowViewState extends State<CashflowView> {
     );
   }
 
-  Widget _buildBalanceCard(Tontine? currentTontine) {
+  Widget _buildBalanceCard(BuildContext context, Tontine? currentTontine) {
+    final cardPadding = ResponsiveHelper.getAdaptivePadding(context, all: 20.0);
+    final iconPadding = ResponsiveHelper.getAdaptivePadding(context, all: 12.0);
+    final iconSize = ResponsiveHelper.getAdaptiveIconSize(context, base: 32.0);
+    final spacing = ResponsiveHelper.getAdaptiveSpacing(context, base: 16.0);
+    final fontSize = ResponsiveHelper.getAdaptiveValue(
+      context,
+      small: 24.0,
+      medium: 26.0,
+      large: 28.0,
+    );
+
     return ModernCard(
       type: ModernCardType.primary,
       icon: Icons.account_balance_wallet,
       title: 'Solde actuel',
-      padding: const EdgeInsets.all(20),
+      padding: cardPadding,
       child: Column(
         children: [
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: iconPadding,
                 decoration: BoxDecoration(
                   color: Colors.white.withAlpha(30),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.monetization_on,
                   color: Colors.white,
-                  size: 32,
+                  size: iconSize,
                 ),
               ),
-              const SizedBox(width: 16),
+              SizedBox(width: spacing),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -138,17 +151,22 @@ class _CashflowViewState extends State<CashflowView> {
                       CurrencyUtils.formatAmountForCard(
                           currentTontine?.cashFlow.amount ?? 0,
                           currentTontine?.cashFlow.currency ?? Currency.EUR),
-                      style: const TextStyle(
-                        fontSize: 28,
+                      style: TextStyle(
+                        fontSize: fontSize,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    SizedBox(height: spacing * 0.25),
                     Text(
                       'Trésorerie disponible',
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: ResponsiveHelper.getAdaptiveValue(
+                          context,
+                          small: 12.0,
+                          medium: 13.0,
+                          large: 14.0,
+                        ),
                         color: Colors.white.withAlpha(200),
                       ),
                     ),
@@ -162,10 +180,18 @@ class _CashflowViewState extends State<CashflowView> {
     );
   }
 
-  Widget _buildFiltersSection() {
+  Widget _buildFiltersSection(BuildContext context) {
+    final cardPadding = ResponsiveHelper.getAdaptivePadding(context, all: 16.0);
+    final spacing = ResponsiveHelper.getAdaptiveSpacing(context, base: 12.0);
+    final contentPadding = ResponsiveHelper.getAdaptivePadding(
+      context,
+      horizontal: 12.0,
+      vertical: 8.0,
+    );
+
     return ModernCard(
       type: ModernCardType.info,
-      padding: const EdgeInsets.all(16),
+      padding: cardPadding,
       child: Row(
         children: [
           Expanded(
@@ -178,8 +204,7 @@ class _CashflowViewState extends State<CashflowView> {
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                contentPadding: contentPadding,
               ),
               items: [
                 const DropdownMenuItem<DepositReason>(
@@ -198,7 +223,7 @@ class _CashflowViewState extends State<CashflowView> {
               },
             ),
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: spacing),
           Expanded(
             child: TextField(
               decoration: InputDecoration(
@@ -207,8 +232,7 @@ class _CashflowViewState extends State<CashflowView> {
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                contentPadding: contentPadding,
               ),
               onChanged: (value) {
                 setState(() {
@@ -222,11 +246,21 @@ class _CashflowViewState extends State<CashflowView> {
     );
   }
 
-  Widget _buildSectionTitle(String title, IconData icon) {
+  Widget _buildSectionTitle(BuildContext context, String title, IconData icon) {
+    final iconPadding = ResponsiveHelper.getAdaptivePadding(context, all: 8.0);
+    final iconSize = ResponsiveHelper.getAdaptiveIconSize(context, base: 20.0);
+    final spacing = ResponsiveHelper.getAdaptiveSpacing(context, base: 12.0);
+    final fontSize = ResponsiveHelper.getAdaptiveValue(
+      context,
+      small: 16.0,
+      medium: 17.0,
+      large: 18.0,
+    );
+
     return Row(
       children: [
         Container(
-          padding: const EdgeInsets.all(8),
+          padding: iconPadding,
           decoration: BoxDecoration(
             color: AppColors.primary.withAlpha(20),
             borderRadius: BorderRadius.circular(8),
@@ -234,14 +268,14 @@ class _CashflowViewState extends State<CashflowView> {
           child: Icon(
             icon,
             color: AppColors.primary,
-            size: 20,
+            size: iconSize,
           ),
         ),
-        const SizedBox(width: 12),
+        SizedBox(width: spacing),
         Text(
           title,
-          style: const TextStyle(
-            fontSize: 18,
+          style: TextStyle(
+            fontSize: fontSize,
             fontWeight: FontWeight.bold,
             color: AppColors.textPrimary,
           ),
@@ -250,7 +284,7 @@ class _CashflowViewState extends State<CashflowView> {
     );
   }
 
-  Widget _buildPendingDepositsSection(
+  Widget _buildPendingDepositsSection(BuildContext context,
       List<Deposit> deposits, TontineProvider tontineProvider, int tontineId) {
     final pendingDeposits = deposits
         .where((deposit) => deposit.status == StatusDeposit.PENDING)
@@ -264,15 +298,22 @@ class _CashflowViewState extends State<CashflowView> {
       title: 'Versements en attente (${pendingDeposits.length})',
       child: Column(
         children: [
-          ...pendingDeposits.take(3).map((deposit) =>
-              _buildPendingDepositItem(deposit, tontineProvider, tontineId)),
+          ...pendingDeposits.take(3).map((deposit) => _buildPendingDepositItem(
+              context, deposit, tontineProvider, tontineId)),
           if (pendingDeposits.length > 3)
             Padding(
-              padding: const EdgeInsets.only(top: 8),
+              padding: EdgeInsets.only(
+                top: ResponsiveHelper.getAdaptiveSpacing(context, base: 8.0),
+              ),
               child: Text(
                 '+ ${pendingDeposits.length - 3} autres en attente',
-                style: const TextStyle(
-                  fontSize: 12,
+                style: TextStyle(
+                  fontSize: ResponsiveHelper.getAdaptiveValue(
+                    context,
+                    small: 11.0,
+                    medium: 11.5,
+                    large: 12.0,
+                  ),
                   color: AppColors.textSecondary,
                   fontStyle: FontStyle.italic,
                 ),
@@ -283,11 +324,14 @@ class _CashflowViewState extends State<CashflowView> {
     );
   }
 
-  Widget _buildPendingDepositItem(
-      Deposit deposit, TontineProvider tontineProvider, int tontineId) {
+  Widget _buildPendingDepositItem(BuildContext context, Deposit deposit,
+      TontineProvider tontineProvider, int tontineId) {
+    final itemPadding = ResponsiveHelper.getAdaptivePadding(context, all: 12.0);
+    final itemMargin = ResponsiveHelper.getAdaptiveSpacing(context, base: 8.0);
+
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(12),
+      margin: EdgeInsets.only(bottom: itemMargin),
+      padding: itemPadding,
       decoration: BoxDecoration(
         color: Colors.white.withAlpha(50),
         borderRadius: BorderRadius.circular(8),
@@ -301,16 +345,27 @@ class _CashflowViewState extends State<CashflowView> {
               children: [
                 Text(
                   '${deposit.author.firstname} ${deposit.author.lastname}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.w600,
                     color: AppColors.textPrimary,
+                    fontSize: ResponsiveHelper.getAdaptiveValue(
+                      context,
+                      small: 13.0,
+                      medium: 14.0,
+                      large: 14.0,
+                    ),
                   ),
                 ),
                 Text(
                   CurrencyUtils.formatAmountForCard(
                       deposit.amount, deposit.currency),
-                  style: const TextStyle(
-                    fontSize: 14,
+                  style: TextStyle(
+                    fontSize: ResponsiveHelper.getAdaptiveValue(
+                      context,
+                      small: 12.0,
+                      medium: 13.0,
+                      large: 14.0,
+                    ),
                     color: AppColors.textSecondary,
                   ),
                 ),
@@ -325,13 +380,23 @@ class _CashflowViewState extends State<CashflowView> {
                   tontineProvider,
                   tontineId,
                 ),
-                icon: const Icon(Icons.check_circle, color: AppColors.success),
+                icon: Icon(
+                  Icons.check_circle,
+                  color: AppColors.success,
+                  size:
+                      ResponsiveHelper.getAdaptiveIconSize(context, base: 24.0),
+                ),
                 tooltip: 'Valider',
               ),
               IconButton(
                 onPressed: () =>
                     _rejectDeposit(deposit.id, tontineProvider, tontineId),
-                icon: const Icon(Icons.cancel, color: AppColors.error),
+                icon: Icon(
+                  Icons.cancel,
+                  color: AppColors.error,
+                  size:
+                      ResponsiveHelper.getAdaptiveIconSize(context, base: 24.0),
+                ),
                 tooltip: 'Rejeter',
               ),
             ],
@@ -341,40 +406,54 @@ class _CashflowViewState extends State<CashflowView> {
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(BuildContext context) {
+    final cardPadding = ResponsiveHelper.getAdaptivePadding(context, all: 32.0);
+    final iconPadding = ResponsiveHelper.getAdaptivePadding(context, all: 16.0);
+    final iconSize = ResponsiveHelper.getAdaptiveIconSize(context, base: 48.0);
+
     return ModernCard(
       type: ModernCardType.info,
-      padding: const EdgeInsets.all(32),
+      padding: cardPadding,
       child: Column(
         children: [
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: iconPadding,
             decoration: BoxDecoration(
               color: AppColors.textSecondary.withAlpha(20),
               shape: BoxShape.circle,
             ),
-            child: const Icon(
+            child: Icon(
               Icons.inbox,
-              size: 48,
+              size: iconSize,
               color: AppColors.textSecondary,
             ),
           ),
-          const SizedBox(height: 16),
-          const Text(
+          ResponsiveSpacing(height: 16),
+          Text(
             'Aucun mouvement trouvé',
             style: TextStyle(
-              fontSize: 18,
+              fontSize: ResponsiveHelper.getAdaptiveValue(
+                context,
+                small: 16.0,
+                medium: 17.0,
+                large: 18.0,
+              ),
               fontWeight: FontWeight.w600,
               color: AppColors.textPrimary,
             ),
           ),
-          const SizedBox(height: 8),
+          ResponsiveSpacing(height: 8),
           Text(
             'Ajustez vos filtres ou ajoutez un nouveau mouvement',
             textAlign: TextAlign.center,
             style: TextStyle(
               color: AppColors.textSecondary,
-              fontSize: 14,
+              fontSize: ResponsiveHelper.getAdaptiveValue(
+                context,
+                small: 12.0,
+                medium: 13.0,
+                large: 14.0,
+              ),
             ),
           ),
         ],

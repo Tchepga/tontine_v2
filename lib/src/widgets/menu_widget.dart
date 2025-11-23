@@ -6,14 +6,77 @@ import '../screen/member/account_view.dart';
 import '../screen/member/member_view.dart';
 import '../screen/dashboard_view.dart';
 import '../theme/app_theme.dart';
+import '../utils/responsive_helper.dart';
 
 class MenuWidget extends StatelessWidget {
   const MenuWidget({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    final height = MediaQuery.of(context).size.height;
+
+    // Hauteur adaptative selon la hauteur de l'écran
+    final menuHeight = ResponsiveHelper.getAdaptiveHeightValue(
+      context,
+      short: 70.0,
+      medium: 80.0,
+      tall: 80.0,
+    );
+
+    // Taille des icônes adaptative
+    final iconSize = ResponsiveHelper.getAdaptiveIconSize(
+      context,
+      base: 28.0,
+    );
+
+    final fabIconSize = ResponsiveHelper.getAdaptiveIconSize(
+      context,
+      base: 32.0,
+    );
+
+    // Calcul des positions adaptatives selon la largeur
+    double leftPosition1, leftPosition2, rightPosition1, rightPosition2;
+    double bottomPosition;
+
+    if (width < ResponsiveHelper.smallWidth) {
+      // Très petits écrans : positions plus serrées
+      leftPosition1 = 12.0;
+      leftPosition2 = 60.0;
+      rightPosition1 = 60.0;
+      rightPosition2 = 12.0;
+      bottomPosition = 14.0;
+    } else if (width < ResponsiveHelper.mediumWidth) {
+      // Écrans moyens : positions légèrement réduites
+      leftPosition1 = 20.0;
+      leftPosition2 = 70.0;
+      rightPosition1 = 70.0;
+      rightPosition2 = 20.0;
+      bottomPosition = 16.0;
+    } else {
+      // Grands écrans : positions normales
+      leftPosition1 = 24.0;
+      leftPosition2 = 80.0;
+      rightPosition1 = 80.0;
+      rightPosition2 = 24.0;
+      bottomPosition = 18.0;
+    }
+
+    // Ajuster bottomPosition selon la hauteur
+    if (height < ResponsiveHelper.shortHeight) {
+      bottomPosition *= 0.85; // Réduire sur écrans courts
+    }
+
+    // Position du FAB central
+    final fabBottom = ResponsiveHelper.getAdaptiveHeightValue(
+      context,
+      short: 20.0,
+      medium: 24.0,
+      tall: 24.0,
+    );
+
     return SizedBox(
-      height: 80,
+      height: menuHeight,
       child: Stack(
         alignment: Alignment.bottomCenter,
         children: [
@@ -25,23 +88,26 @@ class MenuWidget extends StatelessWidget {
           ),
           // Bouton central Dashboard
           Positioned(
-            bottom: 24,
+            bottom: fabBottom,
             child: FloatingActionButton(
               heroTag: 'menu_fab',
               backgroundColor: AppColors.primary,
               elevation: 4,
+              mini: width < ResponsiveHelper.smallWidth ||
+                  height < ResponsiveHelper.shortHeight,
               onPressed: () {
                 Navigator.pushNamed(context, DashboardView.routeName);
               },
-              child: const Icon(Icons.dashboard, color: Colors.white, size: 32),
+              child:
+                  Icon(Icons.dashboard, color: Colors.white, size: fabIconSize),
             ),
           ),
           // Icône Cashflow à gauche
           Positioned(
-            left: 24,
-            bottom: 18,
+            left: leftPosition1,
+            bottom: bottomPosition,
             child: IconButton(
-              icon: const Icon(Icons.balance, color: Colors.white, size: 28),
+              icon: Icon(Icons.balance, color: Colors.white, size: iconSize),
               onPressed: () {
                 Navigator.pushNamed(context, CashflowView.routeName);
               },
@@ -49,10 +115,10 @@ class MenuWidget extends StatelessWidget {
           ),
           // Icône Members (gestion des membres)
           Positioned(
-            left: 80,
-            bottom: 18,
+            left: leftPosition2,
+            bottom: bottomPosition,
             child: IconButton(
-              icon: const Icon(Icons.people, color: Colors.white, size: 28),
+              icon: Icon(Icons.people, color: Colors.white, size: iconSize),
               onPressed: () {
                 Navigator.pushNamed(context, MemberView.routeName);
               },
@@ -60,11 +126,11 @@ class MenuWidget extends StatelessWidget {
           ),
           // Icône Events
           Positioned(
-            right: 80,
-            bottom: 18,
+            right: rightPosition1,
+            bottom: bottomPosition,
             child: IconButton(
-              icon: const Icon(Icons.event_available,
-                  color: Colors.white, size: 28),
+              icon: Icon(Icons.event_available,
+                  color: Colors.white, size: iconSize),
               onPressed: () {
                 Navigator.pushNamed(context, EventView.routeName);
               },
@@ -72,10 +138,10 @@ class MenuWidget extends StatelessWidget {
           ),
           // Icône Account à droite
           Positioned(
-            right: 24,
-            bottom: 18,
+            right: rightPosition2,
+            bottom: bottomPosition,
             child: IconButton(
-              icon: const Icon(Icons.person, color: Colors.white, size: 28),
+              icon: Icon(Icons.person, color: Colors.white, size: iconSize),
               onPressed: () {
                 Navigator.pushNamed(context, AccountView.routeName);
               },

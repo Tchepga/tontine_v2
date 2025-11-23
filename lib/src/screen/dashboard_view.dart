@@ -13,6 +13,8 @@ import '../widgets/action_menu.dart';
 import '../widgets/annual_movements_chart.dart';
 import '../widgets/menu_widget.dart';
 import '../widgets/circular_order_card.dart';
+import '../widgets/responsive_padding.dart';
+import '../utils/responsive_helper.dart';
 import '../theme/app_theme.dart';
 import 'tontine/select_tontine_view.dart';
 
@@ -70,21 +72,30 @@ class _DashboardViewState extends State<DashboardView> {
               children: [
                 Expanded(
                   child: ListView(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+                    padding: ResponsiveHelper.getAdaptivePadding(
+                      context,
+                      horizontal: 16.0,
+                      vertical: 0.0,
+                    ),
                     children: [
-                      const SizedBox(height: 24),
-                      _buildCurrentOrderSection(tontineProvider),
-                      const SizedBox(height: 24),
+                      ResponsiveSpacing(height: 24),
+                      _buildCurrentOrderSection(context, tontineProvider),
+                      ResponsiveSpacing(height: 24),
                       AnnualMovementsChart(deposits: tontineProvider.deposits),
-                      const SizedBox(height: 24),
+                      ResponsiveSpacing(height: 24),
                       GridView.count(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
-                        crossAxisCount: 2,
-                        mainAxisSpacing: 24,
-                        crossAxisSpacing: 24,
-                        childAspectRatio: 1,
+                        crossAxisCount:
+                            ResponsiveHelper.getAdaptiveCrossAxisCount(context),
+                        mainAxisSpacing: ResponsiveHelper.getAdaptiveSpacing(
+                            context,
+                            base: 24.0),
+                        crossAxisSpacing: ResponsiveHelper.getAdaptiveSpacing(
+                            context,
+                            base: 24.0),
+                        childAspectRatio:
+                            ResponsiveHelper.getAdaptiveAspectRatio(context),
                         children: [
                           _buildMenuCard(
                               context,
@@ -125,7 +136,8 @@ class _DashboardViewState extends State<DashboardView> {
     );
   }
 
-  Widget _buildCurrentOrderSection(TontineProvider tontineProvider) {
+  Widget _buildCurrentOrderSection(
+      BuildContext context, TontineProvider tontineProvider) {
     final orderData = tontineProvider.getCurrentAndNextPartOrders();
     final currentPart = orderData['current'];
     final nextPart = orderData['next'];
@@ -134,11 +146,15 @@ class _DashboardViewState extends State<DashboardView> {
       return const SizedBox.shrink();
     }
 
+    final cardPadding = ResponsiveHelper.getAdaptivePadding(context, all: 20.0);
+    final iconSize = ResponsiveHelper.getAdaptiveIconSize(context, base: 24.0);
+    final spacing = ResponsiveHelper.getAdaptiveSpacing(context, base: 16.0);
+
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: cardPadding,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -147,19 +163,24 @@ class _DashboardViewState extends State<DashboardView> {
                 Icon(
                   Icons.schedule,
                   color: AppColors.primary,
-                  size: 24,
+                  size: iconSize,
                 ),
-                const SizedBox(width: 8),
-                const Text(
+                SizedBox(width: spacing * 0.5),
+                Text(
                   'Ordre de passage',
                   style: TextStyle(
-                    fontSize: 18,
+                    fontSize: ResponsiveHelper.getAdaptiveValue(
+                      context,
+                      small: 16.0,
+                      medium: 18.0,
+                      large: 18.0,
+                    ),
                     fontWeight: FontWeight.bold,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: spacing),
             Row(
               children: [
                 if (currentPart != null) ...[
@@ -169,7 +190,7 @@ class _DashboardViewState extends State<DashboardView> {
                       isCurrent: true,
                     ),
                   ),
-                  const SizedBox(width: 16),
+                  SizedBox(width: spacing),
                 ],
                 if (nextPart != null) ...[
                   Expanded(
@@ -189,6 +210,29 @@ class _DashboardViewState extends State<DashboardView> {
 
   Widget _buildMenuCard(
       BuildContext context, String title, String imagePath, String route) {
+    final iconSize = ResponsiveHelper.getAdaptiveIconSize(context, base: 70.0);
+    final verticalPadding = ResponsiveHelper.getAdaptiveHeightValue(
+      context,
+      short: 16.0,
+      medium: 20.0,
+      tall: 24.0,
+    );
+    final horizontalPadding = ResponsiveHelper.getAdaptiveValue(
+      context,
+      small: 6.0,
+      medium: 8.0,
+      large: 8.0,
+    );
+    final containerPadding =
+        ResponsiveHelper.getAdaptivePadding(context, all: 16.0);
+    final spacing = ResponsiveHelper.getAdaptiveSpacing(context, base: 16.0);
+    final fontSize = ResponsiveHelper.getAdaptiveValue(
+      context,
+      small: 13.0,
+      medium: 14.0,
+      large: 15.0,
+    );
+
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -196,7 +240,8 @@ class _DashboardViewState extends State<DashboardView> {
         borderRadius: BorderRadius.circular(20),
         onTap: () => Navigator.pushNamed(context, route),
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 8),
+          padding: EdgeInsets.symmetric(
+              vertical: verticalPadding, horizontal: horizontalPadding),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -204,25 +249,25 @@ class _DashboardViewState extends State<DashboardView> {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(16),
                 ),
-                padding: const EdgeInsets.all(16),
+                padding: containerPadding,
                 child: imagePath.endsWith('.svg')
                     ? SvgPicture.asset(
                         imagePath,
-                        width: 70,
-                        height: 70,
+                        width: iconSize,
+                        height: iconSize,
                       )
                     : Image.asset(
                         imagePath,
-                        width: 40,
-                        height: 40,
+                        width: iconSize * 0.57,
+                        height: iconSize * 0.57,
                       ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: spacing),
               Text(
                 title,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 15,
+                style: TextStyle(
+                  fontSize: fontSize,
                   fontWeight: FontWeight.w600,
                 ),
               ),

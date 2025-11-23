@@ -5,6 +5,7 @@ import '../../providers/notification_provider.dart';
 import '../../providers/tontine_provider.dart';
 import '../../providers/models/notification_tontine.dart';
 import '../../widgets/menu_widget.dart';
+import '../../utils/responsive_helper.dart';
 
 class NotificationView extends StatefulWidget {
   static const routeName = '/notifications';
@@ -63,23 +64,43 @@ class _NotificationViewState extends State<NotificationView> {
     }
 
     return ListView.builder(
+      padding: ResponsiveHelper.getAdaptivePadding(context, all: 8.0),
       itemCount: notificationProvider.notifications.length,
       itemBuilder: (context, index) {
         final notification = notificationProvider.notifications[index];
-        return _buildNotificationCard(notification);
+        return _buildNotificationCard(context, notification);
       },
     );
   }
 
-  Widget _buildNotificationCard(NotificationTontine notification) {
+  Widget _buildNotificationCard(BuildContext context, NotificationTontine notification) {
+    final cardMargin = ResponsiveHelper.getAdaptivePadding(
+      context,
+      horizontal: 16.0,
+      vertical: 8.0,
+    );
+    final fontSize = ResponsiveHelper.getAdaptiveValue(
+      context,
+      small: 11.0,
+      medium: 11.5,
+      large: 12.0,
+    );
+
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      margin: cardMargin,
       child: ListTile(
         leading: CircleAvatar(
           backgroundColor: notification.type.color.withAlpha(20),
+          radius: ResponsiveHelper.getAdaptiveValue(
+            context,
+            small: 18.0,
+            medium: 20.0,
+            large: 20.0,
+          ),
           child: Icon(
             _getIconForType(notification.type),
             color: notification.type.color,
+            size: ResponsiveHelper.getAdaptiveIconSize(context, base: 20.0),
           ),
         ),
         title: Text(
@@ -87,13 +108,19 @@ class _NotificationViewState extends State<NotificationView> {
           style: TextStyle(
             fontWeight:
                 notification.isRead ? FontWeight.normal : FontWeight.bold,
+            fontSize: ResponsiveHelper.getAdaptiveValue(
+              context,
+              small: 13.0,
+              medium: 14.0,
+              large: 15.0,
+            ),
           ),
         ),
         subtitle: Text(
           notification.formattedDate,
           style: TextStyle(
             color: Colors.grey[600],
-            fontSize: 12,
+            fontSize: fontSize,
           ),
         ),
         trailing: notification.isRead

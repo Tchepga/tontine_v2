@@ -12,6 +12,8 @@ import '../../providers/tontine_provider.dart';
 import '../../widgets/menu_widget.dart';
 import '../../widgets/modern_card.dart';
 import '../../widgets/status_badge.dart';
+import '../../widgets/responsive_padding.dart';
+import '../../utils/responsive_helper.dart';
 import '../../theme/app_theme.dart';
 import 'package:intl/intl.dart';
 
@@ -60,24 +62,24 @@ class _LoanViewState extends State<LoanView> {
             elevation: 0,
           ),
           body: ListView(
-            padding: const EdgeInsets.all(16),
+            padding: ResponsiveHelper.getAdaptivePadding(context, all: 16.0),
             children: [
-              _buildRateCard(currentTontine),
-              const SizedBox(height: 16),
-              _buildLoanStatistics(loans),
-              const SizedBox(height: 16),
+              _buildRateCard(context, currentTontine),
+              ResponsiveSpacing(height: 16),
+              _buildLoanStatistics(context, loans),
+              ResponsiveSpacing(height: 16),
               if (myLoans.isNotEmpty) ...[
-                _buildSectionTitle('Mes prêts', Icons.person),
-                const SizedBox(height: 16),
+                _buildSectionTitle(context, 'Mes prêts', Icons.person),
+                ResponsiveSpacing(height: 16),
                 ...myLoans.map((loan) =>
-                    _buildLoanCard(loan, true, currentTontine, currentUser)),
-                const SizedBox(height: 24),
+                    _buildLoanCard(context, loan, true, currentTontine, currentUser)),
+                ResponsiveSpacing(height: 24),
               ],
               if (otherLoans.isNotEmpty) ...[
-                _buildSectionTitle('Autres prêts', Icons.people),
-                const SizedBox(height: 16),
+                _buildSectionTitle(context, 'Autres prêts', Icons.people),
+                ResponsiveSpacing(height: 16),
                 ...otherLoans.map((loan) =>
-                    _buildLoanCard(loan, false, currentTontine, currentUser)),
+                    _buildLoanCard(context, loan, false, currentTontine, currentUser)),
               ],
             ],
           ),
@@ -97,7 +99,7 @@ class _LoanViewState extends State<LoanView> {
   }
 
   Widget _buildLoanCard(
-      Loan loan, bool isMyLoan, Tontine? currentTontine, Member? currentUser) {
+      BuildContext context, Loan loan, bool isMyLoan, Tontine? currentTontine, Member? currentUser) {
     final canManageStatus = currentUser?.user?.roles?.any(
             (role) => role == Role.ACCOUNT_MANAGER || role == Role.PRESIDENT) ??
         false;
@@ -117,24 +119,39 @@ class _LoanViewState extends State<LoanView> {
                   children: [
                     Text(
                       'Emprunteur: ${loan.author.firstname} ${loan.author.lastname}',
-                      style: const TextStyle(
-                        fontSize: 14,
+                      style: TextStyle(
+                        fontSize: ResponsiveHelper.getAdaptiveValue(
+                          context,
+                          small: 12.0,
+                          medium: 13.0,
+                          large: 14.0,
+                        ),
                         color: AppColors.textSecondary,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    ResponsiveSpacing(height: 4),
                     Text(
                       'Échéance: ${DateFormat('dd/MM/yyyy').format(loan.redemptionDate)}',
-                      style: const TextStyle(
-                        fontSize: 12,
+                      style: TextStyle(
+                        fontSize: ResponsiveHelper.getAdaptiveValue(
+                          context,
+                          small: 11.0,
+                          medium: 11.5,
+                          large: 12.0,
+                        ),
                         color: AppColors.textSecondary,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    ResponsiveSpacing(height: 8),
                     Text(
                       'Votes: ${loan.voters?.length ?? 0}/${currentTontine?.members.length ?? 0}',
-                      style: const TextStyle(
-                        fontSize: 12,
+                      style: TextStyle(
+                        fontSize: ResponsiveHelper.getAdaptiveValue(
+                          context,
+                          small: 11.0,
+                          medium: 11.5,
+                          large: 12.0,
+                        ),
                         color: AppColors.textSecondary,
                       ),
                     ),
@@ -475,46 +492,62 @@ class _LoanViewState extends State<LoanView> {
     );
   }
 
-  Widget _buildRateCard(Tontine? currentTontine) {
+  Widget _buildRateCard(BuildContext context, Tontine? currentTontine) {
+    final cardPadding = ResponsiveHelper.getAdaptivePadding(context, all: 20.0);
+    final iconPadding = ResponsiveHelper.getAdaptivePadding(context, all: 12.0);
+    final iconSize = ResponsiveHelper.getAdaptiveIconSize(context, base: 32.0);
+    final spacing = ResponsiveHelper.getAdaptiveSpacing(context, base: 16.0);
+    final fontSize = ResponsiveHelper.getAdaptiveValue(
+      context,
+      small: 24.0,
+      medium: 26.0,
+      large: 28.0,
+    );
+
     return ModernCard(
       type: ModernCardType.primary,
       icon: Icons.percent,
       title: 'Taux d\'intérêt actuel',
-      padding: const EdgeInsets.all(20),
+      padding: cardPadding,
       child: Column(
         children: [
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: iconPadding,
                 decoration: BoxDecoration(
                   color: Colors.white.withAlpha(30),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.trending_up,
                   color: Colors.white,
-                  size: 32,
+                  size: iconSize,
                 ),
               ),
-              const SizedBox(width: 16),
+              SizedBox(width: spacing),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       '${currentTontine?.config.defaultLoanRate ?? 0}%',
-                      style: const TextStyle(
-                        fontSize: 28,
+                      style: TextStyle(
+                        fontSize: fontSize,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    ResponsiveSpacing(height: 4),
                     Text(
                       'Taux d\'intérêt par défaut',
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: ResponsiveHelper.getAdaptiveValue(
+                          context,
+                          small: 12.0,
+                          medium: 13.0,
+                          large: 14.0,
+                        ),
                         color: Colors.white.withAlpha(200),
                       ),
                     ),
@@ -528,7 +561,7 @@ class _LoanViewState extends State<LoanView> {
     );
   }
 
-  Widget _buildLoanStatistics(List<Loan> loans) {
+  Widget _buildLoanStatistics(BuildContext context, List<Loan> loans) {
     final activeLoans =
         loans.where((loan) => loan.status == StatusLoan.APPROVED).length;
     final pendingLoans =
@@ -536,6 +569,7 @@ class _LoanViewState extends State<LoanView> {
     final totalAmount = loans
         .where((loan) => loan.status == StatusLoan.APPROVED)
         .fold(0.0, (sum, loan) => sum + loan.amount);
+    final spacing = ResponsiveHelper.getAdaptiveSpacing(context, base: 12.0);
 
     return Row(
       children: [
@@ -547,7 +581,7 @@ class _LoanViewState extends State<LoanView> {
             type: ModernCardType.success,
           ),
         ),
-        const SizedBox(width: 12),
+        SizedBox(width: spacing),
         Expanded(
           child: StatCard(
             title: 'En attente',
@@ -556,7 +590,7 @@ class _LoanViewState extends State<LoanView> {
             type: ModernCardType.warning,
           ),
         ),
-        const SizedBox(width: 12),
+        SizedBox(width: spacing),
         Expanded(
           child: StatCard(
             title: 'Total prêté',
@@ -569,11 +603,21 @@ class _LoanViewState extends State<LoanView> {
     );
   }
 
-  Widget _buildSectionTitle(String title, IconData icon) {
+  Widget _buildSectionTitle(BuildContext context, String title, IconData icon) {
+    final iconPadding = ResponsiveHelper.getAdaptivePadding(context, all: 8.0);
+    final iconSize = ResponsiveHelper.getAdaptiveIconSize(context, base: 20.0);
+    final spacing = ResponsiveHelper.getAdaptiveSpacing(context, base: 12.0);
+    final fontSize = ResponsiveHelper.getAdaptiveValue(
+      context,
+      small: 16.0,
+      medium: 17.0,
+      large: 18.0,
+    );
+
     return Row(
       children: [
         Container(
-          padding: const EdgeInsets.all(8),
+          padding: iconPadding,
           decoration: BoxDecoration(
             color: AppColors.primary.withAlpha(20),
             borderRadius: BorderRadius.circular(8),
@@ -581,14 +625,14 @@ class _LoanViewState extends State<LoanView> {
           child: Icon(
             icon,
             color: AppColors.primary,
-            size: 20,
+            size: iconSize,
           ),
         ),
-        const SizedBox(width: 12),
+        SizedBox(width: spacing),
         Text(
           title,
-          style: const TextStyle(
-            fontSize: 18,
+          style: TextStyle(
+            fontSize: fontSize,
             fontWeight: FontWeight.bold,
             color: AppColors.textPrimary,
           ),

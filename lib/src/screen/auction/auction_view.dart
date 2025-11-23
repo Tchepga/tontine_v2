@@ -7,6 +7,8 @@ import '../../providers/models/auction.dart';
 import '../../providers/models/enum/system_type.dart';
 import '../../providers/models/enum/auction_status.dart';
 import '../../providers/models/enum/currency.dart';
+import '../../widgets/responsive_padding.dart';
+import '../../utils/responsive_helper.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/menu_widget.dart';
 import 'create_auction_dialog.dart';
@@ -58,25 +60,38 @@ class _AuctionViewState extends State<AuctionView> {
                 children: [
                   Icon(
                     Icons.gavel,
-                    size: 64,
+                    size: ResponsiveHelper.getAdaptiveIconSize(context, base: 64.0),
                     color: AppColors.textSecondary,
                   ),
-                  const SizedBox(height: 16),
-                  const Text(
+                  ResponsiveSpacing(height: 16),
+                  Text(
                     'Système d\'enchères non activé',
                     style: TextStyle(
-                      fontSize: 18,
+                      fontSize: ResponsiveHelper.getAdaptiveValue(
+                        context,
+                        small: 16.0,
+                        medium: 17.0,
+                        large: 18.0,
+                      ),
                       fontWeight: FontWeight.bold,
                       color: AppColors.textPrimary,
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Cette tontine utilise le système de parts.\nLes enchères ne sont pas disponibles.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 14,
+                  ResponsiveSpacing(height: 8),
+                  Padding(
+                    padding: ResponsiveHelper.getAdaptivePadding(context, horizontal: 16.0),
+                    child: Text(
+                      'Cette tontine utilise le système de parts.\nLes enchères ne sont pas disponibles.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: ResponsiveHelper.getAdaptiveValue(
+                          context,
+                          small: 12.0,
+                          medium: 13.0,
+                          large: 14.0,
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -95,7 +110,7 @@ class _AuctionViewState extends State<AuctionView> {
             elevation: 0,
           ),
           body: ListView(
-            padding: const EdgeInsets.all(16),
+            padding: ResponsiveHelper.getAdaptivePadding(context, all: 16.0),
             children: [
               // Enchères actives
               if (auctions.where((a) => a.isActive).isNotEmpty) ...[
