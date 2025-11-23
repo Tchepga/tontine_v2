@@ -22,7 +22,8 @@ class NotificationProvider extends ChangeNotifier {
 
   Future<void> _checkUpdates(int tontineId) async {
     try {
-      final newNotifications = await _notificationService.getNotification(tontineId);
+      final newNotifications =
+          await _notificationService.getNotification(tontineId);
       if (newNotifications != null) {
         _notifications = newNotifications;
         notifyListeners();
@@ -38,9 +39,16 @@ class NotificationProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Supprime une notification de la liste
+  void removeNotification(int notificationId) {
+    _notifications
+        .removeWhere((notification) => notification.id == notificationId);
+    notifyListeners();
+  }
+
   @override
   void dispose() {
     stopChecking();
     super.dispose();
   }
-} 
+}

@@ -32,7 +32,9 @@ class Loan {
     return Loan(
       id: json['id'],
       amount: json['amount']?.toDouble() ?? 0.0,
-      currency: Currency.EUR,
+      currency: json['currency'] != null
+          ? Currency.values.firstWhere((e) => e.name == json['currency'])
+          : Currency.EUR,
       interestRate: json['interestRate']?.toDouble() ?? 0.0,
       redemptionDate: DateTime.parse(json['redemptionDate']),
       status: fromStringToStatusLoan(json['status']),

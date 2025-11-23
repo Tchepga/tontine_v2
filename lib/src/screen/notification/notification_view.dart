@@ -73,7 +73,8 @@ class _NotificationViewState extends State<NotificationView> {
     );
   }
 
-  Widget _buildNotificationCard(BuildContext context, NotificationTontine notification) {
+  Widget _buildNotificationCard(
+      BuildContext context, NotificationTontine notification) {
     final cardMargin = ResponsiveHelper.getAdaptivePadding(
       context,
       horizontal: 16.0,
@@ -161,7 +162,12 @@ class _NotificationViewState extends State<NotificationView> {
   }
 
   void _handleNotificationTap(NotificationTontine notification) {
-    // Implémenter la navigation selon le type de notification
+    // Supprimer la notification de la liste
+    final notificationProvider =
+        Provider.of<NotificationProvider>(context, listen: false);
+    notificationProvider.removeNotification(notification.id);
+
+    // Naviguer vers la vue appropriée selon le type de notification
     switch (notification.type) {
       case TypeNotification.DEPOSIT:
         Navigator.pushNamed(context, '/cashflow');
