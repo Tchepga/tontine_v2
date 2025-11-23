@@ -6,6 +6,7 @@ import '../../providers/models/event.dart';
 import 'middleware/interceptor_http.dart';
 import 'dto/event_dto.dart';
 import 'member_service.dart';
+import '../../services/websocket_service.dart';
 
 class EventService {
   final client = ApiClient.client;
@@ -62,7 +63,23 @@ class EventService {
       },
       body: jsonEncode(eventDto.toJson()),
     );
-    if (response.statusCode != 201) {
+    if (response.statusCode == 201) {
+      final eventData = jsonDecode(response.body);
+
+      // Émettre un événement WebSocket pour notifier les autres utilisateurs
+      try {
+        final wsService = WebSocketService();
+        if (wsService.isConnected) {
+          wsService.emit('event.created', {
+            'eventId': eventData['id'],
+            'title': eventDto.title,
+            'tontineId': eventDto.tontineId,
+          });
+        }
+      } catch (e) {
+        _logger.warning('Error emitting WebSocket event: $e');
+      }
+    } else {
       throw Exception('Failed to create event');
     }
   }
@@ -94,4 +111,4 @@ class EventService {
       throw Exception('Failed to delete event');
     }
   }
-} 
+}

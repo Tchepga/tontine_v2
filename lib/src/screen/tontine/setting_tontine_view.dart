@@ -440,32 +440,27 @@ class _SettingTontineViewState extends State<SettingTontineView> {
                           ),
                         ],
                       ),
-                      Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [AppColors.primary, AppColors.primaryDark],
+                      FilledButton.icon(
+                        onPressed: () => _showAddPartDialog(
+                            context, tontineProvider.currentTontine!, _parts),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
                           ),
-                          borderRadius: BorderRadius.circular(12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
-                        child: ElevatedButton.icon(
-                          onPressed: () => _showAddPartDialog(
-                              context, tontineProvider.currentTontine!, _parts),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.transparent,
-                            shadowColor: Colors.transparent,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 12,
-                            ),
-                          ),
-                          icon: const Icon(Icons.add,
-                              color: Colors.white, size: 18),
-                          label: const Text(
-                            'Ajouter une part',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w600,
-                            ),
+                        icon: const Icon(Icons.add,
+                            color: Colors.white, size: 18),
+                        label: const Text(
+                          'Ajouter une part',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ),
@@ -981,68 +976,199 @@ class _SettingTontineViewState extends State<SettingTontineView> {
           ),
           body: Form(
             key: _formKey,
-            child: ListView(
+            child: SingleChildScrollView(
               padding: const EdgeInsets.all(16),
-              children: [
-                Card(
-                  elevation: 3,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16)),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          Colors.white,
-                          Colors.grey.shade50,
-                        ],
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Card(
+                    elevation: 3,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16)),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16),
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Colors.white,
+                            Colors.grey.shade50,
+                          ],
+                        ),
                       ),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: AppColors.secondary.withAlpha(20),
-                                  borderRadius: BorderRadius.circular(8),
+                      child: Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.secondary.withAlpha(20),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Icon(
+                                    Icons.account_balance,
+                                    color: AppColors.secondary,
+                                    size: 20,
+                                  ),
                                 ),
-                                child: Icon(
-                                  Icons.account_balance,
-                                  color: AppColors.secondary,
-                                  size: 20,
+                                const SizedBox(width: 12),
+                                const Text(
+                                  'Paramètres des prêts',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF2D3748),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 20),
+                            // Affichage de la monnaie
+                            Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: AppColors.tertiary.withAlpha(10),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: AppColors.tertiary.withAlpha(30),
+                                  width: 1,
                                 ),
                               ),
-                              const SizedBox(width: 12),
-                              const Text(
-                                'Paramètres des prêts',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF2D3748),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 20),
-                          // Affichage de la monnaie
-                          Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: AppColors.tertiary.withAlpha(10),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: AppColors.tertiary.withAlpha(30),
-                                width: 1,
+                              child: Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.tertiary.withAlpha(20),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Icon(
+                                      Icons.monetization_on,
+                                      color: AppColors.tertiary,
+                                      size: 20,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  const Text(
+                                    'Monnaie de la tontine: ',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w500,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  ),
+                                  Text(
+                                    currentTontine
+                                        .cashFlow.currency.displayName,
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.primary,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                            child: Row(
+                            const SizedBox(height: 20),
+                            _buildStyledTextField(
+                              initialValue: _defaultLoanRate.toString(),
+                              labelText: 'Taux d\'intérêt par défaut (%)',
+                              icon: Icons.percent,
+                              keyboardType: TextInputType.number,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Ce champ est requis';
+                                }
+                                final rate = double.tryParse(value);
+                                if (rate == null || rate < 0) {
+                                  return 'Veuillez entrer un taux valide';
+                                }
+                                return null;
+                              },
+                              onSaved: (value) {
+                                if (value != null && value.isNotEmpty) {
+                                  _defaultLoanRate = double.parse(value);
+                                }
+                              },
+                            ),
+                            const SizedBox(height: 16),
+                            _buildStyledTextField(
+                              initialValue: _defaultLoanDuration.toString(),
+                              labelText: 'Durée par défaut (jours)',
+                              icon: Icons.schedule,
+                              keyboardType: TextInputType.number,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Ce champ est requis';
+                                }
+                                final duration = int.tryParse(value);
+                                if (duration == null || duration < 1) {
+                                  return 'Veuillez entrer une durée valide';
+                                }
+                                return null;
+                              },
+                              onSaved: (value) {
+                                if (value != null && value.isNotEmpty) {
+                                  _defaultLoanDuration = int.parse(value);
+                                }
+                              },
+                            ),
+                            const SizedBox(height: 16),
+                            _buildStyledTextField(
+                              initialValue: _minLoanAmount.toString(),
+                              labelText: 'Montant minimum de prêt',
+                              icon: Icons.attach_money,
+                              keyboardType: TextInputType.number,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Ce champ est requis';
+                                }
+                                final amount = double.tryParse(value);
+                                if (amount == null || amount < 0) {
+                                  return 'Veuillez entrer un montant valide';
+                                }
+                                return null;
+                              },
+                              onSaved: (value) {
+                                if (value != null && value.isNotEmpty) {
+                                  _minLoanAmount = double.parse(value);
+                                }
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Card(
+                    elevation: 3,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16)),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16),
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Colors.white,
+                            Colors.grey.shade50,
+                          ],
+                        ),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
                               children: [
                                 Container(
                                   padding: const EdgeInsets.all(8),
@@ -1051,259 +1177,147 @@ class _SettingTontineViewState extends State<SettingTontineView> {
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Icon(
-                                    Icons.monetization_on,
+                                    Icons.sync,
                                     color: AppColors.tertiary,
                                     size: 20,
                                   ),
                                 ),
                                 const SizedBox(width: 12),
                                 const Text(
-                                  'Monnaie de la tontine: ',
+                                  'Paramètres des mouvements',
                                   style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w500,
-                                    color: AppColors.textPrimary,
-                                  ),
-                                ),
-                                Text(
-                                  currentTontine.cashFlow.currency.displayName,
-                                  style: const TextStyle(
-                                    fontSize: 16,
+                                    fontSize: 18,
                                     fontWeight: FontWeight.bold,
-                                    color: AppColors.primary,
+                                    color: Color(0xFF2D3748),
                                   ),
                                 ),
                               ],
                             ),
-                          ),
-                          const SizedBox(height: 20),
-                          _buildStyledTextField(
-                            initialValue: _defaultLoanRate.toString(),
-                            labelText: 'Taux d\'intérêt par défaut (%)',
-                            icon: Icons.percent,
-                            keyboardType: TextInputType.number,
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Ce champ est requis';
-                              }
-                              final rate = double.tryParse(value);
-                              if (rate == null || rate < 0) {
-                                return 'Veuillez entrer un taux valide';
-                              }
-                              return null;
-                            },
-                            onSaved: (value) {
-                              _defaultLoanRate = double.parse(value!);
-                            },
-                          ),
-                          const SizedBox(height: 16),
-                          _buildStyledTextField(
-                            initialValue: _defaultLoanDuration.toString(),
-                            labelText: 'Durée par défaut (jours)',
-                            icon: Icons.schedule,
-                            keyboardType: TextInputType.number,
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Ce champ est requis';
-                              }
-                              final duration = int.tryParse(value);
-                              if (duration == null || duration < 1) {
-                                return 'Veuillez entrer une durée valide';
-                              }
-                              return null;
-                            },
-                            onSaved: (value) {
-                              _defaultLoanDuration = int.parse(value!);
-                            },
-                          ),
-                          const SizedBox(height: 16),
-                          _buildStyledTextField(
-                            initialValue: _minLoanAmount.toString(),
-                            labelText: 'Montant minimum de prêt',
-                            icon: Icons.attach_money,
-                            keyboardType: TextInputType.number,
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Ce champ est requis';
-                              }
-                              final amount = double.tryParse(value);
-                              if (amount == null || amount < 0) {
-                                return 'Veuillez entrer un montant valide';
-                              }
-                              return null;
-                            },
-                            onSaved: (value) {
-                              _minLoanAmount = double.parse(value!);
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Card(
-                  elevation: 3,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16)),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          Colors.white,
-                          Colors.grey.shade50,
-                        ],
-                      ),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: AppColors.tertiary.withAlpha(20),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Icon(
-                                  Icons.sync,
-                                  color: AppColors.tertiary,
-                                  size: 20,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              const Text(
-                                'Paramètres des mouvements',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF2D3748),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 20),
-                          _buildStyledDropdown<LoopPeriod>(
-                            value: _loopPeriod,
-                            labelText: 'Périodicité',
-                            icon: Icons.calendar_today,
-                            items: LoopPeriod.values.map((period) {
-                              return DropdownMenuItem(
-                                value: period,
-                                child: Text(period.displayName),
-                              );
-                            }).toList(),
-                            onChanged: (value) {
-                              setState(() {
-                                _loopPeriod = value!;
-                              });
-                            },
-                          ),
-                          const SizedBox(height: 16),
-                          _buildStyledDropdown<MovementType>(
-                            value: _movementType,
-                            labelText: 'Type de mouvement',
-                            icon: Icons.swap_horiz,
-                            items: MovementType.values.map((type) {
-                              return DropdownMenuItem(
-                                value: type,
-                                child: Text(type.displayName),
-                              );
-                            }).toList(),
-                            onChanged: (value) {
-                              setState(() {
-                                _movementType = value!;
-                              });
-                            },
-                          ),
-                          const SizedBox(height: 16),
-                          _buildStyledTextField(
-                            initialValue: _countPersonPerMovement.toString(),
-                            labelText: 'Nombre de personnes par mouvement',
-                            icon: Icons.people,
-                            keyboardType: TextInputType.number,
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Ce champ est requis';
-                              }
-                              final count = int.tryParse(value);
-                              if (count == null || count < 1) {
-                                return 'Veuillez entrer un nombre valide';
-                              }
-                              return null;
-                            },
-                            onSaved: (value) {
-                              _countPersonPerMovement = int.parse(value!);
-                            },
-                          ),
-                          const SizedBox(height: 16),
-                          _buildStyledTextField(
-                            initialValue: _countMaxMember.toString(),
-                            labelText: 'Nombre maximum de membres',
-                            icon: Icons.group,
-                            keyboardType: TextInputType.number,
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Ce champ est requis';
-                              }
-                              final count = int.tryParse(value);
-                              if (count == null || count < 1) {
-                                return 'Veuillez entrer un nombre valide';
-                              }
-
-                              // Vérifier que le nombre max n'est pas inférieur au nombre de membres actuels
-                              final currentTontine =
-                                  Provider.of<TontineProvider>(context,
-                                          listen: false)
-                                      .currentTontine;
-                              if (currentTontine != null) {
-                                final currentMemberCount =
-                                    currentTontine.members.length;
-                                if (count < currentMemberCount) {
-                                  return 'Le nombre maximum ne peut pas être inférieur au nombre de membres actuels ($currentMemberCount)';
+                            const SizedBox(height: 20),
+                            _buildStyledDropdown<LoopPeriod>(
+                              value: _loopPeriod,
+                              labelText: 'Périodicité',
+                              icon: Icons.calendar_today,
+                              items: LoopPeriod.values.map((period) {
+                                return DropdownMenuItem(
+                                  value: period,
+                                  child: Text(period.displayName),
+                                );
+                              }).toList(),
+                              onChanged: (value) {
+                                if (value != null) {
+                                  setState(() {
+                                    _loopPeriod = value;
+                                  });
                                 }
-                              }
+                              },
+                            ),
+                            const SizedBox(height: 16),
+                            _buildStyledDropdown<MovementType>(
+                              value: _movementType,
+                              labelText: 'Type de mouvement',
+                              icon: Icons.swap_horiz,
+                              items: MovementType.values.map((type) {
+                                return DropdownMenuItem(
+                                  value: type,
+                                  child: Text(type.displayName),
+                                );
+                              }).toList(),
+                              onChanged: (value) {
+                                if (value != null) {
+                                  setState(() {
+                                    _movementType = value;
+                                  });
+                                }
+                              },
+                            ),
+                            const SizedBox(height: 16),
+                            _buildStyledTextField(
+                              initialValue: _countPersonPerMovement.toString(),
+                              labelText: 'Nombre de personnes par mouvement',
+                              icon: Icons.people,
+                              keyboardType: TextInputType.number,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Ce champ est requis';
+                                }
+                                final count = int.tryParse(value);
+                                if (count == null || count < 1) {
+                                  return 'Veuillez entrer un nombre valide';
+                                }
+                                return null;
+                              },
+                              onSaved: (value) {
+                                if (value != null && value.isNotEmpty) {
+                                  _countPersonPerMovement = int.parse(value);
+                                }
+                              },
+                            ),
+                            const SizedBox(height: 16),
+                            _buildStyledTextField(
+                              initialValue: _countMaxMember.toString(),
+                              labelText: 'Nombre maximum de membres',
+                              icon: Icons.group,
+                              keyboardType: TextInputType.number,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Ce champ est requis';
+                                }
+                                final count = int.tryParse(value);
+                                if (count == null || count < 1) {
+                                  return 'Veuillez entrer un nombre valide';
+                                }
 
-                              return null;
-                            },
-                            onSaved: (value) {
-                              _countMaxMember = int.parse(value!);
-                            },
-                          ),
-                        ],
+                                // Vérifier que le nombre max n'est pas inférieur au nombre de membres actuels
+                                final currentTontine =
+                                    Provider.of<TontineProvider>(context,
+                                            listen: false)
+                                        .currentTontine;
+                                if (currentTontine != null) {
+                                  final currentMemberCount =
+                                      currentTontine.members.length;
+                                  if (count < currentMemberCount) {
+                                    return 'Le nombre maximum ne peut pas être inférieur au nombre de membres actuels ($currentMemberCount)';
+                                  }
+                                }
+
+                                return null;
+                              },
+                              onSaved: (value) {
+                                if (value != null && value.isNotEmpty) {
+                                  _countMaxMember = int.parse(value);
+                                }
+                              },
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 16),
-                _buildRateMapSection(),
-                const SizedBox(height: 16),
-                _buildPartOrderSection(tontineProvider),
-                const SizedBox(height: 16),
-                _buildDangerousActionsSection(
-                    tontineProvider, currentTontine, authProvider),
-              ],
+                  const SizedBox(height: 16),
+                  _buildRateMapSection(),
+                  const SizedBox(height: 16),
+                  _buildPartOrderSection(tontineProvider),
+                  const SizedBox(height: 16),
+                  _buildDangerousActionsSection(
+                      tontineProvider, currentTontine, authProvider),
+                ],
+              ),
             ),
           ),
-          bottomNavigationBar: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.grey.shade300,
-                  blurRadius: 10,
-                  offset: const Offset(0, -2),
-                ),
-              ],
-            ),
-            child: SafeArea(
+          bottomNavigationBar: SafeArea(
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.shade300,
+                    blurRadius: 10,
+                    offset: const Offset(0, -2),
+                  ),
+                ],
+              ),
               child: Container(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
@@ -1313,8 +1327,8 @@ class _SettingTontineViewState extends State<SettingTontineView> {
                 ),
                 child: ElevatedButton(
                   onPressed: () async {
-                    if (_formKey.currentState!.validate()) {
-                      _formKey.currentState!.save();
+                    if (_formKey.currentState?.validate() ?? false) {
+                      _formKey.currentState?.save();
                       try {
                         await tontineProvider.updateTontineConfig(
                             currentTontine.id,

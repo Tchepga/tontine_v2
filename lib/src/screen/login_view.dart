@@ -152,9 +152,10 @@ class _LoginViewState extends State<LoginView> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const SizedBox(height: 40),
-                // Logo ou illustration
+                // Logo de l'application
                 Container(
-                  height: 200,
+                  height: 120,
+                  width: 120,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
@@ -168,7 +169,7 @@ class _LoginViewState extends State<LoginView> {
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(20),
                     child: Image.asset(
-                      'assets/images/illustration_login.png',
+                      'assets/images/logo.png',
                       fit: BoxFit.contain,
                     ),
                   ),

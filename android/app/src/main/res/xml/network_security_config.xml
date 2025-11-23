@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- Configuration pour permettre les connexions HTTPS/WSS sécurisées -->
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <!-- Autoriser les certificats système -->
+            <certificates src="system" />
+            <!-- Autoriser les certificats utilisateur (pour le développement) -->
+            <certificates src="user" />
+        </trust-anchors>
+    </base-config>
+    
+    <!-- Configuration spécifique pour le domaine de l'API -->
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">api.tontine.devcoorp.net</domain>
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="user" />
+        </trust-anchors>
+    </domain-config>
+</network-security-config>
+

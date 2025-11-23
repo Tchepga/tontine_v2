@@ -21,6 +21,7 @@ import 'package:logging/logging.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'dto/event_dto.dart';
 import 'package:path_provider/path_provider.dart';
+import '../../services/websocket_service.dart';
 
 class TontineService {
   static final _logger = Logger('TontineService');
@@ -100,7 +101,8 @@ class TontineService {
       throw Exception('Failed to add member to tontine during creation');
     }
 
-    final memberId = jsonDecode(responseCreateMember.body)['id'];
+    final memberData = jsonDecode(responseCreateMember.body);
+    final memberId = memberData['id'];
 
     final responseAddMemberToTontine = await client.patch(
       Uri.parse('$urlApi/tontine/$tontineId/member'),
@@ -112,6 +114,22 @@ class TontineService {
     );
     if (responseAddMemberToTontine.statusCode != 200) {
       throw Exception('Failed to add member to tontine');
+    }
+
+    // Émettre un événement WebSocket pour notifier les autres utilisateurs
+    try {
+      final wsService = WebSocketService();
+      if (wsService.isConnected) {
+        final tontine = await getTontine(tontineId);
+        wsService.emit('member.added', {
+          'memberId': memberId,
+          'memberName': memberData['user']?['username'] ?? memberDto.username,
+          'tontineId': tontineId,
+          'tontineName': tontine?.title,
+        });
+      }
+    } catch (e) {
+      _logger.warning('Error emitting WebSocket event: $e');
     }
   }
 
@@ -153,6 +171,21 @@ class TontineService {
 
       if (response.statusCode == 201) {
         final rapport = RapportMeeting.fromJson(jsonDecode(response.body));
+
+        // Émettre un événement WebSocket pour notifier les autres utilisateurs
+        try {
+          final wsService = WebSocketService();
+          if (wsService.isConnected) {
+            wsService.emit('rapport.created', {
+              'rapportId': rapport.id,
+              'title': rapport.title,
+              'tontineId': tontineId,
+            });
+          }
+        } catch (e) {
+          _logger.warning('Error emitting WebSocket event: $e');
+        }
+
         return rapport;
       } else {
         _logger.severe('Error creating rapport: ${response.body}');
@@ -198,7 +231,24 @@ class TontineService {
       body: jsonEncode(sanctionDto.toJson()),
     );
     if (response.statusCode == 201) {
-      return Sanction.fromJson(jsonDecode(response.body));
+      final sanction = Sanction.fromJson(jsonDecode(response.body));
+
+      // Émettre un événement WebSocket pour notifier les autres utilisateurs
+      try {
+        final wsService = WebSocketService();
+        if (wsService.isConnected) {
+          wsService.emit('sanction.created', {
+            'sanctionId': sanction.id,
+            'memberName': sanction.gulty.user?.username ?? 'Un membre',
+            'reason': sanction.description,
+            'tontineId': tontineId,
+          });
+        }
+      } catch (e) {
+        _logger.warning('Error emitting WebSocket event: $e');
+      }
+
+      return sanction;
     }
     throw Exception('Failed to create sanction');
   }
@@ -254,7 +304,24 @@ class TontineService {
       body: jsonEncode(eventDto.toJson()),
     );
     if (response.statusCode == 201) {
-      return Event.fromJson(jsonDecode(response.body));
+      final event = Event.fromJson(jsonDecode(response.body));
+
+      // Émettre un événement WebSocket pour notifier les autres utilisateurs
+      try {
+        final wsService = WebSocketService();
+        if (wsService.isConnected) {
+          wsService.emit('event.created', {
+            'eventId': event.id,
+            'title': event.title,
+            'tontineId': tontineId,
+            'tontineName': (await getTontine(tontineId))?.title,
+          });
+        }
+      } catch (e) {
+        _logger.warning('Error emitting WebSocket event: $e');
+      }
+
+      return event;
     }
     throw Exception('Failed to create event');
   }
@@ -294,6 +361,24 @@ class TontineService {
       body: jsonEncode(depositDto.toJson()),
     );
     if (response.statusCode == 201) {
+      final depositData = jsonDecode(response.body);
+
+      // Émettre un événement WebSocket pour notifier les autres utilisateurs
+      try {
+        final wsService = WebSocketService();
+        if (wsService.isConnected) {
+          wsService.emit('deposit.created', {
+            'depositId': depositData['id'],
+            'amount': depositDto.amount,
+            'currency': depositDto.currency,
+            'tontineId': tontineId,
+            'memberName':
+                depositData['member']?['user']?['username'] ?? 'Un membre',
+          });
+        }
+      } catch (e) {
+        _logger.warning('Error emitting WebSocket event: $e');
+      }
     } else {
       throw Exception('Failed to create deposit');
     }
@@ -340,7 +425,23 @@ class TontineService {
       },
       body: jsonEncode({'status': status.toString().split('.').last}),
     );
-    if (response.statusCode != 200) {
+    if (response.statusCode == 200) {
+      // Émettre un événement WebSocket pour notifier les autres utilisateurs
+      try {
+        final depositData = jsonDecode(response.body);
+        final wsService = WebSocketService();
+        if (wsService.isConnected && status == StatusDeposit.VALIDATED) {
+          wsService.emit('deposit.validated', {
+            'depositId': depositId,
+            'amount': depositData['amount'],
+            'currency': depositData['currency'],
+            'tontineId': tontineId,
+          });
+        }
+      } catch (e) {
+        _logger.warning('Error emitting WebSocket event: $e');
+      }
+    } else {
       throw Exception('Failed to validate deposit');
     }
   }

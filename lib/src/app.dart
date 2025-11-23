@@ -101,7 +101,7 @@ class _MyAppState extends State<MyApp> {
           // preferred ThemeMode (light, dark, or system default) from the
           // SettingsController to display the correct theme.
           theme: AppTheme.lightTheme,
-          darkTheme: ThemeData.light(),
+          darkTheme: AppTheme.darkTheme,
           themeMode: widget.settingsController.themeMode,
 
           // Define a function to handle named routes in order to support

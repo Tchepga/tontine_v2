@@ -3,6 +3,7 @@ import 'package:get_storage/get_storage.dart';
 import 'package:provider/provider.dart';
 import 'package:logging/logging.dart';
 import 'src/services/local_notification_service.dart';
+import 'src/services/realtime_notification_service.dart';
 
 import 'src/app.dart';
 import 'src/providers/auth_provider.dart';
@@ -27,6 +28,9 @@ void main() async {
 
   // Initialiser les notifications locales
   await LocalNotificationService().init();
+
+  // Initialiser le service de notifications en temps réel
+  await RealtimeNotificationService().initialize();
 
   Logger.root.level = Level.ALL;
   Logger.root.onRecord.listen((record) {

@@ -25,9 +25,9 @@ class _FeaturesExplanationViewState extends State<FeaturesExplanationView>
       icon: Icons.emoji_events,
       color: Colors.blue,
       details: [
-        '✓ Gestion facile des contributions',
-        '✓ Suivi transparent des transactions',
-        '✓ Distribution équitable des parts',
+        'Gestion facile des contributions',
+        'Suivi transparent des transactions',
+        'Distribution équitable des parts',
       ],
     ),
     FeatureItem(
@@ -37,9 +37,9 @@ class _FeaturesExplanationViewState extends State<FeaturesExplanationView>
       icon: Icons.group_add,
       color: Colors.green,
       details: [
-        '✓ Créer une nouvelle tontine',
-        '✓ Inviter des membres',
-        '✓ Définir les contributions',
+        'Créer une nouvelle tontine',
+        'Inviter des membres',
+        'Définir les contributions',
       ],
     ),
     FeatureItem(
@@ -49,9 +49,9 @@ class _FeaturesExplanationViewState extends State<FeaturesExplanationView>
       icon: Icons.payment,
       color: Colors.orange,
       details: [
-        '✓ Enregistrer les contributions',
-        '✓ Consulter l\'historique',
-        '✓ Voir votre solde actuel',
+        'Enregistrer les contributions',
+        'Consulter l\'historique',
+        'Voir votre solde actuel',
       ],
     ),
     FeatureItem(
@@ -61,9 +61,9 @@ class _FeaturesExplanationViewState extends State<FeaturesExplanationView>
       icon: Icons.account_balance,
       color: Colors.purple,
       details: [
-        '✓ Demander un prêt',
-        '✓ Fixer les conditions',
-        '✓ Gérer le remboursement',
+        'Demander un prêt',
+        'Fixer les conditions',
+        'Gérer le remboursement',
       ],
     ),
     FeatureItem(
@@ -73,9 +73,9 @@ class _FeaturesExplanationViewState extends State<FeaturesExplanationView>
       icon: Icons.bar_chart,
       color: Colors.red,
       details: [
-        '✓ Graphiques et statistiques',
-        '✓ Historique complet',
-        '✓ Rapports téléchargeables',
+        'Graphiques et statistiques',
+        'Historique complet',
+        'Rapports téléchargeables',
       ],
     ),
   ];

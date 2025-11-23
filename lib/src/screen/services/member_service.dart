@@ -239,6 +239,9 @@ class MemberService {
         body: jsonEncode(forgotPasswordDto.toJson()),
       );
 
+      if (response.statusCode == 404) {
+        throw Exception('Aucun compte trouvé avec cet email ou username.');
+      }
       if (response.statusCode != 200) {
         final errorBody = response.body;
         throw Exception(

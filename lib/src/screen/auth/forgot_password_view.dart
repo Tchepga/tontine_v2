@@ -276,12 +276,26 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
         Navigator.pop(context);
       } catch (e) {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Erreur: ${e.toString()}'),
-            backgroundColor: AppColors.error,
-          ),
-        );
+
+        // Détecter l'erreur 404 (compte non trouvé)
+        final errorMessage = e.toString();
+        if (errorMessage
+            .contains('Aucun compte trouvé avec cet email ou username.')) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Aucun compte trouvé avec cet email ou username.'),
+              backgroundColor: AppColors.error,
+              duration: Duration(seconds: 4),
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Erreur: ${e.toString()}'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        }
       } finally {
         if (mounted) {
           setState(() {

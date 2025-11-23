@@ -27,7 +27,7 @@ class ForgotPasswordDto {
 
   Map<String, dynamic> toJson() {
     return {
-      'email': email,
+      'usernameOrEmail': email,
     };
   }
 }

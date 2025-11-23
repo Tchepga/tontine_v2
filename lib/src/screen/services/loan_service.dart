@@ -6,6 +6,7 @@ import '../../providers/models/loan.dart';
 import 'middleware/interceptor_http.dart';
 import 'dto/loan_dto.dart';
 import 'member_service.dart';
+import '../../services/websocket_service.dart';
 
 class LoanService {
   final client = ApiClient.client;
@@ -62,7 +63,25 @@ class LoanService {
       },
       body: jsonEncode(loanDto.toJson()),
     );
-    if (response.statusCode != 201) {
+    if (response.statusCode == 201) {
+      final loanData = jsonDecode(response.body);
+      
+      // Émettre un événement WebSocket pour notifier les autres utilisateurs
+      try {
+        final wsService = WebSocketService();
+        if (wsService.isConnected) {
+          wsService.emit('loan.created', {
+            'loanId': loanData['id'],
+            'amount': loanDto.amount,
+            'currency': loanDto.currency,
+            'tontineId': loanDto.tontineId,
+            'memberName': loanData['member']?['user']?['username'] ?? 'Un membre',
+          });
+        }
+      } catch (e) {
+        _logger.warning('Error emitting WebSocket event: $e');
+      }
+    } else {
       throw Exception('Failed to create loan');
     }
   }
@@ -77,7 +96,33 @@ class LoanService {
       },
       body: jsonEncode(loanDto.toJson()),
     );
-    if (response.statusCode != 200) {
+    if (response.statusCode == 200) {
+      final loanData = jsonDecode(response.body);
+      
+      // Émettre un événement WebSocket pour notifier les autres utilisateurs
+      try {
+        final wsService = WebSocketService();
+        if (wsService.isConnected) {
+          final status = loanData['status'] as String?;
+          if (status == 'APPROVED') {
+            wsService.emit('loan.approved', {
+              'loanId': id,
+              'amount': loanData['amount'],
+              'currency': loanData['currency'],
+            });
+          } else if (status == 'REJECTED') {
+            wsService.emit('loan.rejected', {
+              'loanId': id,
+              'amount': loanData['amount'],
+              'currency': loanData['currency'],
+              'reason': loanData['rejectionReason'],
+            });
+          }
+        }
+      } catch (e) {
+        _logger.warning('Error emitting WebSocket event: $e');
+      }
+    } else {
       throw Exception('Failed to update loan');
     }
   }

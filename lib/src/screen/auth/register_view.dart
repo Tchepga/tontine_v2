@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:logging/logging.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../theme/app_theme.dart';
 import '../login_view.dart';
 import '../services/dto/member_dto.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
@@ -17,17 +17,64 @@ class RegisterView extends StatefulWidget {
 
 class _RegisterViewState extends State<RegisterView> {
   final _formKey = GlobalKey<FormState>();
-  final _usernameController = TextEditingController(text: 'username');
-  final _passwordController = TextEditingController(text: 'password');
-  final _confirmPasswordController = TextEditingController(text: 'password');
-  final _firstnameController = TextEditingController(text: 'firstname');
-  final _lastnameController = TextEditingController(text: 'lastname');
-  final _emailController = TextEditingController(text: 'email@email.com');
-  final _phoneController = TextEditingController(text: '6666666666');
-  final _countryController = TextEditingController(text: 'FR');
+  final _usernameController = TextEditingController(text: '');
+  final _passwordController = TextEditingController(text: '');
+  final _confirmPasswordController = TextEditingController(text: '');
+  final _firstnameController = TextEditingController(text: '');
+  final _lastnameController = TextEditingController(text: '');
+  final _emailController = TextEditingController(text: '');
+  final _phoneController = TextEditingController(text: '');
+  String _selectedCountry = 'FR';
   String _completePhoneNumber = '';
   bool _isLoading = false;
   Logger logger = Logger('RegisterView');
+
+  // Liste des pays avec leurs codes ISO
+  final Map<String, String> _countries = {
+    'FR': 'France',
+    'BE': 'Belgique',
+    'CH': 'Suisse',
+    'CA': 'Canada',
+    'US': 'États-Unis',
+    'GB': 'Royaume-Uni',
+    'DE': 'Allemagne',
+    'ES': 'Espagne',
+    'IT': 'Italie',
+    'PT': 'Portugal',
+    'NL': 'Pays-Bas',
+    'SN': 'Sénégal',
+    'CI': 'Côte d\'Ivoire',
+    'CM': 'Cameroun',
+    'MG': 'Madagascar',
+    'ML': 'Mali',
+    'BF': 'Burkina Faso',
+    'BJ': 'Bénin',
+    'TG': 'Togo',
+    'GN': 'Guinée',
+    'NE': 'Niger',
+    'TD': 'Tchad',
+    'CF': 'République centrafricaine',
+    'CG': 'Congo',
+    'CD': 'RD Congo',
+    'GA': 'Gabon',
+    'MR': 'Mauritanie',
+    'DZ': 'Algérie',
+    'MA': 'Maroc',
+    'TN': 'Tunisie',
+    'EG': 'Égypte',
+    'ET': 'Éthiopie',
+    'KE': 'Kenya',
+    'NG': 'Nigeria',
+    'ZA': 'Afrique du Sud',
+    'GH': 'Ghana',
+    'AO': 'Angola',
+    'MZ': 'Mozambique',
+    'ZW': 'Zimbabwe',
+    'TZ': 'Tanzanie',
+    'UG': 'Ouganda',
+    'RW': 'Rwanda',
+    'BI': 'Burundi',
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -47,13 +94,15 @@ class _RegisterViewState extends State<RegisterView> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const SizedBox(height: 20),
+                  // Logo de l'application
                   Container(
-                    height: 200,
+                    height: 120,
+                    width: 120,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
-                          color: colorScheme.primary.withAlpha(10),
+                          color: AppColors.primary.withAlpha(10),
                           blurRadius: 20,
                           offset: const Offset(0, 10),
                         ),
@@ -61,11 +110,10 @@ class _RegisterViewState extends State<RegisterView> {
                     ),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(20),
-                      child: SvgPicture.asset(
-                          'assets/images/undraw_savings_uwjn.svg',
-                          fit: BoxFit.contain,
-                          width: 200,
-                          height: 200),
+                      child: Image.asset(
+                        'assets/images/logo.png',
+                        fit: BoxFit.contain,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 32),
@@ -151,7 +199,7 @@ class _RegisterViewState extends State<RegisterView> {
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: colorScheme.outline.withAlpha(30),
+                        color: AppColors.border,
                       ),
                       color: colorScheme.surface,
                     ),
@@ -180,12 +228,7 @@ class _RegisterViewState extends State<RegisterView> {
                     ),
                   ),
                   const SizedBox(height: 20),
-                  _buildTextField(
-                    controller: _countryController,
-                    label: 'Pays',
-                    icon: Icons.flag_outlined,
-                    colorScheme: colorScheme,
-                  ),
+                  _buildCountryDropdown(colorScheme),
                   const SizedBox(height: 32),
                   Container(
                     padding: const EdgeInsets.all(24),
@@ -194,13 +237,13 @@ class _RegisterViewState extends State<RegisterView> {
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: [
-                          colorScheme.primaryContainer.withAlpha(30),
-                          colorScheme.secondaryContainer.withAlpha(20),
+                          AppColors.primary.withAlpha(30),
+                          AppColors.primary.withAlpha(15),
                         ],
                       ),
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: colorScheme.outline.withAlpha(20),
+                        color: AppColors.border,
                       ),
                     ),
                     child: Column(
@@ -265,14 +308,14 @@ class _RegisterViewState extends State<RegisterView> {
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
                               colors: [
-                                colorScheme.primary,
-                                colorScheme.primary.withAlpha(80)
+                                AppColors.primary,
+                                AppColors.primary.withAlpha(80)
                               ],
                             ),
                             borderRadius: BorderRadius.circular(16),
                             boxShadow: [
                               BoxShadow(
-                                color: colorScheme.primary.withAlpha(30),
+                                color: AppColors.primary.withAlpha(30),
                                 blurRadius: 12,
                                 offset: const Offset(0, 4),
                               ),
@@ -283,8 +326,8 @@ class _RegisterViewState extends State<RegisterView> {
                             style: FilledButton.styleFrom(
                               backgroundColor: colorScheme.primary,
                               shadowColor: Colors.transparent,
-                              foregroundColor: Colors.white,
-                              disabledBackgroundColor: Colors.grey,
+                              foregroundColor: colorScheme.onPrimary,
+                              disabledBackgroundColor: AppColors.textLight,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(16),
                               ),
@@ -292,7 +335,7 @@ class _RegisterViewState extends State<RegisterView> {
                             child: Text(
                               'S\'inscrire',
                               style: theme.textTheme.titleMedium?.copyWith(
-                                color: Colors.white,
+                                color: colorScheme.onPrimary,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -335,6 +378,82 @@ class _RegisterViewState extends State<RegisterView> {
     );
   }
 
+  Widget _buildCountryDropdown(ColorScheme colorScheme) {
+    // Trier les pays par nom pour un meilleur affichage
+    final sortedCountries = _countries.entries.toList()
+      ..sort((a, b) => a.value.compareTo(b.value));
+
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppColors.border,
+        ),
+        color: colorScheme.surface,
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.textLight.withAlpha(20),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: DropdownButtonFormField<String>(
+        value: _selectedCountry,
+        decoration: InputDecoration(
+          labelText: 'Pays',
+          prefixIcon: Icon(Icons.flag_outlined, color: colorScheme.primary),
+          border: InputBorder.none,
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          labelStyle: TextStyle(color: colorScheme.onSurface.withAlpha(60)),
+        ),
+        items: sortedCountries.map((entry) {
+          return DropdownMenuItem<String>(
+            value: entry.key,
+            child: Row(
+              children: [
+                Text(
+                  _getCountryFlag(entry.key),
+                  style: const TextStyle(fontSize: 20),
+                ),
+                const SizedBox(width: 12),
+                Text(entry.value),
+              ],
+            ),
+          );
+        }).toList(),
+        onChanged: (value) {
+          if (value != null) {
+            setState(() {
+              _selectedCountry = value;
+            });
+          }
+        },
+        validator: (value) {
+          if (value == null || value.isEmpty) {
+            return 'Veuillez sélectionner un pays';
+          }
+          return null;
+        },
+        dropdownColor: colorScheme.surface,
+        style: TextStyle(color: colorScheme.onSurface),
+        icon: Icon(Icons.arrow_drop_down, color: colorScheme.primary),
+        isExpanded: true,
+      ),
+    );
+  }
+
+  String _getCountryFlag(String countryCode) {
+    // Convertir le code pays en emoji drapeau
+    final codePoints = countryCode
+        .toUpperCase()
+        .split('')
+        .map((char) => 127397 + char.codeUnitAt(0))
+        .toList();
+    return String.fromCharCodes(codePoints);
+  }
+
   Widget _buildTextField({
     required TextEditingController controller,
     required String label,
@@ -348,12 +467,12 @@ class _RegisterViewState extends State<RegisterView> {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: colorScheme.outline.withAlpha(30),
+          color: AppColors.border,
         ),
         color: colorScheme.surface,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withAlpha(2),
+            color: AppColors.textLight.withAlpha(20),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -407,7 +526,7 @@ class _RegisterViewState extends State<RegisterView> {
           lastname: _lastnameController.text,
           email: _emailController.text,
           phone: _completePhoneNumber,
-          country: _countryController.text,
+          country: _selectedCountry,
         );
 
         final statusCode =
@@ -419,7 +538,7 @@ class _RegisterViewState extends State<RegisterView> {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text('Le nom d\'utilisateur existe déjà'),
-                  backgroundColor: Colors.red,
+                  backgroundColor: AppColors.error,
                 ),
               );
               break;
@@ -429,7 +548,7 @@ class _RegisterViewState extends State<RegisterView> {
                 const SnackBar(
                   content:
                       Text('Inscription réussie. Vous pouvez vous connecter.'),
-                  backgroundColor: Colors.green,
+                  backgroundColor: AppColors.success,
                 ),
               );
               break;
@@ -437,7 +556,7 @@ class _RegisterViewState extends State<RegisterView> {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text('Erreur lors de l\'inscription'),
-                  backgroundColor: Colors.red,
+                  backgroundColor: AppColors.error,
                 ),
               );
               break;
@@ -449,7 +568,7 @@ class _RegisterViewState extends State<RegisterView> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Erreur lors de l\'inscription'),
-              backgroundColor: Colors.red,
+              backgroundColor: AppColors.error,
             ),
           );
         }
@@ -472,7 +591,6 @@ class _RegisterViewState extends State<RegisterView> {
     _lastnameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
-    _countryController.dispose();
     super.dispose();
   }
 }
