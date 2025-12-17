@@ -242,7 +242,7 @@ class MemberService {
       if (response.statusCode == 404) {
         throw Exception('Aucun compte trouvé avec cet email ou username.');
       }
-      if (response.statusCode != 200) {
+      if (response.statusCode != 200 && response.statusCode != 201) {
         final errorBody = response.body;
         throw Exception(
             'Erreur lors de la demande de réinitialisation: $errorBody');

@@ -24,17 +24,26 @@ class MemberView extends StatefulWidget {
   State<MemberView> createState() => _MemberViewState();
 }
 
-class _MemberViewState extends State<MemberView> {
+class _MemberViewState extends State<MemberView>
+    with SingleTickerProviderStateMixin {
   final _notificationService = LocalNotificationService();
   bool _isInitialized = false;
   bool _isAddingMember = false;
+  late TabController _tabController;
 
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 2, vsync: this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initializeUser();
     });
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
   }
 
   Future<void> _initializeUser() async {
@@ -98,36 +107,72 @@ class _MemberViewState extends State<MemberView> {
                   tooltip: 'Partager le lien d\'invitation',
                 ),
             ],
-          ),
-          body: Column(
-            children: [
-              // Section Bureau de la tontine
-              _buildBureauSection(context, currentTontine),
-              ResponsiveSpacing(height: 16),
-              // En-tête avec les statistiques
-              _buildStatisticsSection(context, currentTontine),
-              ResponsiveSpacing(height: 16),
-              // Liste des membres
-              Expanded(
-                child: ListView.builder(
-                  padding: EdgeInsets.only(
-                    top: 16.0,
-                    left: 16.0,
-                    right: 16.0,
-                    bottom: 56.0,
-                  ),
-                  itemCount: currentTontine.members.length,
-                  itemBuilder: (context, index) {
-                    final member = currentTontine.members[index];
-                    return _buildMemberCard(
-                      context,
-                      member,
-                      isPresident,
-                      tontineProvider,
-                      currentTontine.id,
-                    );
-                  },
+            bottom: TabBar(
+              controller: _tabController,
+              indicatorColor: Colors.white,
+              indicatorWeight: 3,
+              labelColor: Colors.white,
+              unselectedLabelColor: Colors.white70,
+              labelStyle: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              ),
+              unselectedLabelStyle: const TextStyle(
+                fontWeight: FontWeight.normal,
+                fontSize: 14,
+              ),
+              tabs: const [
+                Tab(
+                  icon: Icon(Icons.business),
+                  text: 'Bureau',
                 ),
+                Tab(
+                  icon: Icon(Icons.people),
+                  text: 'Membres',
+                ),
+              ],
+            ),
+          ),
+          body: TabBarView(
+            controller: _tabController,
+            children: [
+              // Onglet Bureau
+              SingleChildScrollView(
+                child: Column(
+                  children: [
+                    ResponsiveSpacing(height: 16),
+                    _buildBureauSection(context, currentTontine),
+                    ResponsiveSpacing(height: 16),
+                  ],
+                ),
+              ),
+              // Onglet Liste des membres
+              Column(
+                children: [
+                  ResponsiveSpacing(height: 16),
+                  _buildStatisticsSection(context, currentTontine),
+                  ResponsiveSpacing(height: 16),
+                  Expanded(
+                    child: ListView.builder(
+                      padding: EdgeInsets.only(
+                        left: 16.0,
+                        right: 16.0,
+                        bottom: 56.0,
+                      ),
+                      itemCount: currentTontine.members.length,
+                      itemBuilder: (context, index) {
+                        final member = currentTontine.members[index];
+                        return _buildMemberCard(
+                          context,
+                          member,
+                          isPresident,
+                          tontineProvider,
+                          currentTontine.id,
+                        );
+                      },
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

@@ -431,7 +431,7 @@ class _SettingTontineViewState extends State<SettingTontineView> {
                           ),
                           const SizedBox(width: 12),
                           const Text(
-                            'Ordre des parts',
+                            'Ordres',
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,

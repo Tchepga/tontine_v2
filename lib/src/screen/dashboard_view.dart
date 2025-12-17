@@ -215,7 +215,7 @@ class _DashboardViewState extends State<DashboardView> {
       context,
       short: 16.0,
       medium: 20.0,
-      tall: 24.0,
+      tall: 10.0,
     );
     final horizontalPadding = ResponsiveHelper.getAdaptiveValue(
       context,

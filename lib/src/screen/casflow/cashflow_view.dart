@@ -84,7 +84,6 @@ class _CashflowViewState extends State<CashflowView> {
                     context, deposits, tontineProvider, currentTontine!.id),
                 ResponsiveSpacing(height: 16),
               ],
-              // Titre de section modernisé
               _buildSectionTitle(context, 'Mouvements', Icons.list_alt),
               ResponsiveSpacing(height: 16),
               if (filteredDeposits.isEmpty)
@@ -192,54 +191,50 @@ class _CashflowViewState extends State<CashflowView> {
     return ModernCard(
       type: ModernCardType.info,
       padding: cardPadding,
-      child: Row(
+      child: Column(
         children: [
-          Expanded(
-            child: DropdownButtonFormField<DepositReason>(
-              initialValue: _selectedReason,
-              isExpanded: true,
-              decoration: InputDecoration(
-                labelText: 'Type',
-                prefixIcon: const Icon(Icons.filter_list),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                contentPadding: contentPadding,
+          DropdownButtonFormField<DepositReason>(
+            initialValue: _selectedReason,
+            isExpanded: true,
+            decoration: InputDecoration(
+              labelText: 'Type',
+              prefixIcon: const Icon(Icons.filter_list),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
               ),
-              items: [
-                const DropdownMenuItem<DepositReason>(
-                  value: null,
-                  child: Text('Tous'),
-                ),
-                ...DepositReason.values.map((reason) => DropdownMenuItem(
-                      value: reason,
-                      child: Text(reason.displayName),
-                    ))
-              ],
-              onChanged: (value) {
-                setState(() {
-                  _selectedReason = value;
-                });
-              },
+              contentPadding: contentPadding,
             ),
+            items: [
+              const DropdownMenuItem<DepositReason>(
+                value: null,
+                child: Text('Tous'),
+              ),
+              ...DepositReason.values.map((reason) => DropdownMenuItem(
+                    value: reason,
+                    child: Text(reason.displayName),
+                  ))
+            ],
+            onChanged: (value) {
+              setState(() {
+                _selectedReason = value;
+              });
+            },
           ),
-          SizedBox(width: spacing),
-          Expanded(
-            child: TextField(
-              decoration: InputDecoration(
-                labelText: 'Nom',
-                prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                contentPadding: contentPadding,
+          SizedBox(height: spacing),
+          TextField(
+            decoration: InputDecoration(
+              labelText: 'Nom',
+              prefixIcon: const Icon(Icons.search),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
               ),
-              onChanged: (value) {
-                setState(() {
-                  _searchName = value;
-                });
-              },
+              contentPadding: contentPadding,
             ),
+            onChanged: (value) {
+              setState(() {
+                _searchName = value;
+              });
+            },
           ),
         ],
       ),
