@@ -153,14 +153,21 @@ class _LoginViewState extends State<LoginView> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                ResponsiveSpacing(height: 20),
+                SizedBox(
+                  height: ResponsiveHelper.getAdaptiveValue(
+                    context,
+                    small: 8.0,
+                    medium: 16.0,
+                    large: 20.0,
+                  ),
+                ),
                 // Illustration de connexion
                 Container(
                   height: ResponsiveHelper.getAdaptiveValue(
                     context,
-                    small: 200.0,
-                    medium: 250.0,
-                    large: 300.0,
+                    small: 150.0,
+                    medium: 220.0,
+                    large: 280.0,
                   ),
                   width: double.infinity,
                   decoration: BoxDecoration(
@@ -174,7 +181,14 @@ class _LoginViewState extends State<LoginView> {
                     ),
                   ),
                 ),
-                ResponsiveSpacing(height: 32),
+                SizedBox(
+                  height: ResponsiveHelper.getAdaptiveValue(
+                    context,
+                    small: 16.0,
+                    medium: 24.0,
+                    large: 32.0,
+                  ),
+                ),
 
                 // Titre
                 Text(
@@ -191,7 +205,14 @@ class _LoginViewState extends State<LoginView> {
                   ),
                   textAlign: TextAlign.center,
                 ),
-                ResponsiveSpacing(height: 8),
+                SizedBox(
+                  height: ResponsiveHelper.getAdaptiveValue(
+                    context,
+                    small: 4.0,
+                    medium: 6.0,
+                    large: 8.0,
+                  ),
+                ),
                 Text(
                   'Connectez-vous à votre compte',
                   style: theme.textTheme.bodyLarge?.copyWith(
@@ -205,7 +226,14 @@ class _LoginViewState extends State<LoginView> {
                   ),
                   textAlign: TextAlign.center,
                 ),
-                ResponsiveSpacing(height: 40),
+                SizedBox(
+                  height: ResponsiveHelper.getAdaptiveValue(
+                    context,
+                    small: 20.0,
+                    medium: 32.0,
+                    large: 40.0,
+                  ),
+                ),
 
                 // Formulaire avec largeur contrainte
                 ConstrainedBox(
@@ -249,7 +277,14 @@ class _LoginViewState extends State<LoginView> {
                           ),
                         ),
                       ),
-                      ResponsiveSpacing(height: 20),
+                      SizedBox(
+                        height: ResponsiveHelper.getAdaptiveValue(
+                          context,
+                          small: 12.0,
+                          medium: 16.0,
+                          large: 20.0,
+                        ),
+                      ),
 
                       // Champ mot de passe
                       Container(
@@ -295,7 +330,14 @@ class _LoginViewState extends State<LoginView> {
                           ),
                         ),
                       ),
-                      ResponsiveSpacing(height: 32),
+                      SizedBox(
+                        height: ResponsiveHelper.getAdaptiveValue(
+                          context,
+                          small: 16.0,
+                          medium: 24.0,
+                          large: 32.0,
+                        ),
+                      ),
 
                       // Bouton de connexion
                       _isLoading
@@ -351,7 +393,14 @@ class _LoginViewState extends State<LoginView> {
                     ],
                   ),
                 ),
-                ResponsiveSpacing(height: 24),
+                SizedBox(
+                  height: ResponsiveHelper.getAdaptiveValue(
+                    context,
+                    small: 12.0,
+                    medium: 18.0,
+                    large: 24.0,
+                  ),
+                ),
 
                 // Lien mot de passe oublié
                 TextButton(
@@ -370,7 +419,14 @@ class _LoginViewState extends State<LoginView> {
                     ),
                   ),
                 ),
-                ResponsiveSpacing(height: 16),
+                SizedBox(
+                  height: ResponsiveHelper.getAdaptiveValue(
+                    context,
+                    small: 4.0,
+                    medium: 10.0,
+                    large: 16.0,
+                  ),
+                ),
 
                 // Lien inscription
                 TextButton(
@@ -399,7 +455,14 @@ class _LoginViewState extends State<LoginView> {
                     ),
                   ),
                 ),
-                ResponsiveSpacing(height: 20),
+                SizedBox(
+                  height: ResponsiveHelper.getAdaptiveValue(
+                    context,
+                    small: 8.0,
+                    medium: 14.0,
+                    large: 20.0,
+                  ),
+                ),
               ],
             ),
           ),

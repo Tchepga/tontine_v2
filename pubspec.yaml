@@ -58,7 +58,8 @@ flutter:
 
 flutter_launcher_icons:
   android: true
-  ios: false
+  ios: true
   image_path: "assets/images/calebasse2.png"
   adaptive_icon_background: "#42a5f5"
   adaptive_icon_foreground: "assets/images/calebasse2.png"
+  remove_alpha_ios: true
