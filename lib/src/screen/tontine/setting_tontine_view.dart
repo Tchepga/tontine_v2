@@ -982,6 +982,8 @@ class _SettingTontineViewState extends State<SettingTontineView> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  _buildPartOrderSection(tontineProvider),
+                  const SizedBox(height: 16),
                   Card(
                     elevation: 3,
                     shape: RoundedRectangleBorder(
@@ -1296,8 +1298,6 @@ class _SettingTontineViewState extends State<SettingTontineView> {
                   ),
                   const SizedBox(height: 16),
                   _buildRateMapSection(),
-                  const SizedBox(height: 16),
-                  _buildPartOrderSection(tontineProvider),
                   const SizedBox(height: 16),
                   _buildDangerousActionsSection(
                       tontineProvider, currentTontine, authProvider),
