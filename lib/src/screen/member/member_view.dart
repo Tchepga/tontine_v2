@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:share_plus/share_plus.dart';
@@ -30,6 +31,63 @@ class _MemberViewState extends State<MemberView>
   bool _isInitialized = false;
   bool _isAddingMember = false;
   late TabController _tabController;
+
+  Rect? _sharePositionOrigin() {
+    final renderObject = context.findRenderObject();
+    if (renderObject is RenderBox) {
+      final offset = renderObject.localToGlobal(Offset.zero);
+      return offset & renderObject.size;
+    }
+    return null;
+  }
+
+  Future<void> _safeShareText(
+    String message, {
+    String? subject,
+    bool copyToClipboardOnError = true,
+  }) async {
+    try {
+      await Share.share(
+        message,
+        subject: subject,
+        sharePositionOrigin: _sharePositionOrigin(),
+      );
+    } on PlatformException catch (e) {
+      debugPrint('Share PlatformException: ${e.code} ${e.message}');
+      if (copyToClipboardOnError) {
+        await Clipboard.setData(ClipboardData(text: message));
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              copyToClipboardOnError
+                  ? 'Partage impossible. Le message a été copié dans le presse-papiers.'
+                  : 'Partage impossible: ${e.message ?? e.code}',
+            ),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('Share error: $e');
+      if (copyToClipboardOnError) {
+        await Clipboard.setData(ClipboardData(text: message));
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              copyToClipboardOnError
+                  ? 'Erreur lors du partage. Le message a été copié dans le presse-papiers.'
+                  : 'Erreur lors du partage: ${e.toString()}',
+            ),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
 
   @override
   void initState() {
@@ -1122,34 +1180,28 @@ Rejoignez-nous pour participer à cette aventure financière collective ! 🚀
       final whatsappUrl = 'https://wa.me/?text=$encodedMessage';
 
       if (await canLaunchUrl(Uri.parse(whatsappUrl))) {
-        await launchUrl(Uri.parse(whatsappUrl));
+        final launched = await launchUrl(
+          Uri.parse(whatsappUrl),
+          mode: LaunchMode.externalApplication,
+        );
+        if (!launched) {
+          await _safeShareText(message);
+        }
       } else {
         // Fallback vers l'application de partage générale
-        await Share.share(message);
+        await _safeShareText(message);
       }
     } catch (e) {
       // En cas d'erreur, utiliser le partage général
-      await Share.share(message);
+      await _safeShareText(message);
     }
   }
 
   void _shareViaOtherApps(String message) async {
-    try {
-      await Share.share(
-        message,
-        subject: 'Invitation à rejoindre la tontine',
-      );
-    } catch (e) {
-      // Gérer l'erreur si nécessaire
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Erreur lors du partage: ${e.toString()}'),
-            backgroundColor: AppColors.error,
-          ),
-        );
-      }
-    }
+    await _safeShareText(
+      message,
+      subject: 'Invitation à rejoindre la tontine',
+    );
   }
 
   void _shareIndividualInvitation(
