@@ -49,3 +49,21 @@ app.*.map.json
 /android/keystore/
 *.jks
 *.keystore
+
+# Playwright related
+playwright-report/
+test-results/
+test-results.xml
+test-results.json
+test-results.html
+test-results.xml
+test-results.json
+test-results.html
+
+# Env files
+.env
+.env.local
+
+# node modules
+node_modules/
+package-lock.json

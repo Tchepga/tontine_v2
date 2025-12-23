@@ -143,16 +143,30 @@ class _LoginViewState extends State<LoginView> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    
+    // Largeur maximale adaptative selon la taille de l'écran
+    final maxWidth = ResponsiveHelper.getAdaptiveValue(
+      context,
+      small: double.infinity, // Pas de limite sur mobile
+      medium: 600.0, // Limite à 600px sur tablette
+      large: 500.0, // Limite à 500px sur desktop pour un design plus compact
+    );
 
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: ResponsivePadding(
-            all: 24.0,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
+        child: Center(
+          child: SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: maxWidth,
+                minHeight: MediaQuery.of(context).size.height - MediaQuery.of(context).padding.top - MediaQuery.of(context).padding.bottom,
+              ),
+              child: ResponsivePadding(
+                all: 24.0,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
                 SizedBox(
                   height: ResponsiveHelper.getAdaptiveValue(
                     context,
@@ -463,7 +477,9 @@ class _LoginViewState extends State<LoginView> {
                     large: 20.0,
                   ),
                 ),
-              ],
+                  ],
+                ),
+              ),
             ),
           ),
         ),

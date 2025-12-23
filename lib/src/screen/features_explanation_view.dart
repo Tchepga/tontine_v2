@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import '../utils/responsive_helper.dart';
 import 'dashboard_view.dart';
 
 class FeaturesExplanationView extends StatefulWidget {
@@ -94,9 +95,20 @@ class _FeaturesExplanationViewState extends State<FeaturesExplanationView>
 
   @override
   Widget build(BuildContext context) {
+    // Largeur maximale adaptative selon la taille de l'écran
+    final maxWidth = ResponsiveHelper.getAdaptiveValue(
+      context,
+      small: double.infinity, // Pas de limite sur mobile
+      medium: 700.0, // Limite à 700px sur tablette
+      large: 800.0, // Limite à 800px sur desktop
+    );
+    
     return Scaffold(
-      body: Stack(
-        children: [
+      body: Center(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: maxWidth),
+          child: Stack(
+            children: [
           // PageView
           PageView.builder(
             controller: _pageController,
@@ -145,7 +157,9 @@ class _FeaturesExplanationViewState extends State<FeaturesExplanationView>
             right: 0,
             child: _buildBottomNavigation(),
           ),
-        ],
+            ],
+          ),
+        ),
       ),
     );
   }

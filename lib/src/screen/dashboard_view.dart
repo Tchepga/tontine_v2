@@ -65,19 +65,30 @@ class _DashboardViewState extends State<DashboardView> {
             ),
           );
         } else {
+          // Largeur maximale adaptative selon la taille de l'écran
+          final maxWidth = ResponsiveHelper.getAdaptiveValue(
+            context,
+            small: double.infinity, // Pas de limite sur mobile
+            medium: 900.0, // Limite à 900px sur tablette
+            large: 1200.0, // Limite à 1200px sur desktop
+          );
+          
           return Scaffold(
             appBar: ActionMenu(title: 'Dashboard'),
             backgroundColor: AppColors.background,
-            body: Column(
-              children: [
-                Expanded(
-                  child: ListView(
-                    padding: ResponsiveHelper.getAdaptivePadding(
-                      context,
-                      horizontal: 16.0,
-                      vertical: 0.0,
-                    ),
-                    children: [
+            body: Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: maxWidth),
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: ListView(
+                        padding: ResponsiveHelper.getAdaptivePadding(
+                          context,
+                          horizontal: 16.0,
+                          vertical: 0.0,
+                        ),
+                        children: [
                       ResponsiveSpacing(height: 24),
                       _buildCurrentOrderSection(context, tontineProvider),
                       ResponsiveSpacing(height: 24),
@@ -127,7 +138,9 @@ class _DashboardViewState extends State<DashboardView> {
                     ],
                   ),
                 ),
-              ],
+                  ],
+                ),
+              ),
             ),
             bottomNavigationBar: const MenuWidget(),
           );
