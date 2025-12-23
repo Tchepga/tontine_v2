@@ -29,6 +29,7 @@ class _SettingTontineViewState extends State<SettingTontineView> {
   late int _countPersonPerMovement = 1;
   late MovementType _movementType = MovementType.ROTATIVE;
   late int _countMaxMember = 10;
+  late bool _reminderMissingDepositsEnabled = false;
   List<RateMap> _rateMaps = [];
   List<PartOrder> _parts = [];
 
@@ -52,6 +53,98 @@ class _SettingTontineViewState extends State<SettingTontineView> {
     _countMaxMember = tontine.config.countMaxMember;
     _rateMaps = List.from(tontine.config.rateMaps);
     _parts = List.from(tontine.config.parts ?? []);
+    _reminderMissingDepositsEnabled =
+        tontine.config.reminderMissingDepositsEnabled;
+  }
+
+  Widget _buildReminderMissingDepositsSection() {
+    return Card(
+      elevation: 3,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Colors.white,
+              Colors.grey.shade50,
+            ],
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.tertiary.withAlpha(20),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      Icons.notifications_active,
+                      color: AppColors.tertiary,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Text(
+                      'Rappel des versements manquants',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF2D3748),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.tertiary.withAlpha(10),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: AppColors.tertiary.withAlpha(25),
+                  ),
+                ),
+                child: SwitchListTile.adaptive(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text(
+                    'Activer le rappel fin de mois',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  subtitle: const Text(
+                    'Le dernier jour du mois à 18:00, les membres en retard recevront un rappel.',
+                  ),
+                  value: _reminderMissingDepositsEnabled,
+                  onChanged: (v) {
+                    setState(() {
+                      _reminderMissingDepositsEnabled = v;
+                    });
+                  },
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Règle: on exclut le bénéficiaire du mois. Un membre est considéré OK s’il a au moins un versement validé sur la période.',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _buildStyledTextField({
@@ -984,6 +1077,8 @@ class _SettingTontineViewState extends State<SettingTontineView> {
                 children: [
                   _buildPartOrderSection(tontineProvider),
                   const SizedBox(height: 16),
+                  _buildReminderMissingDepositsSection(),
+                  const SizedBox(height: 16),
                   Card(
                     elevation: 3,
                     shape: RoundedRectangleBorder(
@@ -1341,6 +1436,8 @@ class _SettingTontineViewState extends State<SettingTontineView> {
                               movementType: _movementType,
                               rateMaps: _rateMaps,
                               countMaxMember: _countMaxMember,
+                              reminderMissingDepositsEnabled:
+                                  _reminderMissingDepositsEnabled,
                             ));
                         await tontineProvider.loadTontines();
                         if (!mounted) return;

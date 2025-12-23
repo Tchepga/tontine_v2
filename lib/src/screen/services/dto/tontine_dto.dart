@@ -33,6 +33,7 @@ class CreateConfigTontineDto {
   final int countMaxMember;
   final SystemType systemType;
   final List<PartOrderDto>? parts;
+  final bool reminderMissingDepositsEnabled;
 
   CreateConfigTontineDto({
     required this.defaultLoanRate,
@@ -45,6 +46,7 @@ class CreateConfigTontineDto {
     required this.countMaxMember,
     this.systemType = SystemType.PART,
     this.parts,
+    this.reminderMissingDepositsEnabled = false,
   });
 
   Map<String, dynamic> toJson() {
@@ -59,6 +61,7 @@ class CreateConfigTontineDto {
       'countMaxMember': countMaxMember,
       'systemType': systemType.value,
       if (parts != null) 'parts': parts!.map((part) => part.toJson()).toList(),
+      'reminderMissingDepositsEnabled': reminderMissingDepositsEnabled,
     };
   }
 }

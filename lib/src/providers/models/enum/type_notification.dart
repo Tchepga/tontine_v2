@@ -7,6 +7,7 @@ enum TypeNotification {
   RAPPORT,
   LOAN,
   EVENT,
+  REMINDER,
   OTHER;
 
   String get displayName {
@@ -23,6 +24,8 @@ enum TypeNotification {
         return 'Prêt';
       case TypeNotification.EVENT:
         return 'Événement';
+      case TypeNotification.REMINDER:
+        return 'Rappel';
       case TypeNotification.OTHER:
         return 'Autre';
     }
@@ -42,6 +45,8 @@ enum TypeNotification {
         return Colors.orange;
       case TypeNotification.EVENT:
         return Colors.teal;
+      case TypeNotification.REMINDER:
+        return Colors.amber;
       case TypeNotification.OTHER:
         return Colors.grey;
     }

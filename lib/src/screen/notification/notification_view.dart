@@ -156,6 +156,8 @@ class _NotificationViewState extends State<NotificationView> {
         return Icons.account_balance;
       case TypeNotification.EVENT:
         return Icons.event;
+      case TypeNotification.REMINDER:
+        return Icons.notifications_active;
       case TypeNotification.OTHER:
         return Icons.notifications;
     }
@@ -184,6 +186,9 @@ class _NotificationViewState extends State<NotificationView> {
         break;
       case TypeNotification.EVENT:
         Navigator.pushNamed(context, '/event');
+        break;
+      case TypeNotification.REMINDER:
+        Navigator.pushNamed(context, '/cashflow');
         break;
       case TypeNotification.OTHER:
         break;
