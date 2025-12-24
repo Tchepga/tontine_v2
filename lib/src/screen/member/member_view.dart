@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/tontine_provider.dart';
 import '../../providers/models/enum/role.dart';
@@ -31,6 +33,29 @@ class _MemberViewState extends State<MemberView>
   bool _isInitialized = false;
   bool _isAddingMember = false;
   late TabController _tabController;
+
+  String _appDownloadLink() {
+    // Lien de téléchargement de l'app de test depuis .env
+    // - iOS: APP_DOWNLOAD_LINK_IOS
+    // - Android: APP_DOWNLOAD_LINK_ANDROID
+    if (kIsWeb) {
+      return dotenv.env['APP_DOWNLOAD_LINK_WEB'] ??
+          dotenv.env['APP_DOWNLOAD_LINK_ANDROID'] ??
+          dotenv.env['APP_DOWNLOAD_LINK_IOS'] ??
+          '';
+    }
+
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.iOS:
+        return dotenv.env['APP_DOWNLOAD_LINK_IOS'] ?? '';
+      case TargetPlatform.android:
+        return dotenv.env['APP_DOWNLOAD_LINK_ANDROID'] ?? '';
+      default:
+        return dotenv.env['APP_DOWNLOAD_LINK_ANDROID'] ??
+            dotenv.env['APP_DOWNLOAD_LINK_IOS'] ??
+            '';
+    }
+  }
 
   Rect? _sharePositionOrigin() {
     final renderObject = context.findRenderObject();
@@ -1089,6 +1114,11 @@ class _MemberViewState extends State<MemberView>
   }
 
   void _shareInvitationLink(BuildContext context, Tontine tontine) {
+    final downloadLink = _appDownloadLink();
+    final step1 = downloadLink.isNotEmpty
+        ? '1. Téléchargez l\'application Tontine : $downloadLink'
+        : '1. Téléchargez l\'application Tontine';
+
     // Message personnalisé pour WhatsApp
     final message = '''
 🏦 *Invitation à rejoindre la tontine "${tontine.title}"*
@@ -1096,7 +1126,7 @@ class _MemberViewState extends State<MemberView>
 Bonjour ! Vous êtes invité(e) à rejoindre notre tontine "${tontine.title}".
 
 📱 *Pour vous connecter :*
-1. Téléchargez l'application Tontine
+$step1
 2. Utilisez ces identifiants temporaires :
    👤 *Nom d'utilisateur :* ${tontine.title.toLowerCase().replaceAll(' ', '_')}_membre
    🔑 *Mot de passe :* changeme
@@ -1207,6 +1237,10 @@ Rejoignez-nous pour participer à cette aventure financière collective ! 🚀
   void _shareIndividualInvitation(
       BuildContext context, Member member, Tontine tontine) {
     final username = member.user?.username ?? 'non_defini';
+    final downloadLink = _appDownloadLink();
+    final downloadLine = downloadLink.isNotEmpty
+        ? '• Téléchargez l\'application Tontine : $downloadLink'
+        : '• Téléchargez l\'application Tontine';
 
     final message = '''
 🏦 *Invitation personnelle - Tontine "${tontine.title}"*
@@ -1221,7 +1255,7 @@ Vous êtes invité(e) à rejoindre notre tontine "${tontine.title}".
 
 🔐 *IMPORTANT - Sécurité :*
 ⚠️ *Changez votre mot de passe dès votre première connexion !*
-• Téléchargez l'application Tontine
+$downloadLine
 • Connectez-vous avec les identifiants ci-dessus
 • Allez dans "Mon compte" → "Modifier le mot de passe"
 • Choisissez un mot de passe fort (8+ caractères, majuscules, chiffres)

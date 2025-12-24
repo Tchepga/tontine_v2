@@ -7,7 +7,6 @@ import 'models/member.dart';
 import '../screen/services/dto/member_dto.dart';
 import '../screen/services/dto/password_dto.dart';
 import '../screen/services/member_service.dart';
-import '../services/push_messaging_service.dart';
 
 class AuthProvider extends ChangeNotifier {
   final _memberService = MemberService();
@@ -88,8 +87,6 @@ class AuthProvider extends ChangeNotifier {
       final success = await _memberService.login(username, password);
       if (success) {
         await loadProfile();
-        // Enregistrer/mettre à jour le token push côté API
-        await PushMessagingService().initialize();
         logger.info('Login successful for user: $username');
       } else {
         logger.warning('Login failed for user: $username');
@@ -120,8 +117,6 @@ class AuthProvider extends ChangeNotifier {
   }
 
   void logout() {
-    // Best effort: retirer le token push côté API
-    PushMessagingService().unregisterFromBackend();
     _memberService.logout();
     _storage.remove(KEY_PROFILE);
     _currentUser = null;
@@ -185,7 +180,6 @@ class AuthProvider extends ChangeNotifier {
     final isValid = await _memberService.hasValidToken();
     if (isValid) {
       await loadProfile();
-      await PushMessagingService().initialize();
       notifyListeners();
     } else {
       // Si le token n'est pas valide, nettoyer le storage

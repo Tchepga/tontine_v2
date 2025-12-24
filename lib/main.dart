@@ -2,11 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:provider/provider.dart';
 import 'package:logging/logging.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'src/services/local_notification_service.dart';
 import 'src/services/realtime_notification_service.dart';
-import 'src/services/push_messaging_service.dart';
 
 import 'src/app.dart';
 import 'src/providers/auth_provider.dart';
@@ -22,18 +19,10 @@ import 'src/providers/notification_provider.dart';
 // If you want to load multiple dotenv files or name your dotenv object differently, you can do the following and import the singleton into the relavant files:
 // DotEnv another_dotenv = DotEnv()
 
-@pragma('vm:entry-point')
-Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  await Firebase.initializeApp();
-}
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized(); // Important !
 
   await dotenv.load(fileName: ".env");
-
-  await Firebase.initializeApp();
-  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
   await GetStorage.init();
 
@@ -42,9 +31,6 @@ void main() async {
 
   // Initialiser le service de notifications en temps réel
   await RealtimeNotificationService().initialize();
-
-  // Initialiser Firebase Messaging + registration token (sera envoyé au backend si l’utilisateur est connecté)
-  await PushMessagingService().initialize();
 
   Logger.root.level = Level.ALL;
   Logger.root.onRecord.listen((record) {

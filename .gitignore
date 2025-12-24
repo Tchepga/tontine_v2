@@ -64,6 +64,11 @@ test-results.html
 .env
 .env.local
 
+# Firebase (ne pas committer les fichiers de config)
+android/app/google-services.json
+android/app/src/**/google-services.json
+ios/GoogleService-Info.plist
+
 # node modules
 node_modules/
 package-lock.json
