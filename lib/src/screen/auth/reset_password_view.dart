@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:get_storage/get_storage.dart';
 import '../../providers/auth_provider.dart';
 import '../../theme/app_theme.dart';
+import '../../utils/responsive_helper.dart';
 import '../services/dto/password_dto.dart';
 import '../services/member_service.dart';
 
@@ -53,14 +54,29 @@ class _ResetPasswordViewState extends State<ResetPasswordView> {
       );
     }
 
+    // Largeur maximale adaptative selon la taille de l'écran
+    final maxWidth = ResponsiveHelper.getAdaptiveValue(
+      context,
+      small: double.infinity, // Pas de limite sur mobile
+      medium: 600.0, // Limite à 600px sur tablette
+      large: 500.0, // Limite à 500px sur desktop
+    );
+    
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
+        child: Center(
+          child: SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: maxWidth,
+                minHeight: MediaQuery.of(context).size.height - MediaQuery.of(context).padding.top - MediaQuery.of(context).padding.bottom,
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
               const SizedBox(height: 40),
 
               // Logo et titre
@@ -362,7 +378,10 @@ class _ResetPasswordViewState extends State<ResetPasswordView> {
                   ),
                 ),
               ),
-            ],
+                  ],
+                ),
+              ),
+            ),
           ),
         ),
       ),

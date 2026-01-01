@@ -35,9 +35,18 @@ class LocalNotificationService {
       requestCriticalPermission: false,
     );
 
+    // Configuration macOS
+    const macosSettings = DarwinInitializationSettings(
+      requestAlertPermission: true,
+      requestBadgePermission: true,
+      requestSoundPermission: true,
+      requestCriticalPermission: false,
+    );
+
     const initializationSettings = InitializationSettings(
       android: androidSettings,
       iOS: iosSettings,
+      macOS: macosSettings,
     );
 
     // Initialiser le plugin
@@ -153,9 +162,18 @@ class LocalNotificationService {
         sound: 'default',
       );
 
+      // Configuration macOS
+      const macosDetails = DarwinNotificationDetails(
+        presentAlert: true,
+        presentBadge: true,
+        presentSound: true,
+        sound: 'default',
+      );
+
       const notificationDetails = NotificationDetails(
         android: androidDetails,
         iOS: iosDetails,
+        macOS: macosDetails,
       );
 
       await flutterLocalNotificationsPlugin.show(
@@ -205,9 +223,17 @@ class LocalNotificationService {
         presentSound: true,
       );
 
+      // Configuration macOS
+      const macosDetails = DarwinNotificationDetails(
+        presentAlert: true,
+        presentBadge: true,
+        presentSound: true,
+      );
+
       final notificationDetails = NotificationDetails(
         android: androidDetails,
         iOS: iosDetails,
+        macOS: macosDetails,
       );
 
       await flutterLocalNotificationsPlugin.show(

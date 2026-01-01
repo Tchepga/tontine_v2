@@ -3,6 +3,7 @@ import 'package:logging/logging.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../theme/app_theme.dart';
+import '../../utils/responsive_helper.dart';
 import '../login_view.dart';
 import '../services/dto/member_dto.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
@@ -80,19 +81,33 @@ class _RegisterViewState extends State<RegisterView> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    
+    // Largeur maximale adaptative selon la taille de l'écran
+    final maxWidth = ResponsiveHelper.getAdaptiveValue(
+      context,
+      small: double.infinity, // Pas de limite sur mobile
+      medium: 600.0, // Limite à 600px sur tablette
+      large: 500.0, // Limite à 500px sur desktop
+    );
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
+        child: Center(
+          child: SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: maxWidth,
+                minHeight: MediaQuery.of(context).size.height - MediaQuery.of(context).padding.top - MediaQuery.of(context).padding.bottom,
+              ),
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
                   const SizedBox(height: 20),
                   // Logo de l'application
                   Container(
@@ -375,6 +390,8 @@ class _RegisterViewState extends State<RegisterView> {
           ),
         ),
       ),
+    ),
+    ),
     );
   }
 

@@ -86,6 +86,11 @@ class RealtimeNotificationService {
     _webSocketService.on('part.added', (event, data) {
       _handlePartAdded(data);
     });
+
+    // Rappel : versements manquants (fin de mois)
+    _webSocketService.on('reminder.missing_deposits', (event, data) {
+      _handleMissingDepositsReminder(data);
+    });
   }
 
   /// Gérer la création d'un événement
@@ -271,6 +276,36 @@ class RealtimeNotificationService {
       _logger.info('Notification sent for part added');
     } catch (e) {
       _logger.severe('Error handling part added: $e');
+    }
+  }
+
+  /// Gérer le rappel de versements manquants (fin de mois)
+  void _handleMissingDepositsReminder(Map<String, dynamic> data) {
+    try {
+      final tontineName = data['tontineName'] as String? ?? '';
+      final beneficiaryName = data['beneficiaryName'] as String? ?? '';
+      final missingCount = data['missingCount'] as int?;
+      final message = data['message'] as String?;
+
+      final title = 'Rappel de versement';
+      final body = message ??
+          [
+            if (tontineName.isNotEmpty) 'Tontine: $tontineName',
+            if (beneficiaryName.isNotEmpty)
+              'Bénéficiaire: $beneficiaryName',
+            if (missingCount != null) 'Membres en retard: $missingCount',
+            'Merci de régulariser votre versement.',
+          ].join('\n');
+
+      _localNotificationService.showBigTextNotification(
+        title: title,
+        body: body,
+        summary: tontineName.isNotEmpty ? tontineName : null,
+        payload: '/cashflow',
+      );
+      _logger.info('Notification sent for missing deposits reminder');
+    } catch (e) {
+      _logger.severe('Error handling missing deposits reminder: $e');
     }
   }
 

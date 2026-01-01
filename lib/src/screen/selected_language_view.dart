@@ -46,19 +46,33 @@ class _SelectedLanguageViewState extends State<SelectedLanguageView> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    
+    // Largeur maximale adaptative selon la taille de l'écran
+    final maxWidth = ResponsiveHelper.getAdaptiveValue(
+      context,
+      small: double.infinity, // Pas de limite sur mobile
+      medium: 600.0, // Limite à 600px sur tablette
+      large: 500.0, // Limite à 500px sur desktop pour un design plus compact
+    );
 
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: ResponsivePadding(
-            all: 24.0,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                ResponsiveSpacing(height: 40),
-                // Logo de l'application
-                Container(
+        child: Center(
+          child: SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: maxWidth,
+                minHeight: MediaQuery.of(context).size.height - MediaQuery.of(context).padding.top - MediaQuery.of(context).padding.bottom,
+              ),
+              child: ResponsivePadding(
+                all: 24.0,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    ResponsiveSpacing(height: 40),
+                    // Logo de l'application
+                    Container(
                   height: ResponsiveHelper.getAdaptiveValue(
                     context,
                     small: 100.0,
@@ -89,49 +103,51 @@ class _SelectedLanguageViewState extends State<SelectedLanguageView> {
                     ),
                   ),
                 ),
-                ResponsiveSpacing(height: 40),
+                    ResponsiveSpacing(height: 40),
 
-                // Titre
-                Text(
-                  'Choisir la langue',
-                  style: theme.textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.primary,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                ResponsiveSpacing(height: 8),
-                Text(
-                  'Sélectionnez votre langue préférée',
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                ResponsiveSpacing(height: 48),
+                    // Titre
+                    Text(
+                      'Choisir la langue',
+                      style: theme.textTheme.headlineMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.primary,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    ResponsiveSpacing(height: 8),
+                    Text(
+                      'Sélectionnez votre langue préférée',
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    ResponsiveSpacing(height: 48),
 
-                // Cartes de langues
-                _buildLanguageCard(
-                  context,
-                  language: AvailableLanguage.fr,
-                  title: 'Français',
-                  subtitle: 'French',
-                  icon: Icons.language,
-                  color: const Color(0xFF002654), // Bleu français
-                  onTap: () => _saveSelectedLanguage(AvailableLanguage.fr),
+                    // Cartes de langues
+                    _buildLanguageCard(
+                      context,
+                      language: AvailableLanguage.fr,
+                      title: 'Français',
+                      subtitle: 'French',
+                      icon: Icons.language,
+                      color: const Color(0xFF002654), // Bleu français
+                      onTap: () => _saveSelectedLanguage(AvailableLanguage.fr),
+                    ),
+                    ResponsiveSpacing(height: 20),
+                    _buildLanguageCard(
+                      context,
+                      language: AvailableLanguage.en,
+                      title: 'English',
+                      subtitle: 'Anglais',
+                      icon: Icons.language,
+                      color: const Color(0xFF012169), // Bleu anglais
+                      onTap: () => _saveSelectedLanguage(AvailableLanguage.en),
+                    ),
+                    ResponsiveSpacing(height: 40),
+                  ],
                 ),
-                ResponsiveSpacing(height: 20),
-                _buildLanguageCard(
-                  context,
-                  language: AvailableLanguage.en,
-                  title: 'English',
-                  subtitle: 'Anglais',
-                  icon: Icons.language,
-                  color: const Color(0xFF012169), // Bleu anglais
-                  onTap: () => _saveSelectedLanguage(AvailableLanguage.en),
-                ),
-                ResponsiveSpacing(height: 40),
-              ],
+              ),
             ),
           ),
         ),

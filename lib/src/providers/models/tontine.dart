@@ -83,6 +83,9 @@ class ConfigTontine {
   final int countMaxMember;
   final SystemType systemType;
   final List<PartOrder>? parts;
+  /// Active le rappel fin de mois pour les versements manquants
+  /// (notification aux membres n'ayant pas versé).
+  final bool reminderMissingDepositsEnabled;
 
   ConfigTontine({
     required this.id,
@@ -96,6 +99,7 @@ class ConfigTontine {
     this.systemType = SystemType.PART,
     this.rateMaps = const [],
     this.parts,
+    this.reminderMissingDepositsEnabled = false,
   });
 
   factory ConfigTontine.fromJson(Map<String, dynamic> json) {
@@ -123,6 +127,10 @@ class ConfigTontine {
               .map((part) => PartOrder.fromJson(part))
               .toList()
           : null,
+      reminderMissingDepositsEnabled: (json['reminderMissingDepositsEnabled'] ??
+              json['reminder_missing_deposits_enabled'] ??
+              false) ==
+          true,
     );
   }
 
@@ -138,6 +146,7 @@ class ConfigTontine {
       'movementType': movementType.toString(),
       'countMaxMember': countMaxMember,
       'systemType': systemType.value,
+      'reminderMissingDepositsEnabled': reminderMissingDepositsEnabled,
     };
   }
 }

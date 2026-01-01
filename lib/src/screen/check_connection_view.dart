@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 import 'services/app_service.dart';
 import 'selected_language_view.dart';
+import '../utils/responsive_helper.dart';
 
 class CheckConnectionView extends StatefulWidget {
   static const routeName = '/check-connection';
@@ -49,11 +50,21 @@ class _CheckConnectionViewState extends State<CheckConnectionView> {
 
   @override
   Widget build(BuildContext context) {
+    // Largeur maximale adaptative selon la taille de l'écran
+    final maxWidth = ResponsiveHelper.getAdaptiveValue(
+      context,
+      small: double.infinity, // Pas de limite sur mobile
+      medium: 600.0, // Limite à 600px sur tablette
+      large: 500.0, // Limite à 500px sur desktop
+    );
+    
     return Scaffold(
       body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: maxWidth),
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               if (_isLoading) ...[
@@ -90,6 +101,7 @@ class _CheckConnectionViewState extends State<CheckConnectionView> {
                 ),
               ],
             ],
+            ),
           ),
         ),
       ),
