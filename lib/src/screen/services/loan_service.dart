@@ -3,8 +3,10 @@ import 'package:get_storage/get_storage.dart';
 import 'package:logging/logging.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../../providers/models/loan.dart';
+import '../../providers/models/loan_repayment.dart';
 import 'middleware/interceptor_http.dart';
 import 'dto/loan_dto.dart';
+import 'dto/loan_repayment_dto.dart';
 import 'member_service.dart';
 import '../../services/websocket_service.dart';
 
@@ -153,5 +155,73 @@ class LoanService {
     if (response.statusCode != 200) {
       throw Exception('Failed to vote for loan');
     }
+  }
+
+  /// Approbation directe par le président.
+  Future<void> approveLoan(int loanId) async {
+    final token = storage.read(MemberService.KEY_TOKEN);
+    final response = await client.patch(
+      Uri.parse('$urlApi/loan/$loanId/approve'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    if (response.statusCode != 200) {
+      final body = jsonDecode(response.body);
+      throw Exception(body['message'] ?? 'Failed to approve loan');
+    }
+  }
+
+  /// Rejet par le président avec une raison.
+  Future<void> rejectLoan(int loanId, String reason) async {
+    final token = storage.read(MemberService.KEY_TOKEN);
+    final response = await client.patch(
+      Uri.parse('$urlApi/loan/$loanId/reject'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({'reason': reason}),
+    );
+    if (response.statusCode != 200) {
+      final body = jsonDecode(response.body);
+      throw Exception(body['message'] ?? 'Failed to reject loan');
+    }
+  }
+
+  /// Récupère tous les remboursements d'un prêt.
+  Future<List<LoanRepayment>> getRepayments(int loanId) async {
+    try {
+      final token = storage.read(MemberService.KEY_TOKEN);
+      final response = await client.get(
+        Uri.parse('$urlApi/loan/$loanId/repayments'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        return data.map((json) => LoanRepayment.fromJson(json)).toList();
+      }
+      return [];
+    } catch (e) {
+      _logger.severe('Error getting repayments: $e');
+      return [];
+    }
+  }
+
+  /// Enregistre un remboursement (principal + intérêts).
+  Future<LoanRepayment> recordRepayment(
+      int loanId, CreateLoanRepaymentDto dto) async {
+    final token = storage.read(MemberService.KEY_TOKEN);
+    final response = await client.post(
+      Uri.parse('$urlApi/loan/$loanId/repayments'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode(dto.toJson()),
+    );
+    if (response.statusCode == 201) {
+      return LoanRepayment.fromJson(jsonDecode(response.body));
+    }
+    final body = jsonDecode(response.body);
+    throw Exception(body['message'] ?? 'Failed to record repayment');
   }
 }
