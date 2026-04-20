@@ -70,6 +70,7 @@ class _CashflowViewState extends State<CashflowView> {
 
         return Scaffold(
           appBar: ActionMenu(title: 'Trésorerie', showBackButton: true),
+          drawer: const AppDrawer(),
           body: ListView(
             padding: ResponsiveHelper.getAdaptivePadding(context, all: 16.0),
             children: [

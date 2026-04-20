@@ -61,6 +61,7 @@ class _LoanViewState extends State<LoanView> {
             foregroundColor: Colors.white,
             elevation: 0,
           ),
+          drawer: const AppDrawer(),
           body: ListView(
             padding: ResponsiveHelper.getAdaptivePadding(context, all: 16.0),
             children: [

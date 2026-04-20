@@ -176,6 +176,7 @@ class _MemberViewState extends State<MemberView>
 
         return Scaffold(
           backgroundColor: AppColors.background,
+          drawer: const AppDrawer(),
           appBar: AppBar(
             title: Text('Membres', style: TextStyle(color: Colors.white)),
             backgroundColor: AppColors.primary,
