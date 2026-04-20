@@ -18,13 +18,13 @@ android {
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
         coreLibraryDesugaringEnabled = true
     }
 
     kotlinOptions {
-        jvmTarget = '11'
+        jvmTarget = '17'
     }
 
     defaultConfig {
@@ -41,9 +41,21 @@ android {
 
     signingConfigs {
         release {
+            if (!keystorePropertiesFile.exists()) {
+                throw new GradleException("Fichier android/key.properties manquant. Impossible de signer le build release. Crée-le (voir README Android release) ou désactive la signature release.")
+            }
+
+            def storeFilePath = keystoreProperties['storeFile']
+            if (storeFilePath == null || storeFilePath.toString().trim().isEmpty()) {
+                throw new GradleException("storeFile manquant dans android/key.properties (chemin vers le keystore .jks)")
+            }
+            if (keystoreProperties['keyAlias'] == null || keystoreProperties['keyPassword'] == null || keystoreProperties['storePassword'] == null) {
+                throw new GradleException("keyAlias/keyPassword/storePassword manquants dans android/key.properties")
+            }
+
             keyAlias keystoreProperties['keyAlias']
             keyPassword keystoreProperties['keyPassword']
-            storeFile keystoreProperties['storeFile'] ? file(keystoreProperties['storeFile']) : null
+            storeFile file(storeFilePath)
             storePassword keystoreProperties['storePassword']
         }
     }

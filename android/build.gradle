@@ -24,7 +24,7 @@ allprojects {
 
     plugins.withType(com.android.build.gradle.BasePlugin) {
         android {
-            compileSdkVersion 35
+            compileSdkVersion 36
             
             compileOptions {
                 sourceCompatibility JavaVersion.VERSION_17

@@ -1,150 +1,159 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../providers/auth_provider.dart';
+import '../providers/models/enum/role.dart';
 import '../screen/casflow/cashflow_view.dart';
 import '../screen/event/event_view.dart';
+import '../screen/loan/loan_view.dart';
 import '../screen/member/account_view.dart';
 import '../screen/member/member_view.dart';
 import '../screen/dashboard_view.dart';
+import '../screen/rapport/rapport_view.dart';
 import '../theme/app_theme.dart';
-import '../utils/responsive_helper.dart';
+
+/// Routes de la barre de navigation principale (5 onglets).
+const _routes = [
+  CashflowView.routeName,  // 0 - Banque
+  MemberView.routeName,    // 1 - Membres
+  DashboardView.routeName, // 2 - Dashboard (centre)
+  LoanView.routeName,      // 3 - Emprunts
+  AccountView.routeName,   // 4 - Compte
+];
+
+int _routeToIndex(String? route) {
+  final idx = _routes.indexOf(route ?? '');
+  return idx < 0 ? 2 : idx; // Dashboard par défaut
+}
 
 class MenuWidget extends StatelessWidget {
   const MenuWidget({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final width = MediaQuery.of(context).size.width;
-    final height = MediaQuery.of(context).size.height;
+    final currentRoute = ModalRoute.of(context)?.settings.name;
+    final selectedIndex = _routeToIndex(currentRoute);
 
-    // Hauteur adaptative selon la hauteur de l'écran
-    final menuHeight = ResponsiveHelper.getAdaptiveHeightValue(
-      context,
-      short: 70.0,
-      medium: 80.0,
-      tall: 80.0,
+    return NavigationBar(
+      selectedIndex: selectedIndex,
+      backgroundColor: AppColors.surface,
+      indicatorColor: AppColors.primary.withValues(alpha: 0.12),
+      shadowColor: Colors.black12,
+      elevation: 8,
+      labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+      animationDuration: const Duration(milliseconds: 300),
+      onDestinationSelected: (index) {
+        final targetRoute = _routes[index];
+        if (currentRoute == targetRoute) return;
+        if (index == 2) {
+          Navigator.of(context).pushReplacementNamed(targetRoute);
+        } else {
+          Navigator.of(context).pushNamed(targetRoute);
+        }
+      },
+      destinations: [
+        NavigationDestination(
+          icon: const Icon(Icons.account_balance_wallet_outlined),
+          selectedIcon: Icon(Icons.account_balance_wallet, color: AppColors.primary),
+          label: 'Banque',
+        ),
+        NavigationDestination(
+          icon: const Icon(Icons.people_outline),
+          selectedIcon: Icon(Icons.people, color: AppColors.primary),
+          label: 'Membres',
+        ),
+        NavigationDestination(
+          icon: const Icon(Icons.dashboard_outlined),
+          selectedIcon: Icon(Icons.dashboard, color: AppColors.primary),
+          label: 'Dashboard',
+        ),
+        NavigationDestination(
+          icon: const Icon(Icons.trending_up_outlined),
+          selectedIcon: Icon(Icons.trending_up, color: AppColors.primary),
+          label: 'Emprunts',
+        ),
+        NavigationDestination(
+          icon: const Icon(Icons.person_outline),
+          selectedIcon: Icon(Icons.person, color: AppColors.primary),
+          label: 'Compte',
+        ),
+      ],
     );
+  }
+}
 
-    // Taille des icônes adaptative
-    final iconSize = ResponsiveHelper.getAdaptiveIconSize(
-      context,
-      base: 28.0,
-    );
+/// Drawer latéral pour les sections secondaires (Événements, Rapports).
+/// Ajouter [drawer: const AppDrawer()] dans les Scaffold concernés.
+class AppDrawer extends StatelessWidget {
+  const AppDrawer({super.key});
 
-    final fabIconSize = ResponsiveHelper.getAdaptiveIconSize(
-      context,
-      base: 32.0,
-    );
+  @override
+  Widget build(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final isPresident =
+        authProvider.currentUser?.user?.roles?.contains(Role.PRESIDENT) ?? false;
+    final currentRoute = ModalRoute.of(context)?.settings.name;
 
-    // Calcul des positions adaptatives selon la largeur
-    double leftPosition1, leftPosition2, rightPosition1, rightPosition2;
-    double bottomPosition;
-
-    if (width < ResponsiveHelper.smallWidth) {
-      // Très petits écrans : positions plus serrées
-      leftPosition1 = 12.0;
-      leftPosition2 = 60.0;
-      rightPosition1 = 60.0;
-      rightPosition2 = 12.0;
-      bottomPosition = 14.0;
-    } else if (width < ResponsiveHelper.mediumWidth) {
-      // Écrans moyens : positions légèrement réduites
-      leftPosition1 = 20.0;
-      leftPosition2 = 70.0;
-      rightPosition1 = 70.0;
-      rightPosition2 = 20.0;
-      bottomPosition = 16.0;
-    } else {
-      // Grands écrans : positions normales
-      leftPosition1 = 24.0;
-      leftPosition2 = 80.0;
-      rightPosition1 = 80.0;
-      rightPosition2 = 24.0;
-      bottomPosition = 18.0;
-    }
-
-    // Ajuster bottomPosition selon la hauteur
-    if (height < ResponsiveHelper.shortHeight) {
-      bottomPosition *= 0.85; // Réduire sur écrans courts
-    }
-
-    // Position du FAB central
-    final fabBottom = ResponsiveHelper.getAdaptiveHeightValue(
-      context,
-      short: 20.0,
-      medium: 24.0,
-      tall: 24.0,
-    );
-
-    return SizedBox(
-      height: menuHeight,
-      child: Stack(
-        alignment: Alignment.bottomCenter,
+    return Drawer(
+      child: Column(
         children: [
-          // Fond arrondi
-          Positioned.fill(
-            child: CustomPaint(
-              painter: _FooterPainter(),
+          DrawerHeader(
+            decoration: BoxDecoration(color: AppColors.primary),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                CircleAvatar(
+                  radius: 28,
+                  backgroundColor: Colors.white.withValues(alpha: 0.2),
+                  child: const Icon(Icons.savings, size: 28, color: Colors.white),
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  'Tontine',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
             ),
           ),
-          // Bouton central Dashboard
-          Positioned(
-            bottom: fabBottom,
-            child: FloatingActionButton(
-              heroTag: 'menu_fab',
-              backgroundColor: AppColors.primary,
-              elevation: 4,
-              mini: width < ResponsiveHelper.smallWidth ||
-                  height < ResponsiveHelper.shortHeight,
-              onPressed: () {
-                Navigator.pushNamed(context, DashboardView.routeName);
-              },
-              child:
-                  Icon(Icons.dashboard, color: Colors.white, size: fabIconSize),
-            ),
-          ),
-          // Icône Cashflow à gauche
-          Positioned(
-            left: leftPosition1,
-            bottom: bottomPosition,
-            child: IconButton(
-              icon: Icon(Icons.balance, color: Colors.white, size: iconSize),
-              onPressed: () {
-                Navigator.pushNamed(context, CashflowView.routeName);
-              },
-            ),
-          ),
-          // Icône Members (gestion des membres)
-          Positioned(
-            left: leftPosition2,
-            bottom: bottomPosition,
-            child: IconButton(
-              icon: Icon(Icons.people, color: Colors.white, size: iconSize),
-              onPressed: () {
-                Navigator.pushNamed(context, MemberView.routeName);
-              },
-            ),
-          ),
-          // Icône Events
-          Positioned(
-            right: rightPosition1,
-            bottom: bottomPosition,
-            child: IconButton(
-              icon: Icon(Icons.event_available,
-                  color: Colors.white, size: iconSize),
-              onPressed: () {
-                Navigator.pushNamed(context, EventView.routeName);
-              },
-            ),
-          ),
-          // Icône Account à droite
-          Positioned(
-            right: rightPosition2,
-            bottom: bottomPosition,
-            child: IconButton(
-              icon: Icon(Icons.person, color: Colors.white, size: iconSize),
-              onPressed: () {
-                Navigator.pushNamed(context, AccountView.routeName);
-              },
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              children: [
+                _DrawerItem(
+                  icon: Icons.event_outlined,
+                  label: 'Événements',
+                  route: EventView.routeName,
+                  currentRoute: currentRoute,
+                ),
+                _DrawerItem(
+                  icon: Icons.description_outlined,
+                  label: 'Rapports & Sanctions',
+                  route: RapportView.routeName,
+                  currentRoute: currentRoute,
+                ),
+                if (isPresident) ...[
+                  const Divider(),
+                  _DrawerItem(
+                    icon: Icons.download_outlined,
+                    label: 'Exporter CSV',
+                    route: null,
+                    currentRoute: null,
+                    onTap: () {
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Utilisez le menu de la tontine pour exporter'),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ],
             ),
           ),
         ],
@@ -153,46 +162,50 @@ class MenuWidget extends StatelessWidget {
   }
 }
 
-class _FooterPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = AppColors.primary
-      ..style = PaintingStyle.fill;
-    final path = Path();
-    // Arrondi à gauche
-    path.moveTo(0, 20);
-    path.quadraticBezierTo(0, 0, 30, 0);
-    // Ligne jusqu'à avant le creux
-    path.lineTo(size.width * 0.35, 0);
-    // Début du creux circulaire
-    path.cubicTo(
-        size.width * 0.40,
-        0, // contrôle gauche
-        size.width * 0.42,
-        40, // contrôle bas gauche
-        size.width * 0.50,
-        40 // point bas du creux
-        );
-    path.cubicTo(
-        size.width * 0.58,
-        40, // contrôle bas droite
-        size.width * 0.60,
-        0, // contrôle droite
-        size.width * 0.65,
-        0 // sortie du creux
-        );
-    // Ligne jusqu'à l'arrondi droit
-    path.lineTo(size.width - 30, 0);
-    path.quadraticBezierTo(size.width, 0, size.width, 20);
-    // Descend sur le bord droit
-    path.lineTo(size.width, size.height);
-    // Ligne bas
-    path.lineTo(0, size.height);
-    path.close();
-    canvas.drawPath(path, paint);
-  }
+class _DrawerItem extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String? route;
+  final String? currentRoute;
+  final VoidCallback? onTap;
+
+  const _DrawerItem({
+    required this.icon,
+    required this.label,
+    required this.route,
+    required this.currentRoute,
+    this.onTap,
+  });
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  Widget build(BuildContext context) {
+    final isSelected = route != null && route == currentRoute;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      child: ListTile(
+        leading: Icon(
+          icon,
+          color: isSelected ? AppColors.primary : AppColors.textSecondary,
+        ),
+        title: Text(
+          label,
+          style: TextStyle(
+            color: isSelected ? AppColors.primary : AppColors.textPrimary,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          ),
+        ),
+        selected: isSelected,
+        selectedTileColor: AppColors.primary.withValues(alpha: 0.08),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        onTap: onTap ??
+            () {
+              Navigator.pop(context);
+              if (route != null && route != currentRoute) {
+                Navigator.pushNamed(context, route!);
+              }
+            },
+      ),
+    );
+  }
 }
