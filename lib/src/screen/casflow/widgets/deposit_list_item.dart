@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../providers/models/deposit.dart';
 import '../../../providers/models/enum/deposit_reason.dart';
+import '../../../providers/models/enum/deposit_type.dart';
 import '../../../providers/models/enum/status_deposit.dart';
 import '../../../providers/models/enum/currency.dart';
 import '../../../providers/tontine_provider.dart';
@@ -69,7 +70,9 @@ class DepositListItem extends StatelessWidget {
                         children: [
                           Expanded(
                             child: Text(
-                              deposit.reasons ?? 'Mouvement',
+                              deposit.displayLabel,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
@@ -104,7 +107,9 @@ class DepositListItem extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Par ${deposit.author.firstname} ${deposit.author.lastname}',
+                        deposit.author != null
+                            ? 'Par ${deposit.author!.firstname ?? ''} ${deposit.author!.lastname ?? ''}'.trim()
+                            : 'Inconnu',
                         style: const TextStyle(
                           fontSize: 14,
                           color: AppColors.textSecondary,
@@ -154,6 +159,8 @@ class DepositListItem extends StatelessWidget {
   }
 
   IconData _getDepositReasonIcon() {
+    // Le type FOND a sa propre icône
+    if (deposit.type == DepositType.FOND) return Icons.savings;
     final reason = depositReasonFromString(deposit.reasons ?? '');
     switch (reason) {
       case DepositReason.VERSEMENT:
@@ -168,6 +175,8 @@ class DepositListItem extends StatelessWidget {
   }
 
   Color _getDepositReasonColor() {
+    // Le type FOND utilise la couleur info (bleu)
+    if (deposit.type == DepositType.FOND) return AppColors.info;
     final reason = depositReasonFromString(deposit.reasons ?? '');
     switch (reason) {
       case DepositReason.VERSEMENT:
