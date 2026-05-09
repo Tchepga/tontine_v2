@@ -73,37 +73,65 @@ jobs:
     runs-on: ubuntu-latest
     needs: test  # ← bloqué si les tests échouent
     if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    outputs:
+      play_uploaded: ${{ steps.check_android.outputs.upload }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # Si un secret manque : job vert + notice (plus d’erreur « ANDROID_KEYSTORE_BASE64 vide »).
+      - name: Secrets Android présents ?
+        id: check_android
+        env:
+          KS: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          PLAY_JSON: ${{ secrets.PLAY_STORE_JSON_KEY }}
+          STORE_PW: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_PW: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: |
+          set -euo pipefail
+          miss=""
+          [ -z "${KS:-}" ] && miss="${miss} ANDROID_KEYSTORE_BASE64"
+          [ -z "${PLAY_JSON:-}" ] && miss="${miss} PLAY_STORE_JSON_KEY"
+          [ -z "${STORE_PW:-}" ] && miss="${miss} ANDROID_KEYSTORE_PASSWORD"
+          [ -z "${KEY_PW:-}" ] && miss="${miss} ANDROID_KEY_PASSWORD"
+          [ -z "${KEY_ALIAS:-}" ] && miss="${miss} ANDROID_KEY_ALIAS"
+          if [ -n "$miss" ]; then
+            echo "upload=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::Déploiement Play Store ignoré — secrets manquants :$miss"
+            echo "::notice::Ajoutez les secrets dans le dépôt GitHub : Settings → Secrets and variables → Actions. ANDROID_KEYSTORE_BASE64 = sortie base64 du fichier .jks sur une seule ligne."
+            exit 0
+          fi
+          echo "upload=true" >> "$GITHUB_OUTPUT"
+
       - name: Setup Java ${{ env.JAVA_VERSION }}
+        if: steps.check_android.outputs.upload == 'true'
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: ${{ env.JAVA_VERSION }}
 
       - name: Setup Flutter
+        if: steps.check_android.outputs.upload == 'true'
         uses: subosito/flutter-action@v2
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
 
-      # printf évite le \\n final de echo qui peut corrompre le .jks ; pas de guillemets autour du secret dans le shell.
       - name: Décoder le keystore Android
+        if: steps.check_android.outputs.upload == 'true'
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
         run: |
           set -euo pipefail
-          test -n "${ANDROID_KEYSTORE_BASE64:-}" || { echo "::error::Secret ANDROID_KEYSTORE_BASE64 vide"; exit 1; }
           printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 -d > android/app/tontine_release.jks
           sz=$(wc -c < android/app/tontine_release.jks)
-          test "$sz" -gt 100 || { echo "::error::Keystore décodé trop petit (${sz} o) — base64 GitHub invalide ou tronqué"; exit 1; }
+          test "$sz" -gt 100 || { echo "::error::Keystore décodé trop petit (${sz} o)"; exit 1; }
           file android/app/tontine_release.jks || true
 
-      # Chemins relatifs au module app/ ; pas d’espaces en tête de ligne (Properties).
       - name: Créer le fichier key.properties
+        if: steps.check_android.outputs.upload == 'true'
         env:
           STORE_PW: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           KEY_PW: ${{ secrets.ANDROID_KEY_PASSWORD }}
@@ -117,20 +145,23 @@ jobs:
             "storeFile=tontine_release.jks" \
             > android/key.properties
 
-      # Échec clair si le fichier n’est pas un magasin lisible par le JDK (sinon signReleaseBundle / Tag number…).
       - name: Vérifier le keystore (keytool)
+        if: steps.check_android.outputs.upload == 'true'
         env:
           STORE_PW: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
         run: |
           keytool -list -keystore android/app/tontine_release.jks -storepass "$STORE_PW" </dev/null
 
       - name: Flutter pub get
+        if: steps.check_android.outputs.upload == 'true'
         run: flutter pub get
 
       - name: Build AAB release
+        if: steps.check_android.outputs.upload == 'true'
         run: flutter build appbundle --release --dart-define=ENV=production
 
       - name: Upload vers Play Store (internal track)
+        if: steps.check_android.outputs.upload == 'true'
         uses: r0adkll/upload-google-play@v1
         with:
           serviceAccountJsonPlainText: ${{ secrets.PLAY_STORE_JSON_KEY }}
@@ -140,7 +171,7 @@ jobs:
           status: completed
 
       - name: Nettoyage secrets locaux
-        if: always()
+        if: always() && steps.check_android.outputs.upload == 'true'
         run: |
           rm -f android/app/tontine_release.jks
           rm -f android/key.properties
@@ -230,8 +261,10 @@ jobs:
         run: |
           echo "## Résultat du déploiement" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          if [ "${{ needs.deploy-android.result }}" = "success" ]; then
+          if [ "${{ needs.deploy-android.outputs.play_uploaded }}" = "true" ]; then
             echo "✅ **Android** → Play Store internal track" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.deploy-android.result }}" = "success" ]; then
+            echo "⏭️ **Android** → Non publié (secrets Actions manquants — voir notice dans le job deploy-android)" >> $GITHUB_STEP_SUMMARY
           else
             echo "❌ **Android** → Échec (${{ needs.deploy-android.result }})" >> $GITHUB_STEP_SUMMARY
           fi
