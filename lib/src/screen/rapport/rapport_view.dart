@@ -153,6 +153,8 @@ class _RapportViewState extends State<RapportView>
                             showInlineCode: false,
                             showJustifyAlignment: false,
                             showLineHeightButton: false,
+                            // API expérimentale flutter_quill — garder false pour masquer l’action
+                            // ignore: experimental_member_use
                             showClipboardCut: false,
                             showRedo: false,
                             showUndo: false,

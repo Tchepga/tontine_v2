@@ -1,12 +1,13 @@
-import 'dart:io';
 import 'dart:async';
+import 'dart:developer' show log;
+import 'dart:io';
 
 /// Script de test pour diagnostiquer les problèmes de connexion WebSocket
 ///
 /// Pour exécuter ce test:
 /// dart test/websocket_connection_test.dart
 void main() async {
-  print('=== Test de connexion WebSocket ===\n');
+  log('=== Test de connexion WebSocket ===\n');
 
   // Configuration
   const baseUrl = 'api.tontine.devcoorp.net';
@@ -23,32 +24,32 @@ void main() async {
     'ws://$baseUrl?token=$token', // Version non sécurisée
   ];
 
-  print('URLs à tester:');
+  log('URLs à tester:');
   for (var i = 0; i < testUrls.length; i++) {
-    print('  ${i + 1}. ${testUrls[i].replaceAll(token, 'TOKEN')}');
+    log('  ${i + 1}. ${testUrls[i].replaceAll(token, 'TOKEN')}');
   }
-  print('');
+  log('');
 
   // Tester chaque URL
   for (var i = 0; i < testUrls.length; i++) {
     final url = testUrls[i];
-    print(
+    log(
         'Test ${i + 1}/${testUrls.length}: ${url.replaceAll(token, 'TOKEN')}');
     await testWebSocketConnection(url);
-    print('');
+    log('');
   }
 
-  print('=== Tests terminés ===');
+  log('=== Tests terminés ===');
 }
 
 Future<void> testWebSocketConnection(String url) async {
   WebSocket? socket;
 
   try {
-    print('  Tentative de connexion...');
+    log('  Tentative de connexion...');
 
     // Connexion simple sans headers personnalisés
-    print('  Connexion simple sans headers...');
+    log('  Connexion simple sans headers...');
 
     // Tentative de connexion avec timeout
     socket = await WebSocket.connect(url).timeout(
@@ -58,22 +59,22 @@ Future<void> testWebSocketConnection(String url) async {
       },
     );
 
-    print('  ✓ Connexion établie avec succès!');
-    print('  ReadyState: ${socket.readyState}');
+    log('  ✓ Connexion établie avec succès!');
+    log('  ReadyState: ${socket.readyState}');
 
     // Écouter les messages pendant 3 secondes
-    print('  Écoute des messages pendant 3 secondes...');
+    log('  Écoute des messages pendant 3 secondes...');
 
     final subscription = socket.listen(
       (message) {
-        print(
+        log(
             '  ✓ Message reçu: ${message.toString().substring(0, message.toString().length > 100 ? 100 : message.toString().length)}...');
       },
       onError: (error) {
-        print('  ✗ Erreur de stream: $error');
+        log('  ✗ Erreur de stream: $error');
       },
       onDone: () {
-        print('  ✓ Connexion fermée proprement');
+        log('  ✓ Connexion fermée proprement');
       },
     );
 
@@ -83,27 +84,27 @@ Future<void> testWebSocketConnection(String url) async {
     // Fermer
     await subscription.cancel();
     await socket.close();
-    print('  ✓ Test réussi - Connexion fermée');
+    log('  ✓ Test réussi - Connexion fermée');
   } on TimeoutException catch (e) {
-    print('  ✗ Timeout: $e');
+    log('  ✗ Timeout: $e');
   } on SocketException catch (e) {
-    print('  ✗ Erreur Socket: ${e.message}');
+    log('  ✗ Erreur Socket: ${e.message}');
     if (e.osError != null) {
-      print('  ✗ OS Error: ${e.osError}');
+      log('  ✗ OS Error: ${e.osError}');
     }
   } on HttpException catch (e) {
-    print('  ✗ Erreur HTTP: ${e.message}');
-    print('  ✗ Cela indique généralement:');
-    print('     - Code HTTP 502: Problème de proxy/gateway');
-    print('     - Code HTTP 400: Mauvaise requête');
-    print('     - Code HTTP 401/403: Authentification échouée');
-    print('     - Le serveur n\'a pas accepté la mise à niveau WebSocket');
+    log('  ✗ Erreur HTTP: ${e.message}');
+    log('  ✗ Cela indique généralement:');
+    log('     - Code HTTP 502: Problème de proxy/gateway');
+    log('     - Code HTTP 400: Mauvaise requête');
+    log('     - Code HTTP 401/403: Authentification échouée');
+    log('     - Le serveur n\'a pas accepté la mise à niveau WebSocket');
   } on WebSocketException catch (e) {
-    print('  ✗ Erreur WebSocket: ${e.message}');
+    log('  ✗ Erreur WebSocket: ${e.message}');
   } catch (e, stackTrace) {
-    print('  ✗ Erreur inattendue: $e');
-    print('  ✗ Type: ${e.runtimeType}');
-    print(
+    log('  ✗ Erreur inattendue: $e');
+    log('  ✗ Type: ${e.runtimeType}');
+    log(
         '  ✗ Stack trace: ${stackTrace.toString().split('\n').take(3).join('\n')}');
   } finally {
     try {

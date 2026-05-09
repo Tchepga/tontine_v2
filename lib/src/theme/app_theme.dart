@@ -62,7 +62,7 @@ class AppTheme {
     onErrorContainer: AppColors.error,
     surface: AppColors.surface,
     onSurface: AppColors.textPrimary,
-    surfaceVariant:
+    surfaceContainerHighest:
         Color(0xFFF0F0F0), // Gris légèrement plus foncé pour meilleur contraste
     onSurfaceVariant: Color(0xFF4A5568), // Texte plus foncé sur surface variant
     outline: Color(0xFFD0D0D0), // Bordure légèrement plus foncée
@@ -114,7 +114,7 @@ class AppTheme {
           borderRadius: BorderRadius.circular(16),
         ),
         color: colorScheme.surface,
-        shadowColor: colorScheme.shadow.withOpacity(0.1),
+        shadowColor: colorScheme.shadow.withValues(alpha: 0.1),
         surfaceTintColor: colorScheme.surfaceTint,
       ),
 
@@ -192,8 +192,8 @@ class AppTheme {
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         labelStyle: TextStyle(color: colorScheme.onSurfaceVariant),
-        hintStyle:
-            TextStyle(color: colorScheme.onSurfaceVariant.withOpacity(0.6)),
+        hintStyle: TextStyle(
+            color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6)),
       ),
 
       // Text Theme - Utilise colorScheme pour les couleurs
@@ -339,9 +339,9 @@ class AppTheme {
 
       // Chip Theme
       chipTheme: ChipThemeData(
-        backgroundColor: colorScheme.surfaceVariant,
+        backgroundColor: colorScheme.surfaceContainerHighest,
         deleteIconColor: colorScheme.onSurfaceVariant,
-        disabledColor: colorScheme.onSurface.withOpacity(0.12),
+        disabledColor: colorScheme.onSurface.withValues(alpha: 0.12),
         selectedColor: colorScheme.primaryContainer,
         secondarySelectedColor: colorScheme.secondaryContainer,
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -401,7 +401,7 @@ class AppTheme {
     onErrorContainer: Color(0xFFFFDAD6),
     surface: Color(0xFF1C1B1F),
     onSurface: Color(0xFFE6E1E5),
-    surfaceVariant: Color(0xFF49454F),
+    surfaceContainerHighest: Color(0xFF49454F),
     onSurfaceVariant: Color(0xFFCAC4D0),
     outline: Color(0xFF938F99),
     outlineVariant: Color(0xFF49454F),
@@ -452,7 +452,7 @@ class AppTheme {
           borderRadius: BorderRadius.circular(16),
         ),
         color: colorScheme.surface,
-        shadowColor: colorScheme.shadow.withOpacity(0.3),
+        shadowColor: colorScheme.shadow.withValues(alpha: 0.3),
         surfaceTintColor: colorScheme.surfaceTint,
       ),
 
@@ -471,7 +471,7 @@ class AppTheme {
 
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: colorScheme.surfaceVariant,
+          backgroundColor: colorScheme.surfaceContainerHighest,
           foregroundColor: colorScheme.primary,
           elevation: 1,
           minimumSize: const Size.fromHeight(50),
@@ -530,8 +530,8 @@ class AppTheme {
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         labelStyle: TextStyle(color: colorScheme.onSurfaceVariant),
-        hintStyle:
-            TextStyle(color: colorScheme.onSurfaceVariant.withOpacity(0.6)),
+        hintStyle: TextStyle(
+            color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6)),
       ),
 
       // Text Theme
@@ -677,9 +677,9 @@ class AppTheme {
 
       // Chip Theme
       chipTheme: ChipThemeData(
-        backgroundColor: colorScheme.surfaceVariant,
+        backgroundColor: colorScheme.surfaceContainerHighest,
         deleteIconColor: colorScheme.onSurfaceVariant,
-        disabledColor: colorScheme.onSurface.withOpacity(0.12),
+        disabledColor: colorScheme.onSurface.withValues(alpha: 0.12),
         selectedColor: colorScheme.primaryContainer,
         secondarySelectedColor: colorScheme.secondaryContainer,
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),

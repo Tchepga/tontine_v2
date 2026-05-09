@@ -1,4 +1,4 @@
-import 'package:socket_io_client/socket_io_client.dart' as IO;
+import 'package:socket_io_client/socket_io_client.dart' as socket_io;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:logging/logging.dart';
 import 'package:get_storage/get_storage.dart';
@@ -12,7 +12,7 @@ class WebSocketService {
   static final WebSocketService _instance = WebSocketService._internal();
   final _logger = Logger('WebSocketService');
   final _storage = GetStorage();
-  IO.Socket? _socket;
+  socket_io.Socket? _socket;
   bool _isConnecting = false;
   bool _isConnected = false;
   static const _reconnectDelay = Duration(seconds: 5);
@@ -81,9 +81,9 @@ class WebSocketService {
         }
 
         // Créer la connexion Socket.IO
-        _socket = IO.io(
+        _socket = socket_io.io(
           serverUrl,
-          IO.OptionBuilder()
+          socket_io.OptionBuilder()
               .setTransports(['websocket']) // Utiliser uniquement WebSocket
               .setQuery({'token': token}) // Passer le token en query param
               .enableAutoConnect()

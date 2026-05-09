@@ -22,7 +22,7 @@ const String _env = String.fromEnvironment('ENV', defaultValue: 'production');
 void main() async {
   WidgetsFlutterBinding.ensureInitialized(); // Important !
 
-  final envFile = '.env.$_env';
+  final envFile = 'assets/env/.env.$_env';
   await dotenv.load(fileName: envFile);
   debugPrint('🌍 Environnement chargé : $envFile');
 
@@ -36,7 +36,7 @@ void main() async {
 
   Logger.root.level = Level.ALL;
   Logger.root.onRecord.listen((record) {
-    print('${record.level.name}: ${record.time}: ${record.message}');
+    debugPrint('${record.level.name}: ${record.time}: ${record.message}');
   });
 
   // Set up the SettingsController, which will glue user settings to multiple

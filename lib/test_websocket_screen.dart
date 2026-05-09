@@ -6,7 +6,7 @@ import 'dart:async';
 ///
 /// Ajoutez cette route dans votre application pour tester
 class WebSocketTestScreen extends StatefulWidget {
-  const WebSocketTestScreen({Key? key}) : super(key: key);
+  const WebSocketTestScreen({super.key});
 
   @override
   State<WebSocketTestScreen> createState() => _WebSocketTestScreenState();
@@ -27,7 +27,7 @@ class _WebSocketTestScreenState extends State<WebSocketTestScreen> {
         _logs.add('[${DateTime.now().toString().substring(11, 19)}] $message');
       });
     }
-    print(message);
+    debugPrint(message);
   }
 
   Future<void> _runTests() async {
