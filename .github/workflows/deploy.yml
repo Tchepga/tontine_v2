@@ -131,21 +131,35 @@ jobs:
     name: 🍎 iOS → TestFlight
     runs-on: macos-latest
     needs: test  # ← bloqué si les tests échouent
-    # Pas de dossier fastlane/ dans ce dépôt → éviter setup-ruby avec working-directory: fastlane (ENOENT).
-    # Quand vous ajouterez fastlane/Fastfile (Gemfile…), cette condition activera le job automatiquement.
-    if: github.ref == 'refs/heads/master' && github.event_name == 'push' && hashFiles('fastlane/Fastfile') != ''
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    # hashFiles() n'est pas autorisé dans job.if — on détecte fastlane/Fastfile après checkout.
+    outputs:
+      fastlane_used: ${{ steps.fastlane.outputs.present }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Détection fastlane/Fastfile
+        id: fastlane
+        run: |
+          if [ -f fastlane/Fastfile ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Pas de fastlane/Fastfile — étapes iOS ignorées (ajoutez Fastlane ou utilisez Codemagic)."
+
+            fi
+
       - name: Setup Flutter
+        if: steps.fastlane.outputs.present == 'true'
         uses: subosito/flutter-action@v2
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
 
       - name: Setup Ruby
+        if: steps.fastlane.outputs.present == 'true'
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ env.RUBY_VERSION }}
@@ -153,19 +167,23 @@ jobs:
           working-directory: fastlane
 
       - name: Install Fastlane
+        if: steps.fastlane.outputs.present == 'true'
         run: |
           cd fastlane
           bundle install
 
       - name: Flutter pub get
+        if: steps.fastlane.outputs.present == 'true'
         run: flutter pub get
 
       - name: Build iOS (sans codesign — Fastlane gère)
+        if: steps.fastlane.outputs.present == 'true'
         run: |
           flutter build ios --release --no-codesign \
             --dart-define=ENV=production
 
       - name: Sync certificats via Match & Upload TestFlight
+        if: steps.fastlane.outputs.present == 'true'
         env:
           MATCH_PASSWORD:     ${{ secrets.MATCH_PASSWORD }}
           MATCH_GIT_URL:      ${{ secrets.MATCH_GIT_URL }}
