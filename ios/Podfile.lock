@@ -97,7 +97,7 @@ SPEC CHECKSUMS:
   file_picker: a0560bc09d61de87f12d246fc47d2119e6ef37be
   Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
   flutter_keyboard_visibility_temp_fork: 95b2d534bacf6ac62e7fcbe5c2a9e2c2a17ce06f
-  flutter_local_notifications: a5a732f069baa862e728d839dd2ebb904737effb
+  flutter_local_notifications: 643a3eda1ce1c0599413ca31672536d423dee214
   flutter_native_splash: c32d145d68aeda5502d5f543ee38c192065986cf
   open_file_ios: 46184d802ee7959203f6392abcfa0dd49fdb5be0
   quill_native_bridge_ios: f47af4b14e7757968486641656c5d23250cee521
