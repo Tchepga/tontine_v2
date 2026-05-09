@@ -27,16 +27,29 @@ class _EditMouvementState extends State<EditMouvement> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(() {
-      setState(() {
-        _selectedAuthor = widget.deposit?.author;
-      });
-    });
     if (widget.deposit != null) {
       _amountController.text = widget.deposit!.amount.toString();
-      _selectedReason = depositReasonFromString(widget.deposit!.reasons ?? '');
-      _selectedAuthor = widget.deposit!.author;
     }
+    // Après le premier frame : croiser rôle (Provider), raison API et liste du dropdown
+    // (évite l’assertion « value must be in items » sur DropdownButtonFormField).
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (widget.deposit != null) {
+        final auth = Provider.of<AuthProvider>(context, listen: false);
+        final available = _getAvailableReasons(auth);
+        final fromDeposit =
+            depositReasonFromString(widget.deposit!.reasons ?? '');
+        setState(() {
+          _selectedReason =
+              available.contains(fromDeposit) ? fromDeposit : available.first;
+          _selectedAuthor = widget.deposit!.author;
+        });
+      } else {
+        setState(() {
+          _selectedAuthor = null;
+        });
+      }
+    });
   }
 
   List<DepositReason> _getAvailableReasons(AuthProvider authProvider) {
@@ -205,7 +218,7 @@ class _EditMouvementState extends State<EditMouvement> {
         memberId: author.id!,
         status: StatusDeposit.PENDING,
         cashFlowId: currentTontine.cashFlow.id,
-        reasons: _selectedReason.displayName,
+        reasons: depositReasonToString(_selectedReason),
       );
 
       try {

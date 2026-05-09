@@ -6,7 +6,14 @@ enum DepositReason {
 }
 
 DepositReason depositReasonFromString(String reason) {
-  return DepositReason.values.firstWhere((e) => e.toString().split('.').last == reason.toUpperCase());
+  final normalized = reason.trim().toUpperCase();
+  if (normalized.isEmpty) {
+    return DepositReason.VERSEMENT;
+  }
+  return DepositReason.values.firstWhere(
+    (e) => e.toString().split('.').last == normalized,
+    orElse: () => DepositReason.AUTRE,
+  );
 }
 
 String depositReasonToString(DepositReason reason) {

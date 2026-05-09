@@ -29,13 +29,16 @@ class _SelectTontineViewState extends State<SelectTontineView> {
   void initState() {
     super.initState();
 
-    Future.microtask(() => _loadTontines());
-    if (mounted) {
-      if (Provider.of<TontineProvider>(context, listen: false).currentTontine !=
-          null) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final currentTontine =
+          Provider.of<TontineProvider>(context, listen: false).currentTontine;
+      if (currentTontine != null) {
         Navigator.of(context).pushReplacementNamed(DashboardView.routeName);
+      } else {
+        _loadTontines();
       }
-    }
+    });
   }
 
   Future<void> _loadTontines() async {

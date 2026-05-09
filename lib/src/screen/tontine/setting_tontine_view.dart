@@ -11,6 +11,7 @@ import '../../widgets/circular_order_card.dart';
 import '../../theme/app_theme.dart';
 import '../../providers/models/enum/currency.dart';
 import 'package:intl/intl.dart';
+import 'select_tontine_view.dart';
 
 class SettingTontineView extends StatefulWidget {
   static const routeName = '/setting-tontine';
@@ -772,6 +773,146 @@ class _SettingTontineViewState extends State<SettingTontineView> {
     );
   }
 
+  Widget _buildChangeTontineSection(
+      TontineProvider tontineProvider, Tontine currentTontine) {
+    return Card(
+      elevation: 3,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Colors.white,
+              Colors.grey.shade50,
+            ],
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withAlpha(20),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      Icons.swap_horiz,
+                      color: AppColors.primary,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const Text(
+                    'Changer de tontine',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF2D3748),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Retournez à la liste de vos tontines pour en ouvrir une autre. Vos données ne sont pas supprimées.',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () => _showChangeTontineConfirmation(
+                    context,
+                    tontineProvider,
+                    currentTontine,
+                  ),
+                  icon: Icon(Icons.list_alt, color: AppColors.primary),
+                  label: const Text('Choisir une autre tontine'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.primary,
+                    side: BorderSide(color: AppColors.primary.withAlpha(180)),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showChangeTontineConfirmation(
+    BuildContext context,
+    TontineProvider tontineProvider,
+    Tontine currentTontine,
+  ) {
+    showDialog<void>(
+      context: context,
+      builder: (BuildContext dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: Row(
+          children: [
+            Icon(Icons.help_outline, color: AppColors.primary, size: 26),
+            const SizedBox(width: 8),
+            const Expanded(
+              child: Text('Changer de tontine ?'),
+            ),
+          ],
+        ),
+        content: Text(
+          'Vous allez quitter « ${currentTontine.title} » et choisir une autre tontine. '
+          'Confirmez-vous ?',
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text(
+              'Annuler',
+              style: TextStyle(color: AppColors.textSecondary),
+            ),
+          ),
+          FilledButton(
+            onPressed: () {
+              Navigator.of(dialogContext).pop();
+              _handleChangeTontine(context, tontineProvider);
+            },
+            child: const Text('Confirmer'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _handleChangeTontine(
+      BuildContext context, TontineProvider tontineProvider) {
+    tontineProvider.clearCurrentTontineSelection();
+    Navigator.of(context).pushNamedAndRemoveUntil(
+      SelectTontineView.routeName,
+      (route) => false,
+    );
+  }
+
   Widget _buildDangerousActionsSection(TontineProvider tontineProvider,
       Tontine currentTontine, AuthProvider authProvider) {
     final currentUser = authProvider.currentUser;
@@ -1020,7 +1161,7 @@ class _SettingTontineViewState extends State<SettingTontineView> {
 
       // Rediriger vers la sélection de tontine
       Navigator.of(context).pushNamedAndRemoveUntil(
-        '/select-tontine',
+        SelectTontineView.routeName,
         (route) => false,
       );
 
@@ -1281,7 +1422,7 @@ class _SettingTontineViewState extends State<SettingTontineView> {
                                 ),
                                 const SizedBox(width: 12),
                                 const Text(
-                                  'Paramètres des mouvements',
+                                  'Mouvements',
                                   style: TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
@@ -1393,6 +1534,8 @@ class _SettingTontineViewState extends State<SettingTontineView> {
                   ),
                   const SizedBox(height: 16),
                   _buildRateMapSection(),
+                  const SizedBox(height: 16),
+                  _buildChangeTontineSection(tontineProvider, currentTontine),
                   const SizedBox(height: 16),
                   _buildDangerousActionsSection(
                       tontineProvider, currentTontine, authProvider),

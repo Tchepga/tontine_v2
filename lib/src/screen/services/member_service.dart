@@ -39,7 +39,7 @@ class MemberService {
         }),
       );
 
-      _logger.info('Login response status: ${response.statusCode}');
+      _logger.info('Login response status: ${response.body}');
 
       if (response.statusCode == 201) {
         final data = jsonDecode(response.body);

@@ -60,12 +60,14 @@ class TontineProvider extends ChangeNotifier {
     try {
       final tontines = await _tontineService.getTontines();
       _tontines = tontines;
-      final index = _tontines
-          .indexWhere((t) => t.id == _storage.read(KEY_SELECTED_TONTINE_ID));
+      final selectedId = _storage.read(KEY_SELECTED_TONTINE_ID);
+      final index = selectedId != null
+          ? _tontines.indexWhere((t) => t.id == selectedId)
+          : -1;
       if (index != -1) {
         _currentTontine = _tontines[index];
       } else {
-        throw Exception('La tontine sélectionnée n\'existe pas');
+        _currentTontine = null;
       }
     } catch (e) {
       _logger.severe('Error loading tontines: $e');
@@ -100,6 +102,18 @@ class TontineProvider extends ChangeNotifier {
       _logger.severe('Error setting current tontine: $e');
       rethrow;
     }
+  }
+
+  /// Efface la tontine active (stockage + caches) pour afficher l’écran de choix d’une autre tontine.
+  void clearCurrentTontineSelection() {
+    _currentTontine = null;
+    _storage.remove(KEY_SELECTED_TONTINE_ID);
+    _deposits = [];
+    _auctions = [];
+    _distributions = [];
+    _contributions = [];
+    _parts.clear();
+    notifyListeners();
   }
 
   Future<void> createTontine(CreateTontineDto tontine) async {

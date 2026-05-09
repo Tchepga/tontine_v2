@@ -461,6 +461,7 @@ class TontineService {
       body: jsonEncode(configDto.toJson()),
     );
     if (response.statusCode != 200) {
+      _logger.severe('Failed to update tontine config: ${response.body}');
       throw Exception('Failed to update tontine config');
     }
   }

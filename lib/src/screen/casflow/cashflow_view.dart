@@ -54,14 +54,14 @@ class _CashflowViewState extends State<CashflowView> {
         final filteredDeposits = deposits.where((deposit) {
           final matchType = _selectedReason == null ||
               (deposit.reasons != null &&
-                  deposit.reasons!.toLowerCase() ==
-                      _selectedReason!.displayName.toLowerCase());
+                  deposit.reasons!.isNotEmpty &&
+                  depositReasonFromString(deposit.reasons!) == _selectedReason);
           final matchName = _searchName.isEmpty ||
-              (deposit.author.firstname
+              (deposit.author?.firstname
                       ?.toLowerCase()
                       .contains(_searchName.toLowerCase()) ??
                   false) ||
-              (deposit.author.lastname
+              (deposit.author?.lastname
                       ?.toLowerCase()
                       .contains(_searchName.toLowerCase()) ??
                   false);
@@ -324,6 +324,14 @@ class _CashflowViewState extends State<CashflowView> {
       TontineProvider tontineProvider, int tontineId) {
     final itemPadding = ResponsiveHelper.getAdaptivePadding(context, all: 12.0);
     final itemMargin = ResponsiveHelper.getAdaptiveSpacing(context, base: 8.0);
+    final author = deposit.author;
+    final String authorLabel;
+    if (author == null) {
+      authorLabel = '—';
+    } else {
+      final n = '${author.firstname ?? ''} ${author.lastname ?? ''}'.trim();
+      authorLabel = n.isEmpty ? '—' : n;
+    }
 
     return Container(
       margin: EdgeInsets.only(bottom: itemMargin),
@@ -340,7 +348,7 @@ class _CashflowViewState extends State<CashflowView> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '${deposit.author.firstname} ${deposit.author.lastname}',
+                  authorLabel,
                   style: TextStyle(
                     fontWeight: FontWeight.w600,
                     color: AppColors.textPrimary,
