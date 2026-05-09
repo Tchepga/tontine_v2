@@ -90,18 +90,6 @@ jobs:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
 
-      - name: Setup Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: ${{ env.RUBY_VERSION }}
-          bundler-cache: true
-          working-directory: fastlane
-
-      - name: Install Fastlane
-        run: |
-          cd fastlane
-          bundle install
-
       - name: Décoder le keystore Android
         run: |
           echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android/app/tontine_release.jks
@@ -114,11 +102,6 @@ jobs:
           keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}
           storeFile=../app/tontine_release.jks
           EOF
-
-      - name: Créer le service account Play Store
-        run: |
-          mkdir -p fastlane/secrets
-          echo '${{ secrets.PLAY_STORE_JSON_KEY }}' > fastlane/secrets/play-store-key.json
 
       - name: Flutter pub get
         run: flutter pub get
@@ -140,7 +123,6 @@ jobs:
         run: |
           rm -f android/app/tontine_release.jks
           rm -f android/key.properties
-          rm -f fastlane/secrets/play-store-key.json
 
 # ══════════════════════════════════════════════════════════════════════════════
 # JOB 3 — DÉPLOIEMENT iOS (uniquement sur master, après tests OK)
@@ -149,7 +131,9 @@ jobs:
     name: 🍎 iOS → TestFlight
     runs-on: macos-latest
     needs: test  # ← bloqué si les tests échouent
-    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    # Pas de dossier fastlane/ dans ce dépôt → éviter setup-ruby avec working-directory: fastlane (ENOENT).
+    # Quand vous ajouterez fastlane/Fastfile (Gemfile…), cette condition activera le job automatiquement.
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push' && hashFiles('fastlane/Fastfile') != ''
 
     steps:
       - name: Checkout
@@ -213,8 +197,11 @@ jobs:
           else
             echo "❌ **Android** → Échec (${{ needs.deploy-android.result }})" >> $GITHUB_STEP_SUMMARY
           fi
-          if [ "${{ needs.deploy-ios.result }}" = "success" ]; then
+          ios="${{ needs.deploy-ios.result }}"
+          if [ "$ios" = "success" ]; then
             echo "✅ **iOS** → TestFlight" >> $GITHUB_STEP_SUMMARY
+          elif [ "$ios" = "skipped" ]; then
+            echo "⏭️ **iOS** → Ignoré (pas de fastlane/Fastfile — ajoutez Fastlane dans le repo ou utilisez Codemagic)" >> $GITHUB_STEP_SUMMARY
           else
-            echo "❌ **iOS** → Échec (${{ needs.deploy-ios.result }})" >> $GITHUB_STEP_SUMMARY
+            echo "❌ **iOS** → Échec ($ios)" >> $GITHUB_STEP_SUMMARY
           fi
