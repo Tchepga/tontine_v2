@@ -38,35 +38,30 @@ jobs:
       - name: Tests unitaires & widgets
         run: flutter test --coverage --reporter=expanded
 
-      # La suite de tests couvre encore peu de lignes (~5 % typique) : un seuil à 70 %
-      # faisait systématiquement échouer le job. On affiche la métrique et un warning GitHub.
+      # Même formule que l’ancien python (Σ compteurs DA / nb entrées DA). Ne bloque jamais le job.
       - name: Rapport couverture (lcov)
+        shell: bash
         run: |
-          python3 << 'EOF'
-          import os
-          import re
-          import sys
-
-          path = "coverage/lcov.info"
-          goal = float(os.environ.get("COVERAGE_GOAL_PERCENT", "70"))
-
-          if not os.path.isfile(path):
-              print(f"::warning::Fichier {path} absent — exécuter les tests avec --coverage")
-              sys.exit(0)
-
-          lines = open(path, encoding="utf-8").read()
-          hits = sum(int(x) for x in re.findall(r"^DA:\d+,(\d+)", lines, re.M))
-          total = len(re.findall(r"^DA:", lines, re.M))
-          pct = hits / total * 100 if total else 0.0
-
-          print(f"Couverture lignes (lcov) : {pct:.1f}% ({hits}/{total} lignes instrumentées)")
-          print(f"Objectif référence : {goal:.0f}%")
-
-          if pct < goal:
-              print(
-                  f"::warning::Couverture {pct:.1f}% sous l’objectif {goal:.0f}% — à augmenter avec plus de tests"
-              )
-          EOF
+          set -euo pipefail
+          LCOV="coverage/lcov.info"
+          GOAL="${COVERAGE_GOAL_PERCENT:-70}"
+          if [[ ! -f "$LCOV" ]]; then
+            echo "::warning::Fichier $LCOV absent — la step « Tests » doit réussir avec --coverage"
+            exit 0
+          fi
+          read -r pct hits total <<< "$(awk -F',' '
+            /^DA:/ { t++; h += ($2 == "" ? 0 : $2 + 0) }
+            END {
+              if (t > 0) printf "%.1f %d %d\n", 100 * h / t, h, t
+              else print "0.0 0 0"
+            }
+          ' "$LCOV")"
+          echo "Couverture (lcov, métrique historique): ${pct}% (Σ hits=${hits} / ${total} entrées DA)"
+          echo "Objectif référence: ${GOAL}%"
+          if awk -v p="$pct" -v g="$GOAL" 'BEGIN { exit !(p + 0 < g + 0) }'; then
+            echo "::warning::Couverture ${pct}% sous l'objectif ${GOAL}%"
+          fi
+          exit 0
         env:
           COVERAGE_GOAL_PERCENT: "70"
 
