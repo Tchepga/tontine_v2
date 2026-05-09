@@ -13,8 +13,7 @@ import '../../utils/responsive_helper.dart';
 import '../../theme/app_theme.dart';
 import '../services/dto/rapport_dto.dart';
 import 'package:intl/intl.dart';
-import 'package:file_picker/file_picker.dart'
-    show FilePicker, FilePickerResult, FileType, PlatformFile;
+import 'package:file_picker/file_picker.dart';
 import 'dart:io';
 import '../../providers/auth_provider.dart';
 import '../../providers/models/enum/role.dart';
@@ -347,7 +346,7 @@ class _RapportViewState extends State<RapportView>
 
   Future<void> _pickFile() async {
     try {
-      FilePickerResult? result = await FilePicker.platform.pickFiles(
+      FilePickerResult? result = await FilePicker.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['jpg', 'jpeg', 'png', 'pdf', 'doc', 'docx'],
       );

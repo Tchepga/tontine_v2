@@ -51,7 +51,7 @@ class LocalNotificationService {
 
     // Initialiser le plugin
     final bool? initialized = await flutterLocalNotificationsPlugin.initialize(
-      initializationSettings,
+      settings: initializationSettings,
       onDidReceiveNotificationResponse: (NotificationResponse response) {
         _logger.info('Notification clicked: ${response.payload}');
         if (onNotificationTap != null) {
@@ -177,10 +177,10 @@ class LocalNotificationService {
       );
 
       await flutterLocalNotificationsPlugin.show(
-        notificationId,
-        title,
-        body,
-        notificationDetails,
+        id: notificationId,
+        title: title,
+        body: body,
+        notificationDetails: notificationDetails,
         payload: payload,
       );
 
@@ -237,10 +237,10 @@ class LocalNotificationService {
       );
 
       await flutterLocalNotificationsPlugin.show(
-        notificationId,
-        title,
-        body,
-        notificationDetails,
+        id: notificationId,
+        title: title,
+        body: body,
+        notificationDetails: notificationDetails,
         payload: payload,
       );
 
@@ -252,7 +252,7 @@ class LocalNotificationService {
 
   /// Annuler une notification spécifique
   Future<void> cancelNotification(int notificationId) async {
-    await flutterLocalNotificationsPlugin.cancel(notificationId);
+    await flutterLocalNotificationsPlugin.cancel(id: notificationId);
     _logger.info('Notification cancelled: $notificationId');
   }
 

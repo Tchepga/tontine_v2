@@ -41,28 +41,30 @@ android {
 
     signingConfigs {
         release {
-            if (!keystorePropertiesFile.exists()) {
-                throw new GradleException("Fichier android/key.properties manquant. Impossible de signer le build release. Crée-le (voir README Android release) ou désactive la signature release.")
-            }
+            // If key.properties is missing, we don't fail the build: we will sign release builds
+            // with the debug keystore (configured below in buildTypes.release) so devs can still
+            // run "release mode" on an emulator for performance testing.
+            if (keystorePropertiesFile.exists()) {
+                def storeFilePath = keystoreProperties['storeFile']
+                if (storeFilePath == null || storeFilePath.toString().trim().isEmpty()) {
+                    throw new GradleException("storeFile manquant dans android/key.properties (chemin vers le keystore .jks)")
+                }
+                if (keystoreProperties['keyAlias'] == null || keystoreProperties['keyPassword'] == null || keystoreProperties['storePassword'] == null) {
+                    throw new GradleException("keyAlias/keyPassword/storePassword manquants dans android/key.properties")
+                }
 
-            def storeFilePath = keystoreProperties['storeFile']
-            if (storeFilePath == null || storeFilePath.toString().trim().isEmpty()) {
-                throw new GradleException("storeFile manquant dans android/key.properties (chemin vers le keystore .jks)")
+                keyAlias keystoreProperties['keyAlias']
+                keyPassword keystoreProperties['keyPassword']
+                storeFile file(storeFilePath)
+                storePassword keystoreProperties['storePassword']
             }
-            if (keystoreProperties['keyAlias'] == null || keystoreProperties['keyPassword'] == null || keystoreProperties['storePassword'] == null) {
-                throw new GradleException("keyAlias/keyPassword/storePassword manquants dans android/key.properties")
-            }
-
-            keyAlias keystoreProperties['keyAlias']
-            keyPassword keystoreProperties['keyPassword']
-            storeFile file(storeFilePath)
-            storePassword keystoreProperties['storePassword']
         }
     }
 
     buildTypes {
         release {
-            signingConfig signingConfigs.release
+            // Use the real release keystore when configured; otherwise fall back to debug signing.
+            signingConfig keystorePropertiesFile.exists() ? signingConfigs.release : signingConfigs.debug
         }
     }
 }

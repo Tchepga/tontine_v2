@@ -24,7 +24,7 @@ extension DepositReasonExtension on DepositReason {
   String get displayName {
     switch (this) {
       case DepositReason.VERSEMENT:
-        return 'Versement';
+        return 'Cotisation';
       case DepositReason.REMBOURSEMENT:
         return 'Remboursement';
       case DepositReason.SANCTION:

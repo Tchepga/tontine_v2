@@ -13,7 +13,7 @@ import 'edit_mouvement.dart';
 import 'widgets/deposit_list_item.dart';
 import 'package:tontine_v2/src/providers/models/enum/currency.dart';
 import '../../utils/currency_utils.dart';
-import '../../providers/models/enum/deposit_reason.dart';
+import '../../providers/models/enum/deposit_type.dart';
 import '../../providers/models/enum/status_deposit.dart';
 import '../../providers/auth_provider.dart';
 
@@ -26,7 +26,7 @@ class CashflowView extends StatefulWidget {
 }
 
 class _CashflowViewState extends State<CashflowView> {
-  DepositReason? _selectedReason;
+  DepositType? _selectedType;
   String _searchName = '';
 
   @override
@@ -52,10 +52,7 @@ class _CashflowViewState extends State<CashflowView> {
 
         // Filtrage
         final filteredDeposits = deposits.where((deposit) {
-          final matchType = _selectedReason == null ||
-              (deposit.reasons != null &&
-                  deposit.reasons!.isNotEmpty &&
-                  depositReasonFromString(deposit.reasons!) == _selectedReason);
+          final matchType = _selectedType == null || deposit.type == _selectedType;
           final matchName = _searchName.isEmpty ||
               (deposit.author?.firstname
                       ?.toLowerCase()
@@ -194,8 +191,8 @@ class _CashflowViewState extends State<CashflowView> {
       padding: cardPadding,
       child: Column(
         children: [
-          DropdownButtonFormField<DepositReason>(
-            initialValue: _selectedReason,
+          DropdownButtonFormField<DepositType>(
+            value: _selectedType,
             isExpanded: true,
             decoration: InputDecoration(
               labelText: 'Type',
@@ -206,18 +203,21 @@ class _CashflowViewState extends State<CashflowView> {
               contentPadding: contentPadding,
             ),
             items: [
-              const DropdownMenuItem<DepositReason>(
+              const DropdownMenuItem<DepositType>(
                 value: null,
-                child: Text('Tous'),
+                child: Text('Tous', overflow: TextOverflow.ellipsis),
               ),
-              ...DepositReason.values.map((reason) => DropdownMenuItem(
-                    value: reason,
-                    child: Text(reason.displayName),
+              ...DepositType.values.map((type) => DropdownMenuItem(
+                    value: type,
+                    child: Text(
+                      type.displayName,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ))
             ],
             onChanged: (value) {
               setState(() {
-                _selectedReason = value;
+                _selectedType = value;
               });
             },
           ),

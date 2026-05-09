@@ -1,0 +1,187 @@
+workflows:
+
+  # ══════════════════════════════════════════════════════════════════════════
+  # WORKFLOW 1 — Tests uniquement (Pull Requests)
+  # ══════════════════════════════════════════════════════════════════════════
+  tests-only:
+    name: 🧪 Tests Flutter
+    max_build_duration: 30
+    triggering:
+      events:
+        - pull_request
+      branch_patterns:
+        - pattern: '*'
+          include: true
+    environment:
+      flutter: 3.29.3
+      xcode: latest
+      java: 17
+    scripts:
+      - name: Récupération des dépendances
+        script: flutter pub get
+
+      - name: Analyse statique
+        script: flutter analyze --no-fatal-infos
+
+      - name: Tests unitaires & widgets
+        script: flutter test --coverage --reporter=expanded
+
+    artifacts:
+      - coverage/**
+
+  # ══════════════════════════════════════════════════════════════════════════
+  # WORKFLOW 2 — Android → Play Store internal track
+  # ══════════════════════════════════════════════════════════════════════════
+  android-deploy:
+    name: 🤖 Android → Play Store
+    max_build_duration: 60
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: master
+          include: true
+    environment:
+      flutter: 3.29.3
+      java: 17
+      android_signing:
+        - tontine_keystore
+
+    scripts:
+      - name: Récupération des dépendances
+        script: flutter pub get
+
+      - name: Analyse statique
+        script: flutter analyze --no-fatal-infos
+
+      - name: Tests — arrêt si échec
+        script: flutter test --reporter=expanded
+
+      - name: Build AAB release
+        script: |
+          flutter build appbundle --release \
+            --dart-define=ENV=production \
+            --build-number=$BUILD_NUMBER
+
+    artifacts:
+      - build/app/outputs/bundle/release/app-release.aab
+
+    publishing:
+      google_play:
+        credentials: $GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
+        track: internal          # internal → alpha → beta → production
+        submit_as_draft: false
+      email:
+        recipients:
+          - tchepgapatrick@yahoo.fr
+        notify:
+          success: true
+          failure: true
+
+  # ══════════════════════════════════════════════════════════════════════════
+  # WORKFLOW 3 — iOS → TestFlight
+  # ══════════════════════════════════════════════════════════════════════════
+  ios-deploy:
+    name: 🍎 iOS → TestFlight
+    max_build_duration: 90
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: master
+          include: true
+    environment:
+      flutter: 3.29.3
+      xcode: latest
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: fr.devcoorp.thoua
+
+    scripts:
+      - name: Récupération des dépendances
+        script: flutter pub get
+
+      - name: Analyse statique
+        script: flutter analyze --no-fatal-infos
+
+      - name: Tests — arrêt si échec
+        script: flutter test --reporter=expanded
+
+      - name: Build IPA release
+        script: |
+          flutter build ipa --release \
+            --dart-define=ENV=production \
+            --build-number=$BUILD_NUMBER \
+            --export-options-plist=/Users/builder/export_options.plist
+
+    artifacts:
+      - build/ios/ipa/*.ipa
+
+    publishing:
+      app_store_connect:
+        api_key: $APP_STORE_CONNECT_PRIVATE_KEY
+        key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
+        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
+        submit_to_testflight: true
+        beta_groups:
+          - Testeurs internes       # Nom du groupe dans TestFlight
+      email:
+        recipients:
+          - tchepgapatrick@yahoo.fr
+        notify:
+          success: true
+          failure: true
+
+  # ══════════════════════════════════════════════════════════════════════════
+  # WORKFLOW 4 — Distribution testeurs via lien direct (sans stores)
+  # ══════════════════════════════════════════════════════════════════════════
+  testers-distribution:
+    name: 📲 Distribution testeurs
+    max_build_duration: 60
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: develop
+          include: true
+    environment:
+      flutter: 3.29.3
+      java: 17
+      xcode: latest
+      android_signing:
+        - tontine_keystore
+      ios_signing:
+        distribution_type: ad_hoc
+        bundle_identifier: fr.devcoorp.thoua
+
+    scripts:
+      - name: Récupération des dépendances
+        script: flutter pub get
+
+      - name: Tests
+        script: flutter test --reporter=expanded
+
+      - name: Build Android APK (pour testeurs)
+        script: |
+          flutter build apk --release \
+            --dart-define=ENV=staging \
+            --build-number=$BUILD_NUMBER
+
+      - name: Build iOS IPA (ad hoc pour testeurs)
+        script: |
+          flutter build ipa --release \
+            --dart-define=ENV=staging \
+            --build-number=$BUILD_NUMBER
+
+    artifacts:
+      - build/app/outputs/flutter-apk/app-release.apk
+      - build/ios/ipa/*.ipa
+
+    publishing:
+      # Lien de téléchargement envoyé automatiquement par Codemagic
+      email:
+        recipients:
+          - tchepgapatrick@yahoo.fr
+        notify:
+          success: true
+          failure: true

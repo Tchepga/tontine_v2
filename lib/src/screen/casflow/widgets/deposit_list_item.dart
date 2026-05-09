@@ -70,11 +70,11 @@ class DepositListItem extends StatelessWidget {
                         children: [
                           Expanded(
                             child: Text(
-                              deposit.displayLabel,
+                              _buildShortLabel(),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
-                                fontSize: 16,
+                                fontSize: 15,
                                 fontWeight: FontWeight.w600,
                                 color: AppColors.textPrimary,
                               ),
@@ -105,20 +105,9 @@ class DepositListItem extends StatelessWidget {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        deposit.author != null
-                            ? 'Par ${deposit.author!.firstname ?? ''} ${deposit.author!.lastname ?? ''}'.trim()
-                            : 'Inconnu',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
                       const SizedBox(height: 4),
                       Text(
-                        DateFormat('dd/MM/yyyy à HH:mm')
-                            .format(deposit.creationDate),
+                        DateFormat('dd/MM/yy').format(deposit.creationDate),
                         style: const TextStyle(
                           fontSize: 12,
                           color: AppColors.textSecondary,
@@ -156,6 +145,17 @@ class DepositListItem extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _buildShortLabel() {
+    // Le type vient du champ `type` (COTISATION / FOND), pas de `reasons` (texte libre)
+    final String typeLabel = deposit.type.displayName;
+
+    // Prénom seulement pour garder le label court
+    final String authorLabel = deposit.author?.firstname?.trim() ?? '';
+
+    if (authorLabel.isEmpty) return typeLabel;
+    return '$typeLabel · $authorLabel';
   }
 
   IconData _getDepositReasonIcon() {
