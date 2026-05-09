@@ -148,8 +148,7 @@ jobs:
           else
             echo "present=false" >> "$GITHUB_OUTPUT"
             echo "::notice::Pas de fastlane/Fastfile — étapes iOS ignorées (ajoutez Fastlane ou utilisez Codemagic)."
-
-            fi
+          fi
 
       - name: Setup Flutter
         if: steps.fastlane.outputs.present == 'true'
@@ -216,10 +215,13 @@ jobs:
             echo "❌ **Android** → Échec (${{ needs.deploy-android.result }})" >> $GITHUB_STEP_SUMMARY
           fi
           ios="${{ needs.deploy-ios.result }}"
-          if [ "$ios" = "success" ]; then
+          fl="${{ needs.deploy-ios.outputs.fastlane_used }}"
+          if [ "$ios" = "success" ] && [ "$fl" = "true" ]; then
             echo "✅ **iOS** → TestFlight" >> $GITHUB_STEP_SUMMARY
+          elif [ "$ios" = "success" ] && [ "$fl" != "true" ]; then
+            echo "⏭️ **iOS** → Ignoré (pas de fastlane/Fastfile — Codemagic ou ajout Fastlane au repo)" >> $GITHUB_STEP_SUMMARY
           elif [ "$ios" = "skipped" ]; then
-            echo "⏭️ **iOS** → Ignoré (pas de fastlane/Fastfile — ajoutez Fastlane dans le repo ou utilisez Codemagic)" >> $GITHUB_STEP_SUMMARY
+            echo "⏭️ **iOS** → Job ignoré" >> $GITHUB_STEP_SUMMARY
           else
             echo "❌ **iOS** → Échec ($ios)" >> $GITHUB_STEP_SUMMARY
           fi
