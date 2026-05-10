@@ -192,7 +192,7 @@ class _CashflowViewState extends State<CashflowView> {
       child: Column(
         children: [
           DropdownButtonFormField<DepositType>(
-            value: _selectedType,
+            initialValue: _selectedType,
             isExpanded: true,
             decoration: InputDecoration(
               labelText: 'Type',
