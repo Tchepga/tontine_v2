@@ -17,7 +17,8 @@ class MemberService {
   static const String KEY_TOKEN = 'token';
 
   Future<void> init() async {
-    if (urlApi.isEmpty) {
+    final base = dotenv.env['API_URL']?.trim();
+    if (base == null || base.isEmpty) {
       throw Exception('API_URL is not set in .env file');
     }
   }

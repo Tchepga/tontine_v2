@@ -64,7 +64,7 @@ class WebSocketService {
     _isConnecting = true;
 
     try {
-      final wsUrl = dotenv.env['WS_URL'];
+      final wsUrl = dotenv.env['WS_URL']?.trim();
       final token = _storage.read(MemberService.KEY_TOKEN);
 
       if (wsUrl != null && token != null) {

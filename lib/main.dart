@@ -26,6 +26,14 @@ void main() async {
   await dotenv.load(fileName: envFile);
   debugPrint('🌍 Environnement chargé : $envFile');
 
+  final apiUrl = dotenv.env['API_URL']?.trim();
+  if (apiUrl == null || apiUrl.isEmpty) {
+    throw StateError(
+      'API_URL est absent ou vide dans $envFile. '
+      'Ajoutez une ligne du type API_URL=https://votre-api (sans slash final).',
+    );
+  }
+
   await GetStorage.init();
 
   // Initialiser les notifications locales
