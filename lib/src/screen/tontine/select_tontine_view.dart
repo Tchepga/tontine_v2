@@ -49,6 +49,7 @@ class _SelectTontineViewState extends State<SelectTontineView> {
         return;
       }
       await memberService.getProfile();
+      if (!mounted) return;
       await Provider.of<TontineProvider>(context, listen: false).loadTontines();
     } catch (e) {
       _logger.severe('Error loading tontines: $e');
@@ -498,7 +499,7 @@ class _SelectTontineViewState extends State<SelectTontineView> {
                       : null,
                   onTap: () async {
                     await tontineProvider.setCurrentTontine(tontine);
-                    if (mounted) {
+                    if (context.mounted) {
                       Navigator.of(context)
                           .pushReplacementNamed(DashboardView.routeName);
                       // TODO: review after adding part order

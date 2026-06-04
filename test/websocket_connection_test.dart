@@ -1,12 +1,24 @@
 import 'dart:io';
 import 'dart:async';
 
+import 'package:logging/logging.dart';
+
 /// Script de test pour diagnostiquer les problèmes de connexion WebSocket
 ///
 /// Pour exécuter ce test:
 /// dart test/websocket_connection_test.dart
+final _log = Logger('WebSocketConnectionTest');
+
+void _initLogging() {
+  Logger.root.level = Level.ALL;
+  Logger.root.onRecord.listen((record) {
+    stdout.writeln(record.message);
+  });
+}
+
 void main() async {
-  print('=== Test de connexion WebSocket ===\n');
+  _initLogging();
+  _log.info('=== Test de connexion WebSocket ===\n');
 
   // Configuration
   const baseUrl = 'api.tontine.devcoorp.net';
@@ -23,32 +35,32 @@ void main() async {
     'ws://$baseUrl?token=$token', // Version non sécurisée
   ];
 
-  print('URLs à tester:');
+  _log.info('URLs à tester:');
   for (var i = 0; i < testUrls.length; i++) {
-    print('  ${i + 1}. ${testUrls[i].replaceAll(token, 'TOKEN')}');
+    _log.info('  ${i + 1}. ${testUrls[i].replaceAll(token, 'TOKEN')}');
   }
-  print('');
+  _log.info('');
 
   // Tester chaque URL
   for (var i = 0; i < testUrls.length; i++) {
     final url = testUrls[i];
-    print(
+    _log.info(
         'Test ${i + 1}/${testUrls.length}: ${url.replaceAll(token, 'TOKEN')}');
     await testWebSocketConnection(url);
-    print('');
+    _log.info('');
   }
 
-  print('=== Tests terminés ===');
+  _log.info('=== Tests terminés ===');
 }
 
 Future<void> testWebSocketConnection(String url) async {
   WebSocket? socket;
 
   try {
-    print('  Tentative de connexion...');
+    _log.info('  Tentative de connexion...');
 
     // Connexion simple sans headers personnalisés
-    print('  Connexion simple sans headers...');
+    _log.info('  Connexion simple sans headers...');
 
     // Tentative de connexion avec timeout
     socket = await WebSocket.connect(url).timeout(
@@ -58,22 +70,22 @@ Future<void> testWebSocketConnection(String url) async {
       },
     );
 
-    print('  ✓ Connexion établie avec succès!');
-    print('  ReadyState: ${socket.readyState}');
+    _log.info('  ✓ Connexion établie avec succès!');
+    _log.info('  ReadyState: ${socket.readyState}');
 
     // Écouter les messages pendant 3 secondes
-    print('  Écoute des messages pendant 3 secondes...');
+    _log.info('  Écoute des messages pendant 3 secondes...');
 
     final subscription = socket.listen(
       (message) {
-        print(
+        _log.info(
             '  ✓ Message reçu: ${message.toString().substring(0, message.toString().length > 100 ? 100 : message.toString().length)}...');
       },
       onError: (error) {
-        print('  ✗ Erreur de stream: $error');
+        _log.severe('  ✗ Erreur de stream: $error');
       },
       onDone: () {
-        print('  ✓ Connexion fermée proprement');
+        _log.info('  ✓ Connexion fermée proprement');
       },
     );
 
@@ -83,27 +95,28 @@ Future<void> testWebSocketConnection(String url) async {
     // Fermer
     await subscription.cancel();
     await socket.close();
-    print('  ✓ Test réussi - Connexion fermée');
+    _log.info('  ✓ Test réussi - Connexion fermée');
   } on TimeoutException catch (e) {
-    print('  ✗ Timeout: $e');
+    _log.severe('  ✗ Timeout: $e');
   } on SocketException catch (e) {
-    print('  ✗ Erreur Socket: ${e.message}');
+    _log.severe('  ✗ Erreur Socket: ${e.message}');
     if (e.osError != null) {
-      print('  ✗ OS Error: ${e.osError}');
+      _log.severe('  ✗ OS Error: ${e.osError}');
     }
   } on HttpException catch (e) {
-    print('  ✗ Erreur HTTP: ${e.message}');
-    print('  ✗ Cela indique généralement:');
-    print('     - Code HTTP 502: Problème de proxy/gateway');
-    print('     - Code HTTP 400: Mauvaise requête');
-    print('     - Code HTTP 401/403: Authentification échouée');
-    print('     - Le serveur n\'a pas accepté la mise à niveau WebSocket');
+    _log.severe('  ✗ Erreur HTTP: ${e.message}');
+    _log.severe('  ✗ Cela indique généralement:');
+    _log.severe('     - Code HTTP 502: Problème de proxy/gateway');
+    _log.severe('     - Code HTTP 400: Mauvaise requête');
+    _log.severe('     - Code HTTP 401/403: Authentification échouée');
+    _log.severe(
+        '     - Le serveur n\'a pas accepté la mise à niveau WebSocket');
   } on WebSocketException catch (e) {
-    print('  ✗ Erreur WebSocket: ${e.message}');
+    _log.severe('  ✗ Erreur WebSocket: ${e.message}');
   } catch (e, stackTrace) {
-    print('  ✗ Erreur inattendue: $e');
-    print('  ✗ Type: ${e.runtimeType}');
-    print(
+    _log.severe('  ✗ Erreur inattendue: $e');
+    _log.severe('  ✗ Type: ${e.runtimeType}');
+    _log.severe(
         '  ✗ Stack trace: ${stackTrace.toString().split('\n').take(3).join('\n')}');
   } finally {
     try {

@@ -154,7 +154,6 @@ class _RapportViewState extends State<RapportView>
                             showInlineCode: false,
                             showJustifyAlignment: false,
                             showLineHeightButton: false,
-                            showClipboardCut: false,
                             showRedo: false,
                             showUndo: false,
                             showRightAlignment: false,
@@ -1199,9 +1198,10 @@ class _RapportViewState extends State<RapportView>
       final tontineId = tontineProvider.currentTontine!.id;
       await tontineProvider.deleteSanction(tontineId, sanction.id);
 
-      if (!mounted) return;
+      if (!context.mounted) return;
       Navigator.of(context).pop(); // Fermer l'indicateur de chargement
 
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('Sanction supprimée avec succès'),
@@ -1213,9 +1213,10 @@ class _RapportViewState extends State<RapportView>
         ),
       );
     } catch (e) {
-      if (!mounted) return;
+      if (!context.mounted) return;
       Navigator.of(context).pop(); // Fermer l'indicateur de chargement
 
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Erreur lors de la suppression : ${e.toString()}'),

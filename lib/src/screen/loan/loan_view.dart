@@ -71,15 +71,15 @@ class _LoanViewState extends State<LoanView> {
               if (myLoans.isNotEmpty) ...[
                 _buildSectionTitle(context, 'Mes prêts', Icons.person),
                 ResponsiveSpacing(height: 16),
-                ...myLoans.map((loan) =>
-                    _buildLoanCard(context, loan, true, currentTontine, currentUser)),
+                ...myLoans.map((loan) => _buildLoanCard(
+                    context, loan, true, currentTontine, currentUser)),
                 ResponsiveSpacing(height: 24),
               ],
               if (otherLoans.isNotEmpty) ...[
                 _buildSectionTitle(context, 'Autres prêts', Icons.people),
                 ResponsiveSpacing(height: 16),
-                ...otherLoans.map((loan) =>
-                    _buildLoanCard(context, loan, false, currentTontine, currentUser)),
+                ...otherLoans.map((loan) => _buildLoanCard(
+                    context, loan, false, currentTontine, currentUser)),
               ],
             ],
           ),
@@ -98,8 +98,8 @@ class _LoanViewState extends State<LoanView> {
     );
   }
 
-  Widget _buildLoanCard(
-      BuildContext context, Loan loan, bool isMyLoan, Tontine? currentTontine, Member? currentUser) {
+  Widget _buildLoanCard(BuildContext context, Loan loan, bool isMyLoan,
+      Tontine? currentTontine, Member? currentUser) {
     final canManageStatus = currentUser?.user?.roles?.any(
             (role) => role == Role.ACCOUNT_MANAGER || role == Role.PRESIDENT) ??
         false;
@@ -779,7 +779,7 @@ class _LoanViewState extends State<LoanView> {
               onPressed: selectedStatus != loan.status
                   ? () async {
                       await _updateLoanStatus(loan, selectedStatus);
-                      if (!mounted) return;
+                      if (!context.mounted) return;
                       Navigator.of(context).pop();
                     }
                   : null,

@@ -740,9 +740,9 @@ class _SettingTontineViewState extends State<SettingTontineView> {
 
                     await tontineProvider.addPart(partDto);
 
-                    if (!mounted) return;
+                    if (!context.mounted) return;
                     Navigator.of(context).pop();
-                    if (!mounted) return;
+                    if (!context.mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text('Part ajoutée avec succès'),
@@ -1015,16 +1015,17 @@ class _SettingTontineViewState extends State<SettingTontineView> {
 
       await tontineProvider.deleteTontine(currentTontine.id);
 
-      if (!mounted) return;
+      if (!context.mounted) return;
       Navigator.of(context).pop(); // Fermer l'indicateur de chargement
 
       // Rediriger vers la sélection de tontine
+      if (!context.mounted) return;
       Navigator.of(context).pushNamedAndRemoveUntil(
         '/select-tontine',
         (route) => false,
       );
 
-      if (!mounted) return;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('Tontine supprimée avec succès'),
@@ -1036,9 +1037,10 @@ class _SettingTontineViewState extends State<SettingTontineView> {
         ),
       );
     } catch (e) {
-      if (!mounted) return;
+      if (!context.mounted) return;
       Navigator.of(context).pop(); // Fermer l'indicateur de chargement
 
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('Erreur lors de la suppression de la tontine'),
@@ -1440,7 +1442,7 @@ class _SettingTontineViewState extends State<SettingTontineView> {
                                   _reminderMissingDepositsEnabled,
                             ));
                         await tontineProvider.loadTontines();
-                        if (!mounted) return;
+                        if (!context.mounted) return;
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             content: Text('Paramètres mis à jour avec succès'),

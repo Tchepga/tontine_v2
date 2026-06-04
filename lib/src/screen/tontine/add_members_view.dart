@@ -83,16 +83,15 @@ class _AddMembersViewState extends State<AddMembersView> {
                           memberDto,
                         );
                         tontineProvider.loadTontines();
-                        if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Membre ajouté avec succès'),
-                              backgroundColor: Colors.green,
-                            ),
-                          );
-                        }
+                        if (!context.mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Membre ajouté avec succès'),
+                            backgroundColor: Colors.green,
+                          ),
+                        );
                       } catch (e) {
-                        if (!mounted) return;
+                        if (!context.mounted) return;
                         if (e == ErrorCatchable.USER_ALREADY_EXISTS) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(

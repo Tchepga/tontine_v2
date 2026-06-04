@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:logging/logging.dart';
 import 'dart:io';
 import 'dart:async';
-
 /// Écran de test WebSocket intégré dans l'application
 ///
 /// Ajoutez cette route dans votre application pour tester
 class WebSocketTestScreen extends StatefulWidget {
-  const WebSocketTestScreen({Key? key}) : super(key: key);
+  const WebSocketTestScreen({super.key});
 
   @override
   State<WebSocketTestScreen> createState() => _WebSocketTestScreenState();
 }
 
 class _WebSocketTestScreenState extends State<WebSocketTestScreen> {
-  final List<String> _logs = [];
-  bool _isRunning = false;
+  final _logger = Logger('WebSocketTestScreen');
+  final List<String> _logs = [];  bool _isRunning = false;
 
   // Configuration
   static const baseUrl = 'api.tontine.devcoorp.net';
@@ -27,9 +27,8 @@ class _WebSocketTestScreenState extends State<WebSocketTestScreen> {
         _logs.add('[${DateTime.now().toString().substring(11, 19)}] $message');
       });
     }
-    print(message);
+    _logger.info(message);
   }
-
   Future<void> _runTests() async {
     setState(() {
       _isRunning = true;

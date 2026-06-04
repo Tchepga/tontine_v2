@@ -93,6 +93,7 @@ class _LoginViewState extends State<LoginView> {
           if (firstLaunchService.isFirstLaunch()) {
             // Premier lancement: afficher les explications
             await firstLaunchService.markAppAsLaunched();
+            if (!mounted) return;
             Navigator.of(context).pushReplacementNamed(
               FeaturesExplanationView.routeName,
             );
