@@ -75,6 +75,7 @@ class _DashboardViewState extends State<DashboardView> {
           
           return Scaffold(
             appBar: ActionMenu(title: 'Dashboard'),
+            drawer: const AppDrawer(),
             backgroundColor: AppColors.background,
             body: Center(
               child: ConstrainedBox(

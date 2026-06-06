@@ -10,6 +10,8 @@ import '../../providers/models/event.dart';
 import '../../providers/models/sanction.dart';
 import '../../providers/models/rapport_meeting.dart';
 import '../../providers/models/enum/role.dart';
+import '../../providers/models/pot_distribution.dart';
+import '../../providers/models/member_contribution.dart';
 import '../../services/error_catchable.dart';
 import 'dto/member_dto.dart';
 import 'middleware/interceptor_http.dart';
@@ -17,6 +19,7 @@ import 'dto/tontine_dto.dart';
 import 'dto/deposit_dto.dart';
 import 'dto/rapport_dto.dart';
 import 'dto/sanction_dto.dart';
+import 'dto/pot_distribution_dto.dart';
 import 'package:logging/logging.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'dto/event_dto.dart';
@@ -458,6 +461,7 @@ class TontineService {
       body: jsonEncode(configDto.toJson()),
     );
     if (response.statusCode != 200) {
+      _logger.severe('Failed to update tontine config: ${response.body}');
       throw Exception('Failed to update tontine config');
     }
   }
@@ -542,6 +546,116 @@ class TontineService {
     if (response.statusCode != 200) {
       throw Exception('Failed to update member roles');
     }
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // Rôles par tontine
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  /// Met à jour les rôles d'un membre dans une tontine spécifique.
+  Future<void> updateMemberRolesForTontine(
+      int tontineId, int memberId, List<Role> roles) async {
+    final token = storage.read(MemberService.KEY_TOKEN);
+    final response = await client.patch(
+      Uri.parse('$urlApi/tontine/$tontineId/member/$memberId/roles'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'roles': roles.map((r) => r.toString().split('.').last).toList(),
+      }),
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to update member roles for tontine');
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // Distribution du pot
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  Future<PotDistribution> createDistribution(
+      int tontineId, CreatePotDistributionDto dto) async {
+    final token = storage.read(MemberService.KEY_TOKEN);
+    final response = await client.post(
+      Uri.parse('$urlApi/tontine/$tontineId/distribution'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode(dto.toJson()),
+    );
+    if (response.statusCode == 201) {
+      return PotDistribution.fromJson(jsonDecode(response.body));
+    }
+    final body = jsonDecode(response.body);
+    throw Exception(body['message'] ?? 'Failed to create distribution');
+  }
+
+  Future<List<PotDistribution>> getDistributions(int tontineId) async {
+    try {
+      final token = storage.read(MemberService.KEY_TOKEN);
+      final response = await client.get(
+        Uri.parse('$urlApi/tontine/$tontineId/distribution'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        return data.map((json) => PotDistribution.fromJson(json)).toList();
+      }
+      return [];
+    } catch (e) {
+      _logger.severe('Error getting distributions: $e');
+      return [];
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // Cotisations par membre
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  Future<List<MemberContribution>> getMembersContributions(
+      int tontineId) async {
+    try {
+      final token = storage.read(MemberService.KEY_TOKEN);
+      final response = await client.get(
+        Uri.parse('$urlApi/tontine/$tontineId/members/contributions'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        return data
+            .map((json) => MemberContribution.fromJson(json))
+            .toList();
+      }
+      return [];
+    } catch (e) {
+      _logger.severe('Error getting members contributions: $e');
+      return [];
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // Export CSV financier
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  /// Télécharge le rapport CSV financier et l'enregistre dans les documents.
+  Future<File> exportFinancialCsv(int tontineId) async {
+    final token = storage.read(MemberService.KEY_TOKEN);
+    final response = await client.get(
+      Uri.parse('$urlApi/tontine/$tontineId/export/financial'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to export financial CSV');
+    }
+    final dir = await getApplicationDocumentsDirectory();
+    final fileName =
+        'tontine_${tontineId}_${DateFormat('yyyyMMdd').format(DateTime.now())}.csv';
+    final file = File('${dir.path}/$fileName');
+    await file.writeAsBytes(response.bodyBytes);
+    return file;
   }
 
   Future<void> deleteTontine(int tontineId) async {

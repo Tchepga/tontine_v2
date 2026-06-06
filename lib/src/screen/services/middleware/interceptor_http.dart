@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:http_interceptor/http_interceptor.dart';
 import 'package:get_storage/get_storage.dart';
 
-class AuthInterceptor implements InterceptorContract {
+class AuthInterceptor implements HttpInterceptor {
   final storage = GetStorage();
   static const List<String> publicPaths = [
     'login',
@@ -35,12 +35,12 @@ class AuthInterceptor implements InterceptorContract {
   }
 
   @override
-  FutureOr<bool> shouldInterceptRequest() {
+  FutureOr<bool> shouldInterceptRequest({required BaseRequest request}) {
     return true;
   }
 
   @override
-  FutureOr<bool> shouldInterceptResponse() {
+  FutureOr<bool> shouldInterceptResponse({required BaseResponse response}) {
     return true;
   }
 }

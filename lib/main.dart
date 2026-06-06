@@ -15,14 +15,24 @@ import 'src/providers/loan_provider.dart';
 import 'src/providers/event_provider.dart';
 import 'src/providers/notification_provider.dart';
 
-// DotEnv dotenv = DotEnv() is automatically called during import.
-// If you want to load multiple dotenv files or name your dotenv object differently, you can do the following and import the singleton into the relavant files:
-// DotEnv another_dotenv = DotEnv()
+// Environnement injecté via --dart-define=ENV=local (ou production)
+// Par défaut : production
+const String _env = String.fromEnvironment('ENV', defaultValue: 'production');
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized(); // Important !
 
-  await dotenv.load(fileName: ".env");
+  final envFile = 'assets/env/.env.$_env';
+  await dotenv.load(fileName: envFile);
+  debugPrint('🌍 Environnement chargé : $envFile');
+
+  final apiUrl = dotenv.env['API_URL']?.trim();
+  if (apiUrl == null || apiUrl.isEmpty) {
+    throw StateError(
+      'API_URL est absent ou vide dans $envFile. '
+      'Ajoutez une ligne du type API_URL=https://votre-api (sans slash final).',
+    );
+  }
 
   await GetStorage.init();
 
@@ -34,7 +44,7 @@ void main() async {
 
   Logger.root.level = Level.ALL;
   Logger.root.onRecord.listen((record) {
-    print('${record.level.name}: ${record.time}: ${record.message}');
+    debugPrint('${record.level.name}: ${record.time}: ${record.message}');
   });
 
   // Set up the SettingsController, which will glue user settings to multiple

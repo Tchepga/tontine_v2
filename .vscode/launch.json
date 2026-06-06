@@ -5,9 +5,76 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Flutter",
+            "name": "🏠 Local (périphérique sélectionné)",
             "request": "launch",
-            "type": "dart"
+            "type": "dart",
+            "args": [
+                "--dart-define=ENV=local"
+            ]
+        },
+        {
+            "name": "🚀 Production (périphérique sélectionné)",
+            "request": "launch",
+            "type": "dart",
+            "args": [
+                "--dart-define=ENV=production"
+            ]
+        },
+        {
+            "name": "🏠 Local — Profile (périphérique sélectionné)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile",
+            "args": [
+                "--dart-define=ENV=local"
+            ]
+        },
+        {
+            "name": "🚀 Production — Release (périphérique sélectionné)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release",
+            "args": [
+                "--dart-define=ENV=production"
+            ]
+        },
+        {
+            "name": "🏠 Local — iOS Simulator",
+            "request": "launch",
+            "type": "dart",
+            "deviceId": "65ABC4D7-F398-4236-868B-6D9F21656CC3",
+            "args": [
+                "--dart-define=ENV=local"
+            ]
+        },
+        {
+            "name": "🚀 Production — iOS Simulator",
+            "request": "launch",
+            "type": "dart",
+            "deviceId": "apple_ios_simulator",
+            "args": [
+                "--dart-define=ENV=production"
+            ]
+        },
+        {
+            "name": "🏠 Local — Profile — iOS Simulator",
+            "request": "launch",
+            "type": "dart",
+            "deviceId": "apple_ios_simulator",
+            "flutterMode": "profile",
+            "args": [
+                "--dart-define=ENV=local"
+            ]
+        },
+        {
+            "name": "🚀 Production — Release — iOS Simulator",
+            "request": "launch",
+            "type": "dart",
+            "deviceId": "apple_ios_simulator",
+            "flutterMode": "release",
+            "args": [
+                "--dart-define=ENV=production"
+            ]
         }
     ]
 }

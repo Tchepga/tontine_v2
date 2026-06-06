@@ -72,10 +72,12 @@ class _MemberViewState extends State<MemberView>
     bool copyToClipboardOnError = true,
   }) async {
     try {
-      await Share.share(
-        message,
-        subject: subject,
-        sharePositionOrigin: _sharePositionOrigin(),
+      await SharePlus.instance.share(
+        ShareParams(
+          text: message,
+          subject: subject,
+          sharePositionOrigin: _sharePositionOrigin(),
+        ),
       );
     } on PlatformException catch (e) {
       debugPrint('Share PlatformException: ${e.code} ${e.message}');
@@ -176,6 +178,7 @@ class _MemberViewState extends State<MemberView>
 
         return Scaffold(
           backgroundColor: AppColors.background,
+          drawer: const AppDrawer(),
           appBar: AppBar(
             title: Text('Membres', style: TextStyle(color: Colors.white)),
             backgroundColor: AppColors.primary,

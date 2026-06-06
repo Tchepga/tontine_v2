@@ -14,7 +14,8 @@ class WebSocketTestScreen extends StatefulWidget {
 
 class _WebSocketTestScreenState extends State<WebSocketTestScreen> {
   final _logger = Logger('WebSocketTestScreen');
-  final List<String> _logs = [];  bool _isRunning = false;
+  final List<String> _logs = [];
+  bool _isRunning = false;
 
   // Configuration
   static const baseUrl = 'api.tontine.devcoorp.net';
@@ -29,6 +30,7 @@ class _WebSocketTestScreenState extends State<WebSocketTestScreen> {
     }
     _logger.info(message);
   }
+
   Future<void> _runTests() async {
     setState(() {
       _isRunning = true;

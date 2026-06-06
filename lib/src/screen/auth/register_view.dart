@@ -18,7 +18,6 @@ class RegisterView extends StatefulWidget {
 
 class _RegisterViewState extends State<RegisterView> {
   final _formKey = GlobalKey<FormState>();
-  final _usernameController = TextEditingController(text: '');
   final _passwordController = TextEditingController(text: '');
   final _confirmPasswordController = TextEditingController(text: '');
   final _firstnameController = TextEditingController(text: '');
@@ -149,22 +148,6 @@ class _RegisterViewState extends State<RegisterView> {
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 32),
-                  _buildTextField(
-                    controller: _usernameController,
-                    label: 'Nom d\'utilisateur',
-                    icon: Icons.person_outline,
-                    colorScheme: colorScheme,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Ce champ est requis';
-                      }
-                      if (value.length < 3) {
-                        return 'Le nom d\'utilisateur doit contenir au moins 3 caractères';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 20),
                   _buildTextField(
                     controller: _firstnameController,
                     label: 'Prénom',
@@ -512,9 +495,6 @@ class _RegisterViewState extends State<RegisterView> {
               if (value == null || value.isEmpty) {
                 return 'Ce champ est requis';
               }
-              if (controller == _usernameController && value.length < 3) {
-                return 'Le nom d\'utilisateur doit contenir au moins 3 caractères';
-              }
               if (controller == _emailController) {
                 final RegExp emailRegExp = RegExp(
                   r'^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$',
@@ -537,7 +517,6 @@ class _RegisterViewState extends State<RegisterView> {
 
       try {
         final memberDto = CreateMemberDto(
-          username: _usernameController.text,
           password: _passwordController.text,
           firstname: _firstnameController.text,
           lastname: _lastnameController.text,
@@ -554,7 +533,7 @@ class _RegisterViewState extends State<RegisterView> {
             case 400:
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text('Le nom d\'utilisateur existe déjà'),
+                  content: Text('Un compte existe déjà avec ces informations'),
                   backgroundColor: AppColors.error,
                 ),
               );
@@ -601,7 +580,6 @@ class _RegisterViewState extends State<RegisterView> {
 
   @override
   void dispose() {
-    _usernameController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     _firstnameController.dispose();

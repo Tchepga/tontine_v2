@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../providers/models/deposit.dart';
 import '../../../providers/models/enum/deposit_reason.dart';
+import '../../../providers/models/enum/deposit_type.dart';
 import '../../../providers/models/enum/status_deposit.dart';
 import '../../../providers/models/enum/currency.dart';
 import '../../../providers/tontine_provider.dart';
@@ -69,9 +70,11 @@ class DepositListItem extends StatelessWidget {
                         children: [
                           Expanded(
                             child: Text(
-                              deposit.reasons ?? 'Mouvement',
+                              _buildShortLabel(),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
-                                fontSize: 16,
+                                fontSize: 15,
                                 fontWeight: FontWeight.w600,
                                 color: AppColors.textPrimary,
                               ),
@@ -102,18 +105,9 @@ class DepositListItem extends StatelessWidget {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Par ${deposit.author.firstname} ${deposit.author.lastname}',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
                       const SizedBox(height: 4),
                       Text(
-                        DateFormat('dd/MM/yyyy à HH:mm')
-                            .format(deposit.creationDate),
+                        DateFormat('dd/MM/yy').format(deposit.creationDate),
                         style: const TextStyle(
                           fontSize: 12,
                           color: AppColors.textSecondary,
@@ -153,7 +147,20 @@ class DepositListItem extends StatelessWidget {
     );
   }
 
+  String _buildShortLabel() {
+    // Le type vient du champ `type` (COTISATION / FOND), pas de `reasons` (texte libre)
+    final String typeLabel = deposit.type.displayName;
+
+    // Prénom seulement pour garder le label court
+    final String authorLabel = deposit.author?.firstname?.trim() ?? '';
+
+    if (authorLabel.isEmpty) return typeLabel;
+    return '$typeLabel · $authorLabel';
+  }
+
   IconData _getDepositReasonIcon() {
+    // Le type FOND a sa propre icône
+    if (deposit.type == DepositType.FOND) return Icons.savings;
     final reason = depositReasonFromString(deposit.reasons ?? '');
     switch (reason) {
       case DepositReason.VERSEMENT:
@@ -168,6 +175,8 @@ class DepositListItem extends StatelessWidget {
   }
 
   Color _getDepositReasonColor() {
+    // Le type FOND utilise la couleur info (bleu)
+    if (deposit.type == DepositType.FOND) return AppColors.info;
     final reason = depositReasonFromString(deposit.reasons ?? '');
     switch (reason) {
       case DepositReason.VERSEMENT:

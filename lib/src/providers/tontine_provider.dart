@@ -12,12 +12,15 @@ import 'models/tontine.dart';
 import 'models/auction.dart';
 import 'models/enum/loop_period.dart';
 import 'models/enum/role.dart';
+import 'models/pot_distribution.dart';
+import 'models/member_contribution.dart';
 import '../screen/services/dto/deposit_dto.dart';
 import '../screen/services/dto/member_dto.dart';
 import '../screen/services/dto/rapport_dto.dart';
 import '../screen/services/dto/sanction_dto.dart';
 import '../screen/services/dto/tontine_dto.dart';
 import '../screen/services/dto/auction_dto.dart';
+import '../screen/services/dto/pot_distribution_dto.dart';
 import '../screen/services/tontine_service.dart';
 import '../screen/services/auction_service.dart';
 import 'models/rapport_meeting.dart';
@@ -34,6 +37,8 @@ class TontineProvider extends ChangeNotifier {
   List<Tontine> _tontines = [];
   List<Deposit> _deposits = [];
   List<Auction> _auctions = [];
+  List<PotDistribution> _distributions = [];
+  List<MemberContribution> _contributions = [];
   Tontine? _currentTontine;
   bool _isLoading = false;
   final _notificationService = LocalNotificationService();
@@ -43,6 +48,8 @@ class TontineProvider extends ChangeNotifier {
   Tontine? get currentTontine => _currentTontine;
   List<Deposit> get deposits => _deposits;
   List<Auction> get auctions => _auctions;
+  List<PotDistribution> get distributions => _distributions;
+  List<MemberContribution> get contributions => _contributions;
   bool get isLoading => _isLoading;
   List<Part> get parts => _parts;
 
@@ -53,12 +60,14 @@ class TontineProvider extends ChangeNotifier {
     try {
       final tontines = await _tontineService.getTontines();
       _tontines = tontines;
-      final index = _tontines
-          .indexWhere((t) => t.id == _storage.read(KEY_SELECTED_TONTINE_ID));
+      final selectedId = _storage.read(KEY_SELECTED_TONTINE_ID);
+      final index = selectedId != null
+          ? _tontines.indexWhere((t) => t.id == selectedId)
+          : -1;
       if (index != -1) {
         _currentTontine = _tontines[index];
       } else {
-        throw Exception('La tontine sélectionnée n\'existe pas');
+        _currentTontine = null;
       }
     } catch (e) {
       _logger.severe('Error loading tontines: $e');
@@ -93,6 +102,18 @@ class TontineProvider extends ChangeNotifier {
       _logger.severe('Error setting current tontine: $e');
       rethrow;
     }
+  }
+
+  /// Efface la tontine active (stockage + caches) pour afficher l’écran de choix d’une autre tontine.
+  void clearCurrentTontineSelection() {
+    _currentTontine = null;
+    _storage.remove(KEY_SELECTED_TONTINE_ID);
+    _deposits = [];
+    _auctions = [];
+    _distributions = [];
+    _contributions = [];
+    _parts.clear();
+    notifyListeners();
   }
 
   Future<void> createTontine(CreateTontineDto tontine) async {
@@ -440,7 +461,7 @@ class TontineProvider extends ChangeNotifier {
     return (daysSinceFirstDay / 7).ceil();
   }
 
-  /// Met à jour les rôles d'un membre
+  /// Met à jour les rôles d'un membre (global — conservé pour compatibilité)
   Future<void> updateMemberRoles(
       int tontineId, int memberId, List<Role> roles) async {
     try {
@@ -449,6 +470,75 @@ class TontineProvider extends ChangeNotifier {
       notifyListeners();
     } catch (e) {
       rethrow;
+    }
+  }
+
+  /// Met à jour les rôles d'un membre dans une tontine spécifique.
+  Future<void> updateMemberRolesForTontine(
+      int tontineId, int memberId, List<Role> roles) async {
+    try {
+      await _tontineService.updateMemberRolesForTontine(
+          tontineId, memberId, roles);
+      notifyListeners();
+    } catch (e) {
+      _logger.severe('Error updating member roles for tontine: $e');
+      rethrow;
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // Distribution du pot
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  Future<void> loadDistributions(int tontineId) async {
+    try {
+      _distributions = await _tontineService.getDistributions(tontineId);
+      notifyListeners();
+    } catch (e) {
+      _logger.severe('Error loading distributions: $e');
+    }
+  }
+
+  Future<void> createDistribution(
+      int tontineId, CreatePotDistributionDto dto) async {
+    try {
+      await _tontineService.createDistribution(tontineId, dto);
+      await loadDistributions(tontineId);
+      await _notificationService.showNotification(
+        title: 'Distribution enregistrée',
+        body: 'La distribution du pot a été enregistrée',
+        payload: '/dashboard',
+      );
+    } catch (e) {
+      _logger.severe('Error creating distribution: $e');
+      rethrow;
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // Cotisations par membre
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  Future<void> loadContributions(int tontineId) async {
+    try {
+      _contributions =
+          await _tontineService.getMembersContributions(tontineId);
+      notifyListeners();
+    } catch (e) {
+      _logger.severe('Error loading contributions: $e');
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // Export CSV financier
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  Future<File?> exportFinancialCsv(int tontineId) async {
+    try {
+      return await _tontineService.exportFinancialCsv(tontineId);
+    } catch (e) {
+      _logger.severe('Error exporting financial CSV: $e');
+      return null;
     }
   }
 

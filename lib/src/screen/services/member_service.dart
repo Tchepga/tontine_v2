@@ -17,7 +17,8 @@ class MemberService {
   static const String KEY_TOKEN = 'token';
 
   Future<void> init() async {
-    if (urlApi.isEmpty) {
+    final base = dotenv.env['API_URL']?.trim();
+    if (base == null || base.isEmpty) {
       throw Exception('API_URL is not set in .env file');
     }
   }
@@ -39,7 +40,7 @@ class MemberService {
         }),
       );
 
-      _logger.info('Login response status: ${response.statusCode}');
+      _logger.info('Login response status: ${response.body}');
 
       if (response.statusCode == 201) {
         final data = jsonDecode(response.body);

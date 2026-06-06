@@ -63,6 +63,10 @@ test-results.html
 # Env files
 .env
 .env.local
+# Placeholders versionnés pour le bundle (valeurs réelles : surcharge locale hors repo si besoin)
+!assets/env/.env.local
+.env.production
+!assets/env/.env.production
 
 # Firebase (ne pas committer les fichiers de config)
 android/app/google-services.json
@@ -71,4 +75,4 @@ ios/GoogleService-Info.plist
 
 # node modules
 node_modules/
-package-lock.json
+package-lock.json.env.local
