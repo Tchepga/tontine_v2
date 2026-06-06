@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import 'selected_language_view.dart';
 
@@ -21,12 +22,13 @@ class _SplashViewState extends State<SplashView> {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
+    return Scaffold(
       body: Center(
-        child: Image(
-          image: AssetImage('assets/images/logo.png'),
+        child: SvgPicture.asset(
+          'assets/images/calebasse.svg',
           width: 200,
           height: 200,
+          fit: BoxFit.contain,
         ),
       ),
     );

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get_storage/get_storage.dart';
 
 import '../providers/models/enum/available_language.dart';
@@ -97,8 +98,8 @@ class _SelectedLanguageViewState extends State<SelectedLanguageView> {
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(20),
-                    child: Image.asset(
-                      'assets/images/logo.png',
+                    child: SvgPicture.asset(
+                      'assets/images/calebasse.svg',
                       fit: BoxFit.contain,
                     ),
                   ),
