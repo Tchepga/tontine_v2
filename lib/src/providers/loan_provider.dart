@@ -90,11 +90,11 @@ class LoanProvider extends ChangeNotifier {
 
   Future<void> voteLoan(int id) async {
     try {
-      await _loanService.voteLoan(id);
       final loan = _loans.firstWhere((l) => l.id == id);
-      if (loan.tontineId != null) {
-        await loadLoans(loan.tontineId!);
-      }
+      final tontineId = loan.tontineId;
+      if (tontineId == null) throw Exception('tontineId manquant sur le prêt $id');
+      await _loanService.voteLoan(id, tontineId: tontineId);
+      await loadLoans(tontineId);
     } catch (e) {
       _logger.severe('Error voting for loan: $e');
       rethrow;
@@ -104,16 +104,37 @@ class LoanProvider extends ChangeNotifier {
   /// Approbation directe par le président.
   Future<void> approveLoan(int id) async {
     try {
-      await _loanService.approveLoan(id);
+      final loan = _loans.firstWhere((l) => l.id == id);
+      final tontineId = loan.tontineId;
+      if (tontineId == null) throw Exception('tontineId manquant sur le prêt $id');
+      await _loanService.approveLoan(id, tontineId: tontineId);
       await _notificationService.showNotification(
         title: 'Prêt approuvé',
         body: 'Le prêt a été approuvé',
         payload: '/loan',
       );
-      final loan = _loans.firstWhere((l) => l.id == id);
-      if (loan.tontineId != null) await loadLoans(loan.tontineId!);
+      await loadLoans(tontineId);
     } catch (e) {
       _logger.severe('Error approving loan: $e');
+      rethrow;
+    }
+  }
+
+  /// Annulation d'un prêt.
+  Future<void> cancelLoan(int id) async {
+    try {
+      final loan = _loans.firstWhere((l) => l.id == id);
+      final tontineId = loan.tontineId;
+      if (tontineId == null) throw Exception('tontineId manquant sur le prêt $id');
+      await _loanService.cancelLoan(id, tontineId: tontineId);
+      await _notificationService.showNotification(
+        title: 'Prêt annulé',
+        body: 'Le prêt a été annulé',
+        payload: '/loan',
+      );
+      await loadLoans(tontineId);
+    } catch (e) {
+      _logger.severe('Error cancelling loan: $e');
       rethrow;
     }
   }
@@ -121,14 +142,16 @@ class LoanProvider extends ChangeNotifier {
   /// Rejet par le président.
   Future<void> rejectLoan(int id, String reason) async {
     try {
-      await _loanService.rejectLoan(id, reason);
+      final loan = _loans.firstWhere((l) => l.id == id);
+      final tontineId = loan.tontineId;
+      if (tontineId == null) throw Exception('tontineId manquant sur le prêt $id');
+      await _loanService.rejectLoan(id, reason, tontineId: tontineId);
       await _notificationService.showNotification(
         title: 'Prêt rejeté',
         body: 'Le prêt a été rejeté',
         payload: '/loan',
       );
-      final loan = _loans.firstWhere((l) => l.id == id);
-      if (loan.tontineId != null) await loadLoans(loan.tontineId!);
+      await loadLoans(tontineId);
     } catch (e) {
       _logger.severe('Error rejecting loan: $e');
       rethrow;

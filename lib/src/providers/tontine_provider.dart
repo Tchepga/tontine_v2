@@ -22,6 +22,7 @@ import '../screen/services/dto/tontine_dto.dart';
 import '../screen/services/dto/auction_dto.dart';
 import '../screen/services/dto/pot_distribution_dto.dart';
 import '../screen/services/tontine_service.dart';
+import '../screen/services/member_service.dart';
 import '../screen/services/auction_service.dart';
 import 'models/rapport_meeting.dart';
 import 'package:get_storage/get_storage.dart';
@@ -31,6 +32,7 @@ class TontineProvider extends ChangeNotifier {
   static const KEY_SELECTED_TONTINE_ID = 'selectedTontineId';
 
   final _tontineService = TontineService();
+  final _memberService = MemberService();
   final _auctionService = AuctionService();
   final _logger = Logger('TontineProvider');
   final _storage = GetStorage();
@@ -58,6 +60,9 @@ class TontineProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
+      if (_memberService.getStoredUsername() == null) {
+        await _memberService.getProfile();
+      }
       final tontines = await _tontineService.getTontines();
       _tontines = tontines;
       final selectedId = _storage.read(KEY_SELECTED_TONTINE_ID);

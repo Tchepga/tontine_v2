@@ -1,6 +1,7 @@
 import 'enum/loop_period.dart';
 import 'enum/type_mouvement.dart';
 import 'enum/system_type.dart';
+import 'enum/currency.dart';
 import 'member.dart';
 import 'cashflow.dart';
 import 'event.dart';
@@ -54,10 +55,22 @@ class PartOrder {
 
   factory PartOrder.fromJson(Map<String, dynamic> json) {
     return PartOrder(
-      id: json['id'],
-      order: json['order'],
-      member: Member.fromJson(json['member']),
-      period: json['period'] != null ? DateTime.parse(json['period']) : null,
+      id: json['id'] ?? 0,
+      order: json['order'] ?? 0,
+      member: json['member'] is Map
+          ? Member.fromJson(Map<String, dynamic>.from(json['member'] as Map))
+          : Member(
+              email: '',
+              firstname: null,
+              lastname: null,
+              phone: null,
+              avatar: null,
+              country: null,
+              user: null,
+            ),
+      period: json['period'] is String
+          ? DateTime.tryParse(json['period'] as String)
+          : null,
     );
   }
 
@@ -104,27 +117,27 @@ class ConfigTontine {
 
   factory ConfigTontine.fromJson(Map<String, dynamic> json) {
     return ConfigTontine(
-      id: json['id'],
+      id: json['id'] ?? 0,
       defaultLoanRate: json['defaultLoanRate']?.toDouble() ?? 0,
       defaultLoanDuration: json['defaultLoanDuration'],
-      loopPeriod: LoopPeriod.values.firstWhere(
-          (e) => e.toString() == 'LoopPeriod.${json['loopPeriod']}'),
+      loopPeriod: _parseLoopPeriod(json['loopPeriod']),
       minLoanAmount: json['minLoanAmount']?.toDouble() ?? 0,
       countPersonPerMovement: json['countPersonPerMovement'] ?? 1,
-      movementType: MovementType.values.firstWhere(
-          (e) => e.toString() == 'MovementType.${json['movementType']}'),
+      movementType: _parseMovementType(json['movementType']),
       countMaxMember: json['countMaxMember'] ?? 12,
       systemType: json['systemType'] != null
           ? systemTypeFromString(json['systemType'])
           : SystemType.PART,
-      rateMaps: json['rateMaps'] != null
+      rateMaps: json['rateMaps'] is List
           ? (json['rateMaps'] as List)
-              .map((rateMap) => RateMap.fromJson(rateMap))
+              .map((rateMap) => RateMap.fromJson(
+                  Map<String, dynamic>.from(rateMap as Map)))
               .toList()
           : [],
-      parts: json['partOrders'] != null
+      parts: json['partOrders'] is List
           ? (json['partOrders'] as List)
-              .map((part) => PartOrder.fromJson(part))
+              .map((part) => PartOrder.fromJson(
+                  Map<String, dynamic>.from(part as Map)))
               .toList()
           : null,
       reminderMissingDepositsEnabled: (json['reminderMissingDepositsEnabled'] ??
@@ -177,30 +190,65 @@ class Tontine {
   });
 
   factory Tontine.fromJson(Map<String, dynamic> json) {
+    final cashFlowJson = json['cashFlow'] ?? json['cash_flow'];
     return Tontine(
       id: json['id'],
-      title: json['title'],
-      legacy: json['legacy'],
-      members: (json['members'] as List)
-          .map((member) => Member.fromJson(member))
-          .toList(),
-      config: ConfigTontine.fromJson(json['config']),
-      cashFlow: CashFlow.fromJson(json['cashFlow']),
-      events: json['events'] != null
+      title: json['title']?.toString() ?? '',
+      legacy: json['legacy']?.toString(),
+      members: json['members'] is List
+          ? (json['members'] as List)
+              .map((member) =>
+                  Member.fromJson(Map<String, dynamic>.from(member as Map)))
+              .toList()
+          : [],
+      config: json['config'] is Map
+          ? ConfigTontine.fromJson(
+              Map<String, dynamic>.from(json['config'] as Map))
+          : ConfigTontine(id: 0),
+      cashFlow: cashFlowJson is Map
+          ? CashFlow.fromJson(Map<String, dynamic>.from(cashFlowJson))
+          : CashFlow(
+              id: 0,
+              amount: 0,
+              currency: Currency.EUR,
+              dividendes: 0,
+            ),
+      events: json['events'] is List
           ? (json['events'] as List)
-              .map((event) => Event.fromJson(event))
+              .map((event) => Event.fromJson(
+                  Map<String, dynamic>.from(event as Map)))
               .toList()
           : [],
-      rapports: json['rapports'] != null
+      rapports: json['rapports'] is List
           ? (json['rapports'] as List)
-              .map((rapport) => RapportMeeting.fromJson(rapport))
+              .map((rapport) => RapportMeeting.fromJson(
+                  Map<String, dynamic>.from(rapport as Map)))
               .toList()
           : [],
-      sanctions: json['sanctions'] != null
+      sanctions: json['sanctions'] is List
           ? (json['sanctions'] as List)
-              .map((sanction) => Sanction.fromJson(sanction))
+              .map((sanction) => Sanction.fromJson(
+                  Map<String, dynamic>.from(sanction as Map)))
               .toList()
           : [],
     );
   }
+}
+
+LoopPeriod _parseLoopPeriod(dynamic value) {
+  if (value == null) return LoopPeriod.MONTHLY;
+  final name = value.toString().split('.').last.toUpperCase();
+  return LoopPeriod.values.firstWhere(
+    (e) => e.name == name,
+    orElse: () => LoopPeriod.MONTHLY,
+  );
+}
+
+MovementType _parseMovementType(dynamic value) {
+  if (value == null) return MovementType.ROTATIVE;
+  final name = value.toString().split('.').last.toUpperCase();
+  return MovementType.values.firstWhere(
+    (e) => e.name == name,
+    orElse: () => MovementType.ROTATIVE,
+  );
 }

@@ -470,6 +470,24 @@ class _EventViewState extends State<EventView> {
     return events.any((event) => DateUtils.isSameDay(event.startDate, date));
   }
 
+  /// Empêche les doubles soumissions (bouton FAB + dialogue).
+  void _setEventSubmissionInProgress(bool inProgress) {
+    if (!mounted) return;
+    setState(() => _isCreatingEvent = inProgress);
+  }
+
+  /// Vérifie si un événement identique existe déjà (même titre + même jour).
+  bool _isEventAlreadySubmitted(List<Event> events, CreateEventDto dto) {
+    final title = dto.title.trim().toLowerCase();
+    final start = dto.startDate;
+    if (title.isEmpty || start == null) return false;
+    return events.any(
+      (e) =>
+          e.title.trim().toLowerCase() == title &&
+          DateUtils.isSameDay(e.startDate, start),
+    );
+  }
+
   Widget _buildStyledTextField({
     required TextEditingController controller,
     required String label,
@@ -698,6 +716,8 @@ class _EventViewState extends State<EventView> {
 
   void _showCreateEventDialog(BuildContext context,
       TontineProvider tontineProvider, EventProvider eventProvider) {
+    if (_isCreatingEvent) return;
+
     final titleController = TextEditingController();
     final descriptionController = TextEditingController();
     DateTime startDate = DateTime.now();
@@ -709,7 +729,7 @@ class _EventViewState extends State<EventView> {
       context: context,
       builder: (BuildContext context) {
         return StatefulBuilder(
-          builder: (context, setState) {
+          builder: (context, setDialogState) {
             return Dialog(
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
@@ -812,7 +832,7 @@ class _EventViewState extends State<EventView> {
                                 );
                               }).toList(),
                               onChanged: (value) {
-                                setState(() {
+                                setDialogState(() {
                                   selectedType = value!;
                                 });
                               },
@@ -832,7 +852,7 @@ class _EventViewState extends State<EventView> {
                                   lastDate: DateTime(2101),
                                 );
                                 if (date != null) {
-                                  setState(() {
+                                  setDialogState(() {
                                     startDate = date;
                                   });
                                 }
@@ -853,7 +873,7 @@ class _EventViewState extends State<EventView> {
                                   lastDate: DateTime(2101),
                                 );
                                 if (date != null) {
-                                  setState(() {
+                                  setDialogState(() {
                                     endDate = date;
                                   });
                                 }
@@ -867,7 +887,7 @@ class _EventViewState extends State<EventView> {
                               members:
                                   tontineProvider.currentTontine?.members ?? [],
                               onChanged: (participants) {
-                                setState(() {
+                                setDialogState(() {
                                   selectedParticipants = participants;
                                 });
                               },
@@ -905,6 +925,8 @@ class _EventViewState extends State<EventView> {
                               onPressed: _isCreatingEvent
                                   ? null
                                   : () async {
+                                      if (_isCreatingEvent) return;
+
                                       if (titleController.text.isEmpty ||
                                           descriptionController.text.isEmpty) {
                                         ScaffoldMessenger.of(context)
@@ -918,16 +940,13 @@ class _EventViewState extends State<EventView> {
                                         return;
                                       }
 
-                                      setState(() {
-                                        _isCreatingEvent = true;
-                                      });
-
                                       final eventDto = CreateEventDto(
                                         tontineId:
                                             tontineProvider.currentTontine!.id,
-                                        title: titleController.text,
+                                        title: titleController.text.trim(),
                                         type: selectedType,
-                                        description: descriptionController.text,
+                                        description:
+                                            descriptionController.text.trim(),
                                         startDate: startDate,
                                         endDate: endDate,
                                         participants:
@@ -935,6 +954,23 @@ class _EventViewState extends State<EventView> {
                                                 ? selectedParticipants
                                                 : null,
                                       );
+
+                                      if (_isEventAlreadySubmitted(
+                                          eventProvider.events, eventDto)) {
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                          const SnackBar(
+                                            content: Text(
+                                              'Un événement avec ce titre existe déjà à cette date',
+                                            ),
+                                            backgroundColor: AppColors.warning,
+                                          ),
+                                        );
+                                        return;
+                                      }
+
+                                      _setEventSubmissionInProgress(true);
+                                      setDialogState(() {});
 
                                       try {
                                         await eventProvider
@@ -960,11 +996,7 @@ class _EventViewState extends State<EventView> {
                                           ),
                                         );
                                       } finally {
-                                        if (mounted) {
-                                          setState(() {
-                                            _isCreatingEvent = false;
-                                          });
-                                        }
+                                        _setEventSubmissionInProgress(false);
                                       }
                                     },
                               style: FilledButton.styleFrom(

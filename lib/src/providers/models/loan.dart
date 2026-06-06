@@ -42,7 +42,8 @@ class Loan {
       redemptionDate: DateTime.parse(json['redemptionDate']),
       status: fromStringToStatusLoan(json['status']),
       author: Member.fromJson(json['author']),
-      tontineId: json['tontineId'],
+      tontineId: json['tontineId'] ??
+          (json['tontine'] is Map ? (json['tontine'] as Map)['id'] as int? : null),
       voters: voters,
       rejectionReason: json['rejectionReason'],
     );

@@ -36,22 +36,73 @@ class TontineService {
   // Tontine CRUD
   Future<List<Tontine>> getTontines() async {
     try {
-      final memberData = await storage.read(MemberService.KEY_USER_INFO);
-      final username = memberData?['user']['username'];
-      final token = storage.read(MemberService.KEY_TOKEN);
-      final response = await client
-          .get(Uri.parse('$urlApi/tontine/member/$username'), headers: {
-        'Authorization': 'Bearer $token',
-      });
-      if (response.statusCode == 200) {
-        final List<dynamic> data = jsonDecode(response.body);
-        return data.map((json) => Tontine.fromJson(json)).toList();
+      final username = memberService.getStoredUsername();
+      if (username == null || username.isEmpty) {
+        _logger.warning(
+          'getTontines: username introuvable (userInfo / user_profile). '
+          'Appelez getProfile() après la connexion.',
+        );
+        return [];
       }
-      return [];
-    } catch (e) {
-      _logger.severe('Error getting tontines: $e');
+
+      final token = storage.read(MemberService.KEY_TOKEN);
+      final uri = Uri.parse('$urlApi/tontine/member/$username');
+      final response = await client.get(
+        uri,
+        headers: {'Authorization': 'Bearer $token'},
+      );
+
+      if (response.statusCode != 200) {
+        _logger.warning(
+          'getTontines: HTTP ${response.statusCode} pour $uri — '
+          'body: ${_truncate(response.body)}',
+        );
+        return [];
+      }
+
+      final items = _decodeTontineListPayload(response.body);
+      final tontines = <Tontine>[];
+      for (var i = 0; i < items.length; i++) {
+        try {
+          tontines.add(
+            Tontine.fromJson(Map<String, dynamic>.from(items[i] as Map)),
+          );
+        } catch (e, st) {
+          _logger.warning(
+            'getTontines: échec parsing tontine index $i: $e\n$st',
+          );
+        }
+      }
+      if (items.isNotEmpty && tontines.isEmpty) {
+        _logger.warning(
+          'getTontines: ${items.length} élément(s) API mais 0 tontine parsée — '
+          'vérifiez le format JSON (config, cashFlow, members).',
+        );
+      }
+      return tontines;
+    } catch (e, st) {
+      _logger.severe('Error getting tontines: $e\n$st');
       return [];
     }
+  }
+
+  List<dynamic> _decodeTontineListPayload(String body) {
+    final decoded = jsonDecode(body);
+    if (decoded is List) return decoded;
+    if (decoded is Map<String, dynamic>) {
+      for (final key in ['data', 'content', 'tontines', 'items', 'results']) {
+        final value = decoded[key];
+        if (value is List) return value;
+      }
+    }
+    throw FormatException(
+      'Réponse tontines inattendue: ${decoded.runtimeType}',
+    );
+  }
+
+  String _truncate(String text, [int max = 200]) {
+    if (text.length <= max) return text;
+    return '${text.substring(0, max)}…';
   }
 
   Future<Tontine?> getTontine(int id) async {

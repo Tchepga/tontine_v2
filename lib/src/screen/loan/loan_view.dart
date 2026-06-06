@@ -644,156 +644,225 @@ class _LoanViewState extends State<LoanView> {
 
   void _showStatusManagementDialog(Loan loan) {
     StatusLoan selectedStatus = loan.status;
+    final rejectionReasonController = TextEditingController();
+    bool isSubmitting = false;
 
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          title: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withAlpha(20),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(
-                  Icons.edit,
-                  color: AppColors.primary,
-                  size: 24,
-                ),
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            final availableStatuses = StatusLoan.values
+                .where((s) => _canChangeToStatus(loan.status, s))
+                .toList();
+
+            return AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
               ),
-              const SizedBox(width: 12),
-              const Text('Modifier le statut'),
-            ],
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Informations du prêt
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.border),
-                ),
+              title: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withAlpha(20),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(
+                      Icons.edit,
+                      color: AppColors.primary,
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Text(
+                      'Modifier le statut',
+                      style: TextStyle(fontSize: 18),
+                    ),
+                  ),
+                ],
+              ),
+              content: SingleChildScrollView(
                 child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Prêt de ${loan.amount} ${loan.currency.displayName}',
-                      style: const TextStyle(
-                        fontSize: 16,
+                    // Résumé du prêt
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppColors.border),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '${loan.amount} ${loan.currency.displayName}',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '${loan.author.firstname ?? ''} ${loan.author.lastname ?? ''}'.trim(),
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              const Text(
+                                'Statut actuel : ',
+                                style: TextStyle(
+                                    fontSize: 13,
+                                    color: AppColors.textSecondary),
+                              ),
+                              _getStatusBadge(loan.status),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Nouveau statut :',
+                      style: TextStyle(
+                        fontSize: 14,
                         fontWeight: FontWeight.w600,
                         color: AppColors.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 4),
-                    Text(
-                      'Emprunteur: ${loan.author.firstname} ${loan.author.lastname}',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: AppColors.textSecondary,
+                    if (availableStatuses.isEmpty)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 8),
+                        child: Text(
+                          'Aucune transition possible depuis ce statut.',
+                          style: TextStyle(color: AppColors.textSecondary),
+                        ),
+                      )
+                    else
+                      RadioGroup<StatusLoan>(
+                        groupValue: selectedStatus,
+                        onChanged: isSubmitting
+                            ? (StatusLoan? _) {}
+                            : (value) {
+                                if (value != null) {
+                                  setDialogState(() => selectedStatus = value);
+                                }
+                              },
+                        child: Column(
+                          children: availableStatuses.map((status) {
+                            return RadioListTile<StatusLoan>(
+                              value: status,
+                              title: Text(
+                                status.displayName,
+                                style: const TextStyle(
+                                    fontSize: 14,
+                                    color: AppColors.textPrimary),
+                              ),
+                              subtitle: Text(
+                                _getStatusDescription(status),
+                                style: const TextStyle(
+                                    fontSize: 12,
+                                    color: AppColors.textSecondary),
+                              ),
+                              activeColor: AppColors.primary,
+                              contentPadding: EdgeInsets.zero,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            );
+                          }).toList(),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Statut actuel: ${loan.status.displayName}',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: AppColors.textSecondary,
+                    // Champ raison si REJECTED sélectionné
+                    if (selectedStatus == StatusLoan.REJECTED) ...[
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: rejectionReasonController,
+                        decoration: InputDecoration(
+                          labelText: 'Raison du rejet *',
+                          hintText: 'Ex: Fonds insuffisants',
+                          prefixIcon:
+                              const Icon(Icons.comment_outlined),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        maxLines: 2,
+                        enabled: !isSubmitting,
                       ),
-                    ),
+                    ],
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
-              // Sélection du nouveau statut
-              const Text(
-                'Nouveau statut:',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
+              actions: [
+                TextButton(
+                  onPressed: isSubmitting
+                      ? null
+                      : () => Navigator.of(context).pop(),
+                  child: const Text('Annuler'),
                 ),
-              ),
-              const SizedBox(height: 8),
-              RadioGroup<StatusLoan>(
-                groupValue: selectedStatus,
-                onChanged: (StatusLoan? value) {
-                  if (value != null && _canChangeToStatus(loan.status, value)) {
-                    setState(() {
-                      selectedStatus = value;
-                    });
-                  }
-                },
-                child: Column(
-                  children: StatusLoan.values.map((status) {
-                    bool canSelect = _canChangeToStatus(loan.status, status);
-                    return RadioListTile<StatusLoan>(
-                      value: status,
-                      title: Text(
-                        status.displayName,
-                        style: TextStyle(
-                          color: canSelect
-                              ? AppColors.textPrimary
-                              : AppColors.textSecondary,
-                        ),
-                      ),
-                      subtitle: Text(
-                        _getStatusDescription(status),
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: canSelect
-                              ? AppColors.textSecondary
-                              : AppColors.textLight,
-                        ),
-                      ),
-                      activeColor: AppColors.primary,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    );
-                  }).toList(),
+                FilledButton(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                  ),
+                  onPressed: (isSubmitting ||
+                          selectedStatus == loan.status ||
+                          availableStatuses.isEmpty)
+                      ? null
+                      : () async {
+                          if (selectedStatus == StatusLoan.REJECTED &&
+                              rejectionReasonController.text.trim().isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                    'Veuillez saisir la raison du rejet'),
+                                backgroundColor: AppColors.warning,
+                              ),
+                            );
+                            return;
+                          }
+                          setDialogState(() => isSubmitting = true);
+                          final ok = await _updateLoanStatus(
+                            loan,
+                            selectedStatus,
+                            rejectionReasonController.text.trim(),
+                          );
+                          if (!context.mounted) return;
+                          if (ok) Navigator.of(context).pop();
+                          setDialogState(() => isSubmitting = false);
+                        },
+                  child: isSubmitting
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Text('Confirmer'),
                 ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                if (!mounted) return;
-                Navigator.of(context).pop();
-              },
-              child: const Text('Annuler'),
-            ),
-            FilledButton(
-              style: FilledButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-              ),
-              onPressed: selectedStatus != loan.status
-                  ? () async {
-                      await _updateLoanStatus(loan, selectedStatus);
-                      if (!context.mounted) return;
-                      Navigator.of(context).pop();
-                    }
-                  : null,
-              child: const Text('Modifier'),
-            ),
-          ],
+              ],
+            );
+          },
         );
       },
     );
   }
 
   bool _canChangeToStatus(StatusLoan currentStatus, StatusLoan newStatus) {
-    // Logique de transition des statuts
+    if (currentStatus == newStatus) return false;
     switch (currentStatus) {
       case StatusLoan.PENDING:
         return newStatus == StatusLoan.APPROVED ||
@@ -806,9 +875,9 @@ class _LoanViewState extends State<LoanView> {
         return newStatus == StatusLoan.PENDING ||
             newStatus == StatusLoan.CANCELLED;
       case StatusLoan.PAID:
-        return false; // Un prêt payé ne peut plus changer de statut
+        return false;
       case StatusLoan.CANCELLED:
-        return newStatus == StatusLoan.PENDING; // Peut être remis en attente
+        return newStatus == StatusLoan.PENDING;
     }
   }
 
@@ -819,7 +888,7 @@ class _LoanViewState extends State<LoanView> {
       case StatusLoan.APPROVED:
         return 'Prêt approuvé et accordé';
       case StatusLoan.REJECTED:
-        return 'Prêt rejeté par les membres';
+        return 'Prêt rejeté (raison obligatoire)';
       case StatusLoan.PAID:
         return 'Prêt entièrement remboursé';
       case StatusLoan.CANCELLED:
@@ -827,22 +896,33 @@ class _LoanViewState extends State<LoanView> {
     }
   }
 
-  Future<void> _updateLoanStatus(Loan loan, StatusLoan newStatus) async {
+  /// Retourne `true` si la mise à jour a réussi.
+  Future<bool> _updateLoanStatus(
+      Loan loan, StatusLoan newStatus, String reason) async {
+    final loanProvider = Provider.of<LoanProvider>(context, listen: false);
     try {
-      final loanProvider = Provider.of<LoanProvider>(context, listen: false);
-      final tontineProvider =
-          Provider.of<TontineProvider>(context, listen: false);
-
-      // Pour l'instant, on simule la mise à jour
-      await Future.delayed(const Duration(seconds: 1));
-
-      // Recharger les prêts
-      await loanProvider.loadLoans(tontineProvider.currentTontine!.id);
-
-      if (!mounted) return;
+      switch (newStatus) {
+        case StatusLoan.APPROVED:
+          await loanProvider.approveLoan(loan.id);
+          break;
+        case StatusLoan.REJECTED:
+          await loanProvider.rejectLoan(loan.id, reason);
+          break;
+        case StatusLoan.CANCELLED:
+          await loanProvider.cancelLoan(loan.id);
+          break;
+        case StatusLoan.PENDING:
+          // Repasse en attente (ex: après rejet ou annulation)
+          await loanProvider.rejectLoan(loan.id, ''); // fallback générique
+          break;
+        case StatusLoan.PAID:
+          // Le passage en PAID se fait via un remboursement, pas ici
+          break;
+      }
+      if (!mounted) return false;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Statut modifié vers: ${newStatus.displayName}'),
+          content: Text('Statut mis à jour : ${newStatus.displayName}'),
           backgroundColor: AppColors.success,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
@@ -850,11 +930,12 @@ class _LoanViewState extends State<LoanView> {
           ),
         ),
       );
+      return true;
     } catch (e) {
-      if (!mounted) return;
+      if (!mounted) return false;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Erreur lors de la modification du statut'),
+          content: Text('Erreur : ${e.toString()}'),
           backgroundColor: AppColors.error,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
@@ -862,6 +943,7 @@ class _LoanViewState extends State<LoanView> {
           ),
         ),
       );
+      return false;
     }
   }
 }

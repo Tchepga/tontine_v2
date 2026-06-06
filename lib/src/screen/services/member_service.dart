@@ -15,6 +15,41 @@ class MemberService {
   final _logger = Logger('MemberService');
   static const String KEY_USER_INFO = 'userInfo';
   static const String KEY_TOKEN = 'token';
+  /// Profil sérialisé par [AuthProvider] (jsonEncode du membre).
+  static const String KEY_PROFILE = 'user_profile';
+
+  /// Username connecté depuis le stockage local (`userInfo` ou `user_profile`).
+  String? getStoredUsername() {
+    final userInfo = storage.read(KEY_USER_INFO);
+    if (userInfo is Map) {
+      final username = _usernameFromMemberMap(Map<String, dynamic>.from(userInfo));
+      if (username != null) return username;
+    }
+
+    final profile = storage.read(KEY_PROFILE);
+    if (profile is String && profile.isNotEmpty) {
+      try {
+        final map = jsonDecode(profile) as Map<String, dynamic>;
+        return _usernameFromMemberMap(map);
+      } catch (_) {
+        return null;
+      }
+    }
+    if (profile is Map) {
+      return _usernameFromMemberMap(Map<String, dynamic>.from(profile));
+    }
+    return null;
+  }
+
+  String? _usernameFromMemberMap(Map<String, dynamic> memberMap) {
+    final user = memberMap['user'];
+    if (user is! Map) return null;
+    final username = user['username'];
+    if (username is String && username.trim().isNotEmpty) {
+      return username.trim();
+    }
+    return null;
+  }
 
   Future<void> init() async {
     final base = dotenv.env['API_URL']?.trim();

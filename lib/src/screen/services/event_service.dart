@@ -80,7 +80,17 @@ class EventService {
         _logger.warning('Error emitting WebSocket event: $e');
       }
     } else {
-      throw Exception('Failed to create event');
+      try {
+        final body = jsonDecode(response.body);
+        if (body is Map && body['message'] != null) {
+          throw Exception(body['message'].toString());
+        }
+      } catch (e) {
+        if (e is Exception) rethrow;
+      }
+      throw Exception(
+        'Échec de la création de l\'événement (HTTP ${response.statusCode})',
+      );
     }
   }
 

@@ -50,7 +50,7 @@ class _CashflowViewState extends State<CashflowView> {
         final deposits = tontineProvider.deposits;
         final canValidate = authProvider.canValidateDeposits();
 
-        // Filtrage
+        // Filtrage + tri du plus récent au plus ancien
         final filteredDeposits = deposits.where((deposit) {
           final matchType = _selectedType == null || deposit.type == _selectedType;
           final matchName = _searchName.isEmpty ||
@@ -63,7 +63,8 @@ class _CashflowViewState extends State<CashflowView> {
                       .contains(_searchName.toLowerCase()) ??
                   false);
           return matchType && matchName;
-        }).toList();
+        }).toList()
+          ..sort((a, b) => b.creationDate.compareTo(a.creationDate));
 
         return Scaffold(
           appBar: ActionMenu(title: 'Trésorerie', showBackButton: true),

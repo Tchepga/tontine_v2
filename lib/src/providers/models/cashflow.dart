@@ -17,9 +17,9 @@ class CashFlow {
 
   factory CashFlow.fromJson(Map<String, dynamic> json) {
     return CashFlow(
-      id: json['id'],
+      id: json['id'] ?? 0,
       amount: json['amount']?.toDouble() ?? 0,
-      currency: currencyFromString(json['currency']),
+      currency: _parseCurrency(json['currency']),
       dividendes: json['dividendes']?.toDouble() ?? 0,
       deposits: json['deposits'] != null
           ? (json['deposits'] as List)
@@ -27,6 +27,28 @@ class CashFlow {
               .toList()
           : [],
     );
+  }
+
+  static Currency _parseCurrency(dynamic value) {
+    if (value == null) return Currency.EUR;
+    if (value is String) {
+      try {
+        return currencyFromString(value);
+      } catch (_) {
+        return Currency.EUR;
+      }
+    }
+    if (value is Map) {
+      final name = value['name'] ?? value['code'];
+      if (name is String) {
+        try {
+          return currencyFromString(name);
+        } catch (_) {
+          return Currency.EUR;
+        }
+      }
+    }
+    return Currency.EUR;
   }
 
   Map<String, dynamic> toJson() {

@@ -37,4 +37,24 @@ class UpdateLoanDto extends CreateLoanDto {
       ...super.toJson(),
     };
   }
+}
+
+/// DTO pour mettre à jour uniquement le statut via PATCH /loan/:id.
+/// Correspond au UpdateLoanDto côté backend (champs optionnels).
+class UpdateLoanStatusDto {
+  final String status;
+  final String? rejectionReason;
+
+  const UpdateLoanStatusDto({
+    required this.status,
+    this.rejectionReason,
+  });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'status': status,
+      if (rejectionReason != null && rejectionReason!.isNotEmpty)
+        'rejectionReason': rejectionReason,
+    };
+  }
 } 

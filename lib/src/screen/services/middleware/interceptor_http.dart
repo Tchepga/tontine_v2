@@ -2,9 +2,12 @@ import 'dart:async';
 
 import 'package:http_interceptor/http_interceptor.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:logging/logging.dart';
 
 class AuthInterceptor implements HttpInterceptor {
   final storage = GetStorage();
+  final _logger = Logger('AuthInterceptor');
+
   static const List<String> publicPaths = [
     'login',
     'logout',
@@ -20,9 +23,19 @@ class AuthInterceptor implements HttpInterceptor {
     }
 
     final token = storage.read('token');
-    final authorisationHeader = request.headers['Authorization'];
-    if (token != null && authorisationHeader != 'Bearer $token') {
-      request.headers['Authorization'] = 'Bearer $token';
+    // Toujours injecter le token (sans condition de comparaison) :
+    // http_interceptor v3 peut reconstruire l'objet request et perdre les
+    // headers passés manuellement dans les services.
+    if (token != null) {
+      final tokenStr = token.toString();
+      request.headers['Authorization'] = 'Bearer $tokenStr';
+      _logger.fine(
+          'interceptRequest [${request.method}] ${request.url.path} '
+          'token[0..15]="${tokenStr.substring(0, tokenStr.length.clamp(0, 15))}..."');
+    } else {
+      _logger.warning(
+          'interceptRequest [${request.method}] ${request.url.path} — '
+          'AUCUN token en storage, requête envoyée sans Authorization');
     }
     request.headers['Content-Type'] = 'application/json';
     return request;
@@ -31,6 +44,12 @@ class AuthInterceptor implements HttpInterceptor {
   @override
   Future<BaseResponse> interceptResponse(
       {required BaseResponse response}) async {
+    if (response.statusCode == 401) {
+      _logger.severe(
+          'interceptResponse 401 Unauthorized — '
+          'url=${response.request?.url} | '
+          'token présent=${storage.hasData("token")}');
+    }
     return response;
   }
 
