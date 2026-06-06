@@ -39,8 +39,8 @@ void main() async {
   // Initialiser les notifications locales
   await LocalNotificationService().init();
 
-  // Initialiser le service de notifications en temps réel
-  await RealtimeNotificationService().initialize();
+  // Initialiser le service de notifications en temps réel (non bloquant)
+  RealtimeNotificationService().initialize();
 
   Logger.root.level = Level.ALL;
   Logger.root.onRecord.listen((record) {

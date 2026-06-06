@@ -125,8 +125,8 @@ class _RegisterViewState extends State<RegisterView> {
                     ),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(20),
-                      child: SvgPicture.asset(
-                        'assets/images/calebasse.svg',
+                      child: Image.asset(
+                        'assets/images/calebasse2.png',
                         fit: BoxFit.contain,
                       ),
                     ),
