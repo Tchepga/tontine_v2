@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:logging/logging.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/responsive_helper.dart';
+import '../../utils/username_helper.dart';
 import '../login_view.dart';
 import '../services/dto/member_dto.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
@@ -28,7 +28,26 @@ class _RegisterViewState extends State<RegisterView> {
   String _selectedCountry = 'FR';
   String _completePhoneNumber = '';
   bool _isLoading = false;
+  bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
+  String _usernamePreview = 'prenom.nom';
   Logger logger = Logger('RegisterView');
+
+  @override
+  void initState() {
+    super.initState();
+    _firstnameController.addListener(_updateUsernamePreview);
+    _lastnameController.addListener(_updateUsernamePreview);
+  }
+
+  void _updateUsernamePreview() {
+    setState(() {
+      _usernamePreview = UsernameHelper.buildPreview(
+        _firstnameController.text,
+        _lastnameController.text,
+      );
+    });
+  }
 
   // Liste des pays avec leurs codes ISO
   final Map<String, String> _countries = {
@@ -155,7 +174,7 @@ class _RegisterViewState extends State<RegisterView> {
                     icon: Icons.badge_outlined,
                     colorScheme: colorScheme,
                     validator: (value) {
-                      if (value == null || value.isEmpty) {
+                      if (value == null || value.trim().isEmpty) {
                         return 'Ce champ est requis';
                       }
                       return null;
@@ -168,16 +187,18 @@ class _RegisterViewState extends State<RegisterView> {
                     icon: Icons.badge_outlined,
                     colorScheme: colorScheme,
                     validator: (value) {
-                      if (value == null || value.isEmpty) {
+                      if (value == null || value.trim().isEmpty) {
                         return 'Ce champ est requis';
                       }
                       return null;
                     },
                   ),
+                  const SizedBox(height: 16),
+                  _buildLoginInfoCard(theme, colorScheme),
                   const SizedBox(height: 20),
                   _buildTextField(
                     controller: _emailController,
-                    label: 'Email',
+                    label: 'Email (recommandé)',
                     icon: Icons.email_outlined,
                     keyboardType: TextInputType.emailAddress,
                     colorScheme: colorScheme,
@@ -186,12 +207,21 @@ class _RegisterViewState extends State<RegisterView> {
                         r'^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$',
                       );
                       if (value != null &&
-                          value.isNotEmpty &&
-                          !emailRegExp.hasMatch(value)) {
+                          value.trim().isNotEmpty &&
+                          !emailRegExp.hasMatch(value.trim())) {
                         return 'Email invalide';
                       }
                       return null;
                     },
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Text(
+                      'Si votre email est valide, vous recevrez un message de confirmation avec vos identifiants de connexion.',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurface.withAlpha(140),
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 20),
                   Container(
@@ -266,26 +296,69 @@ class _RegisterViewState extends State<RegisterView> {
                           controller: _passwordController,
                           label: 'Mot de passe',
                           icon: Icons.lock_outline,
-                          obscureText: true,
+                          obscureText: _obscurePassword,
                           colorScheme: colorScheme,
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _obscurePassword
+                                  ? Icons.visibility_outlined
+                                  : Icons.visibility_off_outlined,
+                              color: colorScheme.onSurface.withAlpha(120),
+                            ),
+                            onPressed: () {
+                              if (!mounted) return;
+                              setState(() {
+                                _obscurePassword = !_obscurePassword;
+                              });
+                            },
+                          ),
                           validator: (value) {
                             if (value == null || value.isEmpty) {
                               return 'Ce champ est requis';
                             }
-                            if (value.length < 6) {
-                              return 'Le mot de passe doit contenir au moins 6 caractères';
+                            if (value.length < 8) {
+                              return 'Au moins 8 caractères requis';
                             }
                             return null;
                           },
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.only(left: 4, top: 6),
+                          child: Text(
+                            'Le mot de passe doit contenir\nau moins 8 caractères',
+                            style: TextStyle(
+                              fontSize: 12,
+                              height: 1.4,
+                              color: colorScheme.onSurface.withAlpha(120),
+                            ),
+                          ),
                         ),
                         const SizedBox(height: 20),
                         _buildTextField(
                           controller: _confirmPasswordController,
                           label: 'Confirmer le mot de passe',
                           icon: Icons.lock_outline,
-                          obscureText: true,
+                          obscureText: _obscureConfirmPassword,
                           colorScheme: colorScheme,
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _obscureConfirmPassword
+                                  ? Icons.visibility_outlined
+                                  : Icons.visibility_off_outlined,
+                              color: colorScheme.onSurface.withAlpha(120),
+                            ),
+                            onPressed: () {
+                              if (!mounted) return;
+                              setState(() {
+                                _obscureConfirmPassword =
+                                    !_obscureConfirmPassword;
+                              });
+                            },
+                          ),
                           validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Ce champ est requis';
+                            }
                             if (value != _passwordController.text) {
                               return 'Les mots de passe ne correspondent pas';
                             }
@@ -379,6 +452,63 @@ class _RegisterViewState extends State<RegisterView> {
     );
   }
 
+  Widget _buildLoginInfoCard(ThemeData theme, ColorScheme colorScheme) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.primary.withAlpha(18),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.info_outline, color: colorScheme.primary, size: 20),
+              const SizedBox(width: 8),
+              Text(
+                'Comment vous connecter',
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: colorScheme.primary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Votre nom d’utilisateur sera généré automatiquement :',
+            style: theme.textTheme.bodyMedium,
+          ),
+          const SizedBox(height: 8),
+          SelectableText(
+            _usernamePreview,
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: colorScheme.primary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Format : prénom.nom en minuscules, sans accents ni espaces '
+            '(ex. Jean Dupont → jean.dupont).',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: colorScheme.onSurface.withAlpha(160),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'À la connexion, utilisez ce nom d’utilisateur et le mot de passe choisi ci-dessous.',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: colorScheme.onSurface.withAlpha(160),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildCountryDropdown(ColorScheme colorScheme) {
     // Trier les pays par nom pour un meilleur affichage
     final sortedCountries = _countries.entries.toList()
@@ -462,6 +592,7 @@ class _RegisterViewState extends State<RegisterView> {
     required ColorScheme colorScheme,
     TextInputType? keyboardType,
     bool obscureText = false,
+    Widget? suffixIcon,
     String? Function(String?)? validator,
   }) {
     return Container(
@@ -486,6 +617,8 @@ class _RegisterViewState extends State<RegisterView> {
         decoration: InputDecoration(
           labelText: label,
           prefixIcon: Icon(icon, color: colorScheme.primary),
+          suffixIcon: suffixIcon,
+          errorMaxLines: 2,
           border: InputBorder.none,
           contentPadding:
               const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -519,44 +652,62 @@ class _RegisterViewState extends State<RegisterView> {
       try {
         final memberDto = CreateMemberDto(
           password: _passwordController.text,
-          firstname: _firstnameController.text,
-          lastname: _lastnameController.text,
-          email: _emailController.text,
-          phone: _completePhoneNumber,
+          firstname: _firstnameController.text.trim(),
+          lastname: _lastnameController.text.trim(),
+          email: _emailController.text.trim().isEmpty
+              ? null
+              : _emailController.text.trim(),
+          phone: _completePhoneNumber.trim(),
           country: _selectedCountry,
         );
 
-        final statusCode =
+        final result =
             await Provider.of<AuthProvider>(context, listen: false)
                 .registerPresident(memberDto);
         if (mounted) {
-          switch (statusCode) {
-            case 400:
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Un compte existe déjà avec ces informations'),
-                  backgroundColor: AppColors.error,
+          if (result.isSuccess) {
+            await _showRegistrationSuccessDialog(
+              username: result.username ?? _usernamePreview,
+              emailSent: result.emailSent,
+              emailProvided: memberDto.email != null,
+            );
+            if (!mounted) return;
+            Navigator.of(context).pushReplacementNamed(LoginView.routeName);
+          } else if (result.isUserAlreadyExists) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: const Text(
+                  'Un compte existe déjà avec ces informations. Connectez-vous.',
                 ),
-              );
-              break;
-            case 201:
-              Navigator.of(context).pushReplacementNamed(LoginView.routeName);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content:
-                      Text('Inscription réussie. Vous pouvez vous connecter.'),
-                  backgroundColor: AppColors.success,
+                backgroundColor: AppColors.error,
+                action: SnackBarAction(
+                  label: 'Connexion',
+                  textColor: Colors.white,
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                    if (!mounted) return;
+                    Navigator.of(context)
+                        .pushReplacementNamed(LoginView.routeName);
+                  },
                 ),
-              );
-              break;
-            default:
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Erreur lors de l\'inscription'),
-                  backgroundColor: AppColors.error,
+              ),
+            );
+          } else if (result.statusCode == 400) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text(
+                  'Informations invalides. Vérifiez les champs du formulaire.',
                 ),
-              );
-              break;
+                backgroundColor: AppColors.error,
+              ),
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Erreur lors de l\'inscription'),
+                backgroundColor: AppColors.error,
+              ),
+            );
           }
         }
       } catch (e) {
@@ -579,8 +730,48 @@ class _RegisterViewState extends State<RegisterView> {
     }
   }
 
+  Future<void> _showRegistrationSuccessDialog({
+    required String username,
+    required bool emailSent,
+    required bool emailProvided,
+  }) async {
+    final emailMessage = emailProvided
+        ? emailSent
+            ? 'Un email de confirmation a été envoyé à votre adresse avec vos identifiants.'
+            : 'Votre email a été enregistré. Si vous ne recevez pas de message, utilisez les identifiants ci-dessous pour vous connecter.'
+        : 'Notez bien votre nom d’utilisateur : sans email, nous ne pourrons pas vous le renvoyer.';
+
+    await showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Inscription réussie'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Vous pouvez maintenant vous connecter avec :'),
+            const SizedBox(height: 12),
+            Text('Nom d’utilisateur : $username',
+                style: const TextStyle(fontWeight: FontWeight.bold)),
+            const Text('Mot de passe : celui que vous venez de choisir'),
+            const SizedBox(height: 12),
+            Text(emailMessage),
+          ],
+        ),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Se connecter'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   void dispose() {
+    _firstnameController.removeListener(_updateUsernamePreview);
+    _lastnameController.removeListener(_updateUsernamePreview);
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     _firstnameController.dispose();

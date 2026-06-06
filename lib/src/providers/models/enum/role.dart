@@ -13,6 +13,16 @@ Role fromStringToRole(String role) {
   return Role.values.firstWhere((r) => r.toString().split('.').last == role);
 }
 
+Role parseRole(dynamic role) {
+  if (role is List && role.isNotEmpty) {
+    return parseRole(role.first);
+  }
+  if (role is String) {
+    return fromStringToRole(role);
+  }
+  throw ArgumentError('Invalid role value: $role');
+}
+
 extension RoleExtension on Role {
   String get displayName {
     switch (this) {

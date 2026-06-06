@@ -13,12 +13,18 @@ class AuthInterceptor implements HttpInterceptor {
     'logout',
     'verify',
     'register',
+    'register-president',
   ];
+
+  bool _isPublicPath(String path) {
+    return publicPaths.any((publicPath) => path.endsWith(publicPath));
+  }
 
   @override
   Future<BaseRequest> interceptRequest({required BaseRequest request}) async {
-    // Ne pas intercepter les routes publiques
-    if (publicPaths.any((path) => request.url.path.endsWith(path))) {
+    // Routes publiques : pas de token requis (inscription, login…)
+    if (_isPublicPath(request.url.path)) {
+      request.headers['Content-Type'] = 'application/json';
       return request;
     }
 
@@ -44,7 +50,8 @@ class AuthInterceptor implements HttpInterceptor {
   @override
   Future<BaseResponse> interceptResponse(
       {required BaseResponse response}) async {
-    if (response.statusCode == 401) {
+    final path = response.request?.url.path ?? '';
+    if (response.statusCode == 401 && !_isPublicPath(path)) {
       _logger.severe(
           'interceptResponse 401 Unauthorized — '
           'url=${response.request?.url} | '
@@ -101,7 +108,8 @@ class ApiClient {
   static InterceptedClient getClientForUrl(String url) {
     if (url.contains('/auth/login') ||
         url.contains('/auth/verify') ||
-        url.contains('/auth/register')) {
+        url.contains('/auth/register') ||
+        url.contains('/member/register-president')) {
       return fastClient;
     }
 

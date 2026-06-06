@@ -45,8 +45,8 @@ class _SelectTontineViewState extends State<SelectTontineView> {
     try {
       final isValidToken = await memberService.hasValidToken();
       if (!isValidToken) {
-        memberService.logout();
         if (mounted) {
+          Provider.of<AuthProvider>(context, listen: false).logout();
           Navigator.of(context).pushReplacementNamed(LoginView.routeName);
         }
         return;

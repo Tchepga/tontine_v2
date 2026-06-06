@@ -8,6 +8,7 @@ import 'tontine/select_tontine_view.dart';
 import 'auth/register_view.dart';
 import 'auth/forgot_password_view.dart';
 import '../services/first_launch_service.dart';
+import '../utils/username_helper.dart';
 import 'features_explanation_view.dart';
 import '../theme/app_theme.dart';
 
@@ -80,9 +81,17 @@ class _LoginViewState extends State<LoginView> {
     });
 
     try {
+      final rawUsername = _usernameController.text.trim();
+      final normalizedUsername = rawUsername.contains(' ')
+          ? UsernameHelper.buildPreview(
+              rawUsername.split(' ').first,
+              rawUsername.split(' ').skip(1).join(' '),
+            )
+          : rawUsername.toLowerCase();
+
       final success =
           await Provider.of<AuthProvider>(context, listen: false).login(
-        _usernameController.text.trim(),
+        normalizedUsername,
         _passwordController.text,
       );
 

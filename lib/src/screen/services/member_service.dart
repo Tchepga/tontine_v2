@@ -4,6 +4,7 @@ import '../../providers/models/member.dart';
 import '../../providers/models/enum/role.dart';
 import 'dto/member_dto.dart';
 import 'dto/password_dto.dart';
+import 'dto/register_president_result.dart';
 import 'middleware/interceptor_http.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:logging/logging.dart';
@@ -77,7 +78,7 @@ class MemberService {
 
       _logger.info('Login response status: ${response.body}');
 
-      if (response.statusCode == 201) {
+      if (response.statusCode == 200 || response.statusCode == 201) {
         final data = jsonDecode(response.body);
         if (data['token'] != null && data['token'].toString().isNotEmpty) {
           await storage.write(KEY_TOKEN, data['token']);
@@ -173,14 +174,35 @@ class MemberService {
   }
 
   Future<bool> hasValidToken() async {
-    final token = await storage.read(KEY_TOKEN);
-    if (token == null) {
+    final token = storage.read(KEY_TOKEN);
+    if (token == null || token.toString().isEmpty) {
       return false;
     }
-    final response = await client
-        .post(Uri.parse('$urlApi/auth/verify'), body: {'token': token});
-    final decodedResponse = jsonDecode(response.body);
-    return decodedResponse['valid'] == true;
+
+    try {
+      final response = await ApiClient.fastClient.post(
+        Uri.parse('$urlApi/auth/verify'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'token': token.toString()}),
+      );
+
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        _logger.warning(
+            'Token verification failed: status=${response.statusCode}, '
+            'body=${response.body}');
+        return false;
+      }
+
+      if (response.body.isEmpty) {
+        return false;
+      }
+
+      final decodedResponse = jsonDecode(response.body);
+      return decodedResponse is Map && decodedResponse['valid'] == true;
+    } catch (e) {
+      _logger.severe('Error verifying token: $e');
+      return false;
+    }
   }
 
   Future<bool> register(CreateMemberDto memberDto) async {
@@ -197,19 +219,60 @@ class MemberService {
     }
   }
 
-  Future<int> registerPresident(CreateMemberDto memberDto) async {
+  Future<RegisterPresidentResult> registerPresident(
+      CreateMemberDto memberDto) async {
     try {
-      final response = await client.post(
+      final response = await ApiClient.fastClient.post(
         Uri.parse('$urlApi/member/register-president'),
         body: jsonEncode(memberDto.toJson()),
         headers: {
           'Content-Type': 'application/json',
         },
       );
-      return response.statusCode;
+
+      String? errorCode;
+      String? username;
+      var emailSent = false;
+
+      if (response.body.isNotEmpty) {
+        try {
+          final body = jsonDecode(response.body);
+          if (body is Map) {
+            if (body['message'] is String) {
+              errorCode = body['message'] as String;
+            }
+            if (body['username'] is String) {
+              username = body['username'] as String;
+            } else {
+              final user = body['user'];
+              if (user is Map && user['username'] is String) {
+                username = user['username'] as String;
+              }
+            }
+            if (body['emailSent'] == true) {
+              emailSent = true;
+            }
+          }
+        } catch (_) {
+          // Corps non JSON, ignorer
+        }
+      }
+
+      if (response.statusCode != 201) {
+        _logger.warning(
+            'registerPresident failed: status=${response.statusCode}, '
+            'errorCode=$errorCode, body=${response.body}');
+      }
+
+      return RegisterPresidentResult(
+        statusCode: response.statusCode,
+        errorCode: errorCode,
+        username: username,
+        emailSent: emailSent,
+      );
     } catch (e) {
       _logger.severe('Error during registration: $e');
-      return 500;
+      return const RegisterPresidentResult(statusCode: 500);
     }
   }
 

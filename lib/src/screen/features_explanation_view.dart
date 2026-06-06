@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../utils/responsive_helper.dart';
-import 'dashboard_view.dart';
+import 'tontine/select_tontine_view.dart';
 
 class FeaturesExplanationView extends StatefulWidget {
   static const routeName = '/features_explanation';
@@ -387,7 +387,7 @@ class _FeaturesExplanationViewState extends State<FeaturesExplanationView>
   }
 
   void _goToDashboard() {
-    Navigator.of(context).pushReplacementNamed(DashboardView.routeName);
+    Navigator.of(context).pushReplacementNamed(SelectTontineView.routeName);
   }
 }
 

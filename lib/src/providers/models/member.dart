@@ -70,7 +70,9 @@ class User {
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
       username: json['username'],
-      roles: json['roles'] != null ? List<Role>.from(json['roles'].map((role) => fromStringToRole(role))) : [],
+      roles: json['roles'] != null
+          ? List<Role>.from(json['roles'].map((role) => parseRole(role)))
+          : [],
     );
   }
 

@@ -6,6 +6,7 @@ import 'models/enum/role.dart';
 import 'models/member.dart';
 import '../screen/services/dto/member_dto.dart';
 import '../screen/services/dto/password_dto.dart';
+import '../screen/services/dto/register_president_result.dart';
 import '../screen/services/member_service.dart';
 
 class AuthProvider extends ChangeNotifier {
@@ -148,13 +149,13 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  Future<int> registerPresident(CreateMemberDto memberDto) async {
+  Future<RegisterPresidentResult> registerPresident(
+      CreateMemberDto memberDto) async {
     _isLoading = true;
     notifyListeners();
 
     try {
-      final statusCode = await _memberService.registerPresident(memberDto);
-      return statusCode;
+      return await _memberService.registerPresident(memberDto);
     } finally {
       _isLoading = false;
       notifyListeners();
