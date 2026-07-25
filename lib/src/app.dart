@@ -9,6 +9,8 @@ import 'package:tontine_v2/src/screen/login_view.dart';
 import 'package:tontine_v2/src/screen/member/account_view.dart';
 import 'package:tontine_v2/src/screen/splash_view.dart';
 import 'package:tontine_v2/src/screen/features_explanation_view.dart';
+import 'package:tontine_v2/src/services/session_manager.dart';
+import 'package:tontine_v2/src/widgets/auth_gate.dart';
 
 import 'screen/selected_language_view.dart';
 import 'screen/tontine/add_members_view.dart';
@@ -43,9 +45,20 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   final _navigatorKey = GlobalKey<NavigatorState>();
 
+  static const _publicRoutes = {
+    LoginView.routeName,
+    RegisterView.routeName,
+    ForgotPasswordView.routeName,
+    ResetPasswordView.routeName,
+    SelectedLanguageView.routeName,
+    CheckConnectionView.routeName,
+    FeaturesExplanationView.routeName,
+  };
+
   @override
   void initState() {
     super.initState();
+    SessionManager.navigatorKey = _navigatorKey;
     _setupNotificationHandling();
   }
 
@@ -57,26 +70,21 @@ class _MyAppState extends State<MyApp> {
     };
   }
 
+  Widget _maybeProtect(String? routeName, Widget child) {
+    if (routeName != null && _publicRoutes.contains(routeName)) {
+      return child;
+    }
+    return AuthGate(child: child);
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Glue the SettingsController to the MaterialApp.
-    //
-    // The ListenableBuilder Widget listens to the SettingsController for changes.
-    // Whenever the user updates their settings, the MaterialApp is rebuilt.
     return ListenableBuilder(
       listenable: widget.settingsController,
       builder: (BuildContext context, Widget? child) {
         return MaterialApp(
           navigatorKey: _navigatorKey,
-          // Providing a restorationScopeId allows the Navigator built by the
-          // MaterialApp to restore the navigation stack when a user leaves and
-          // returns to the app after it has been killed while running in the
-          // background.
           restorationScopeId: 'app',
-
-          // Provide the generated AppLocalizations to the MaterialApp. This
-          // allows descendant Widgets to display the correct translations
-          // depending on the user's locale.
           localizationsDelegates: [
             AppLocalizations.delegate,
             GlobalMaterialLocalizations.delegate,
@@ -85,73 +93,81 @@ class _MyAppState extends State<MyApp> {
             FlutterQuillLocalizations.delegate,
           ],
           supportedLocales: const [
-            Locale('fr', 'FR'), // french, no country code
-            Locale('en', 'US'), // english, no country code
+            Locale('fr', 'FR'),
+            Locale('en', 'US'),
           ],
-
-          // Use AppLocalizations to configure the correct application title
-          // depending on the user's locale.
-          //
-          // The appTitle is defined in .arb files found in the localization
-          // directory.
           onGenerateTitle: (BuildContext context) =>
               AppLocalizations.of(context)!.appTitle,
-
-          // Define a light and dark color theme. Then, read the user's
-          // preferred ThemeMode (light, dark, or system default) from the
-          // SettingsController to display the correct theme.
           theme: AppTheme.lightTheme,
           darkTheme: AppTheme.darkTheme,
           themeMode: widget.settingsController.themeMode,
-
-          // Define a function to handle named routes in order to support
-          // Flutter web url navigation and deep linking.
           onGenerateRoute: (RouteSettings routeSettings) {
             return MaterialPageRoute<void>(
               settings: routeSettings,
               builder: (BuildContext context) {
+                final Widget page;
                 switch (routeSettings.name) {
                   case SettingsView.routeName:
-                    return SettingsView(controller: widget.settingsController);
+                    page = SettingsView(controller: widget.settingsController);
+                    break;
                   case LoginView.routeName:
-                    return const LoginView();
+                    page = const LoginView();
+                    break;
                   case DashboardView.routeName:
-                    return const DashboardView();
+                    page = const DashboardView();
+                    break;
                   case CashflowView.routeName:
-                    return const CashflowView();
+                    page = const CashflowView();
+                    break;
                   case AccountView.routeName:
-                    return const AccountView();
+                    page = const AccountView();
+                    break;
                   case SelectedLanguageView.routeName:
-                    return const SelectedLanguageView();
+                    page = const SelectedLanguageView();
+                    break;
                   case CheckConnectionView.routeName:
-                    return const CheckConnectionView();
+                    page = const CheckConnectionView();
+                    break;
                   case SelectTontineView.routeName:
-                    return const SelectTontineView();
+                    page = const SelectTontineView();
+                    break;
                   case LoanView.routeName:
-                    return const LoanView();
+                    page = const LoanView();
+                    break;
                   case RapportView.routeName:
-                    return const RapportView();
+                    page = const RapportView();
+                    break;
                   case SettingTontineView.routeName:
-                    return const SettingTontineView();
+                    page = const SettingTontineView();
+                    break;
                   case RegisterView.routeName:
-                    return const RegisterView();
+                    page = const RegisterView();
+                    break;
                   case AddMembersView.routeName:
-                    return const AddMembersView();
+                    page = const AddMembersView();
+                    break;
                   case EventView.routeName:
-                    return const EventView();
+                    page = const EventView();
+                    break;
                   case NotificationView.routeName:
-                    return const NotificationView();
+                    page = const NotificationView();
+                    break;
                   case MemberView.routeName:
-                    return const MemberView();
+                    page = const MemberView();
+                    break;
                   case ForgotPasswordView.routeName:
-                    return const ForgotPasswordView();
+                    page = const ForgotPasswordView();
+                    break;
                   case ResetPasswordView.routeName:
-                    return const ResetPasswordView();
+                    page = const ResetPasswordView();
+                    break;
                   case FeaturesExplanationView.routeName:
-                    return const FeaturesExplanationView();
+                    page = const FeaturesExplanationView();
+                    break;
                   default:
-                    return const SplashView();
+                    page = const SplashView();
                 }
+                return _maybeProtect(routeSettings.name, page);
               },
             );
           },

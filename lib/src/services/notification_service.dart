@@ -1,10 +1,10 @@
 import 'dart:convert';
+import 'token_storage.dart';
 
 import 'package:logging/logging.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get_storage/get_storage.dart';
 import '../providers/models/notification_tontine.dart';
-import '../screen/services/member_service.dart';
 import '../screen/services/middleware/interceptor_http.dart';
 
 class NotificationService {
@@ -15,7 +15,7 @@ class NotificationService {
 
   Future<List<NotificationTontine>?> getNotification(int id) async {
     try {
-      final token = storage.read(MemberService.KEY_TOKEN);
+      final token = TokenStorage.instance.token;
       final response = await client.get(
         Uri.parse('$urlApi/notification/tontine/$id'),
         headers: {'Authorization': 'Bearer $token'},

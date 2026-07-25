@@ -7,7 +7,9 @@ import 'services/member_service.dart';
 import 'tontine/select_tontine_view.dart';
 import 'auth/register_view.dart';
 import 'auth/forgot_password_view.dart';
+import 'member/account_view.dart';
 import '../services/first_launch_service.dart';
+import '../services/token_storage.dart';
 import '../utils/username_helper.dart';
 import 'features_explanation_view.dart';
 import '../theme/app_theme.dart';
@@ -97,6 +99,25 @@ class _LoginViewState extends State<LoginView> {
 
       if (success) {
         if (mounted) {
+          final mustChange =
+              await TokenStorage.instance.mustChangePassword();
+          if (mustChange) {
+            if (!mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text(
+                  'Vous devez changer votre mot de passe temporaire',
+                ),
+                backgroundColor: AppColors.warning,
+              ),
+            );
+            if (!mounted) return;
+            Navigator.of(context).pushReplacementNamed(
+              AccountView.routeName,
+            );
+            return;
+          }
+
           // Vérifier si c'est le premier lancement
           final firstLaunchService = FirstLaunchService();
           if (firstLaunchService.isFirstLaunch()) {
@@ -108,6 +129,7 @@ class _LoginViewState extends State<LoginView> {
             );
           } else {
             // Lancement suivant: aller à SelectTontineView
+            if (!mounted) return;
             Navigator.of(context)
                 .pushReplacementNamed(SelectTontineView.routeName);
           }

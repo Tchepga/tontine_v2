@@ -1130,10 +1130,8 @@ Bonjour ! Vous êtes invité(e) à rejoindre notre tontine "${tontine.title}".
 
 📱 *Pour vous connecter :*
 $step1
-2. Utilisez ces identifiants temporaires :
-   👤 *Nom d'utilisateur :* ${tontine.title.toLowerCase().replaceAll(' ', '_')}_membre
-   🔑 *Mot de passe :* changeme
-3. Connectez-vous et rejoignez-nous !
+2. Utilisez les identifiants temporaires communiqués par le président
+3. Changez votre mot de passe dès la première connexion
 
 🔐 *IMPORTANT - Sécurité :*
 ⚠️ *Changez votre mot de passe dès votre première connexion !*
@@ -1149,7 +1147,7 @@ $step1
 Rejoignez-nous pour participer à cette aventure financière collective ! 🚀
 
 ---
-*Message envoyé depuis l'application Tontine*
+*Message envoyé depuis l'application Thoua*
 ''';
 
     // Afficher les options de partage
@@ -1254,7 +1252,8 @@ Vous êtes invité(e) à rejoindre notre tontine "${tontine.title}".
 
 📱 *Vos identifiants de connexion :*
    👤 *Nom d'utilisateur :* $username
-   🔑 *Mot de passe temporaire :* changeme
+   🔑 *Mot de passe temporaire :* celui communiqué lors de votre inscription
+   (sinon utilisez « Mot de passe oublié » dans l'app)
 
 🔐 *IMPORTANT - Sécurité :*
 ⚠️ *Changez votre mot de passe dès votre première connexion !*
@@ -1271,7 +1270,7 @@ $downloadLine
 Bienvenue dans notre tontine ! 🚀
 
 ---
-*Message envoyé depuis l'application Tontine*
+*Message envoyé depuis l'application Thoua*
 ''';
 
     // Afficher les options de partage

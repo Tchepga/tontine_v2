@@ -1,0 +1,3 @@
+# Place this file as ios/GoogleService-Info.plist (gitignored).
+# Download from Firebase Console for app fr.devcoorp.thoua.
+# Required for FCM / APNs push notifications.

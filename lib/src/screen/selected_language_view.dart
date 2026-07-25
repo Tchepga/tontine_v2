@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get_storage/get_storage.dart';
 
 import '../providers/models/enum/available_language.dart';
+import '../services/token_storage.dart';
 import '../theme/app_theme.dart';
 import '../utils/responsive_helper.dart';
 import '../widgets/responsive_padding.dart';
-import 'dashboard_view.dart';
 import 'login_view.dart';
 import 'services/language_service.dart';
+import 'tontine/select_tontine_view.dart';
 
 class SelectedLanguageView extends StatefulWidget {
   static const routeName = '/';
@@ -31,8 +31,13 @@ class _SelectedLanguageViewState extends State<SelectedLanguageView> {
   Future<void> _checkLanguage() async {
     final hasLanguage =
         await _storage.read(LanguageService.languageKey) != null;
-    if (hasLanguage && mounted) {
-      Navigator.of(context).pushReplacementNamed(DashboardView.routeName);
+    if (!hasLanguage || !mounted) return;
+
+    if (TokenStorage.instance.hasToken) {
+      Navigator.of(context)
+          .pushReplacementNamed(SelectTontineView.routeName);
+    } else {
+      Navigator.of(context).pushReplacementNamed(LoginView.routeName);
     }
   }
 

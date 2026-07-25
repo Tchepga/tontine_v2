@@ -1,11 +1,11 @@
 import 'dart:convert';
+import '../../services/token_storage.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:logging/logging.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../../providers/models/event.dart';
 import 'middleware/interceptor_http.dart';
 import 'dto/event_dto.dart';
-import 'member_service.dart';
 import '../../services/websocket_service.dart';
 
 class EventService {
@@ -16,7 +16,7 @@ class EventService {
 
   Future<List<Event>> getEvents(int tontineId) async {
     try {
-      final token = storage.read(MemberService.KEY_TOKEN);
+      final token = TokenStorage.instance.token;
       final response = await client.get(
         Uri.parse('$urlApi/event/tontine/$tontineId'),
         headers: {
@@ -36,7 +36,7 @@ class EventService {
 
   Future<Event?> getEvent(int id) async {
     try {
-      final token = storage.read(MemberService.KEY_TOKEN);
+      final token = TokenStorage.instance.token;
       final response = await client.get(
         Uri.parse('$urlApi/event/$id'),
         headers: {
@@ -54,7 +54,7 @@ class EventService {
   }
 
   Future<void> createEvent(CreateEventDto eventDto) async {
-    final token = storage.read(MemberService.KEY_TOKEN);
+    final token = TokenStorage.instance.token;
     final response = await client.post(
       Uri.parse('$urlApi/event'),
       headers: {
@@ -95,7 +95,7 @@ class EventService {
   }
 
   Future<void> updateEvent(int id, CreateEventDto eventDto) async {
-    final token = storage.read(MemberService.KEY_TOKEN);
+    final token = TokenStorage.instance.token;
     final response = await client.patch(
       Uri.parse('$urlApi/event/$id'),
       headers: {
@@ -110,7 +110,7 @@ class EventService {
   }
 
   Future<void> deleteEvent(int id) async {
-    final token = storage.read(MemberService.KEY_TOKEN);
+    final token = TokenStorage.instance.token;
     final response = await client.delete(
       Uri.parse('$urlApi/event/$id'),
       headers: {

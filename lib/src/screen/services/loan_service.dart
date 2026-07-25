@@ -1,4 +1,5 @@
 import 'dart:convert';
+import '../../services/token_storage.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:logging/logging.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -7,7 +8,6 @@ import '../../providers/models/loan_repayment.dart';
 import 'middleware/interceptor_http.dart';
 import 'dto/loan_dto.dart';
 import 'dto/loan_repayment_dto.dart';
-import 'member_service.dart';
 import '../../services/websocket_service.dart';
 
 class LoanService {
@@ -18,7 +18,7 @@ class LoanService {
 
   Future<List<Loan>> getLoans(int tontineId) async {
     try {
-      final token = storage.read(MemberService.KEY_TOKEN);
+      final token = TokenStorage.instance.token;
       final response = await client.get(
         Uri.parse('$urlApi/loan?tontineId=$tontineId'),
         headers: {
@@ -43,7 +43,7 @@ class LoanService {
 
   Future<Loan?> getLoan(int id) async {
     try {
-      final token = storage.read(MemberService.KEY_TOKEN);
+      final token = TokenStorage.instance.token;
       final response = await client.get(
         Uri.parse('$urlApi/loan/$id'),
         headers: {
@@ -61,7 +61,7 @@ class LoanService {
   }
 
   Future<void> createLoan(CreateLoanDto loanDto) async {
-    final token = storage.read(MemberService.KEY_TOKEN);
+    final token = TokenStorage.instance.token;
     final response = await client.post(
       Uri.parse('$urlApi/loan'),
       headers: {
@@ -94,7 +94,7 @@ class LoanService {
   }
 
   Future<void> updateLoan(int id, UpdateLoanDto loanDto) async {
-    final token = storage.read(MemberService.KEY_TOKEN);
+    final token = TokenStorage.instance.token;
     final response = await client.patch(
       Uri.parse('$urlApi/loan/$id'),
       headers: {
@@ -135,7 +135,7 @@ class LoanService {
   }
 
   Future<void> deleteLoan(int id) async {
-    final token = storage.read(MemberService.KEY_TOKEN);
+    final token = TokenStorage.instance.token;
     final response = await client.delete(
       Uri.parse('$urlApi/loan/$id'),
       headers: {
@@ -150,7 +150,7 @@ class LoanService {
   /// Vote pour un prêt.
   /// Le serveur identifie le votant via le JWT.
   Future<void> voteLoan(int loanId, {required int tontineId}) async {
-    final token = storage.read(MemberService.KEY_TOKEN);
+    final token = TokenStorage.instance.token;
     final response = await client.patch(
       Uri.parse('$urlApi/loan/$loanId/vote'),
       headers: {
@@ -187,7 +187,7 @@ class LoanService {
   /// distinguer l'ID du prêt (params.id) de l'ID de la tontine.
   Future<void> _patchStatus(int loanId, String status,
       {String? rejectionReason, required int tontineId}) async {
-    final token = storage.read(MemberService.KEY_TOKEN);
+    final token = TokenStorage.instance.token;
     if (token == null || token.toString().trim().isEmpty) {
       _logger.severe(
           '_patchStatus: token absent dans storage — reconnexion requise');
@@ -247,7 +247,7 @@ class LoanService {
   /// Récupère tous les remboursements d'un prêt.
   Future<List<LoanRepayment>> getRepayments(int loanId) async {
     try {
-      final token = storage.read(MemberService.KEY_TOKEN);
+      final token = TokenStorage.instance.token;
       final response = await client.get(
         Uri.parse('$urlApi/loan/$loanId/repayments'),
         headers: {'Authorization': 'Bearer $token'},
@@ -266,7 +266,7 @@ class LoanService {
   /// Enregistre un remboursement (principal + intérêts).
   Future<LoanRepayment> recordRepayment(
       int loanId, CreateLoanRepaymentDto dto) async {
-    final token = storage.read(MemberService.KEY_TOKEN);
+    final token = TokenStorage.instance.token;
     final response = await client.post(
       Uri.parse('$urlApi/loan/$loanId/repayments'),
       headers: {

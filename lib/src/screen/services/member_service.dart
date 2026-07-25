@@ -2,6 +2,7 @@ import 'package:get_storage/get_storage.dart';
 import 'dart:convert';
 import '../../providers/models/member.dart';
 import '../../providers/models/enum/role.dart';
+import '../../services/token_storage.dart';
 import 'dto/member_dto.dart';
 import 'dto/password_dto.dart';
 import 'dto/register_president_result.dart';
@@ -15,7 +16,7 @@ class MemberService {
   static final String urlApi = '${dotenv.env['API_URL']}/api';
   final _logger = Logger('MemberService');
   static const String KEY_USER_INFO = 'userInfo';
-  static const String KEY_TOKEN = 'token';
+  static const String KEY_TOKEN = TokenStorage.keyToken;
   /// Profil sérialisé par [AuthProvider] (jsonEncode du membre).
   static const String KEY_PROFILE = 'user_profile';
 
@@ -76,12 +77,15 @@ class MemberService {
         }),
       );
 
-      _logger.info('Login response status: ${response.body}');
+      _logger.info('Login response status: ${response.statusCode}');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final data = jsonDecode(response.body);
         if (data['token'] != null && data['token'].toString().isNotEmpty) {
-          await storage.write(KEY_TOKEN, data['token']);
+          await TokenStorage.instance.write(data['token'].toString());
+          final mustChange = data['mustChangePassword'] == true ||
+              data['must_change_password'] == true;
+          await TokenStorage.instance.setMustChangePassword(mustChange);
           _logger.info('Token saved successfully');
           return true;
         } else {
@@ -89,8 +93,7 @@ class MemberService {
           return false;
         }
       } else {
-        _logger.warning(
-            'Login failed with status: ${response.statusCode}, body: ${response.body}');
+        _logger.warning('Login failed with status: ${response.statusCode}');
         return false;
       }
     } catch (e) {
@@ -157,25 +160,26 @@ class MemberService {
     return null;
   }
 
-  // Récupérer le token
+  // Récupérer le token (cache mémoire après [TokenStorage.init])
   String? getToken() {
-    return storage.read(KEY_TOKEN);
+    return TokenStorage.instance.token;
   }
 
   // Vérifier si l'utilisateur est connecté
   bool isLoggedIn() {
-    return storage.hasData(KEY_TOKEN);
+    return TokenStorage.instance.hasToken;
   }
 
   // Déconnexion
   void logout() {
-    storage.remove(KEY_TOKEN);
+    TokenStorage.instance.clear();
     storage.remove(KEY_USER_INFO);
+    storage.remove(KEY_PROFILE);
   }
 
   Future<bool> hasValidToken() async {
-    final token = storage.read(KEY_TOKEN);
-    if (token == null || token.toString().isEmpty) {
+    final token = TokenStorage.instance.token;
+    if (token == null || token.isEmpty) {
       return false;
     }
 
@@ -320,10 +324,9 @@ class MemberService {
       );
 
       if (response.statusCode != 200) {
-        final errorBody = response.body;
-        throw Exception(
-            'Erreur lors du changement de mot de passe: $errorBody');
+        throw Exception('Erreur lors du changement de mot de passe');
       }
+      await TokenStorage.instance.setMustChangePassword(false);
     } catch (e) {
       _logger.severe('Error changing password: $e');
       rethrow;

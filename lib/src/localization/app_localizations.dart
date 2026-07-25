@@ -101,7 +101,7 @@ abstract class AppLocalizations {
   /// The title of the application
   ///
   /// In en, this message translates to:
-  /// **'tontine_v2'**
+  /// **'Thoua'**
   String get appTitle;
 }
 

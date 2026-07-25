@@ -1,4 +1,5 @@
 import 'dart:convert';
+import '../../services/token_storage.dart';
 import 'dart:io';
 import 'package:get_storage/get_storage.dart';
 import 'package:intl/intl.dart';
@@ -45,7 +46,7 @@ class TontineService {
         return [];
       }
 
-      final token = storage.read(MemberService.KEY_TOKEN);
+      final token = TokenStorage.instance.token;
       final uri = Uri.parse('$urlApi/tontine/member/$username');
       final response = await client.get(
         uri,
@@ -119,7 +120,7 @@ class TontineService {
   }
 
   Future<Tontine> createTontine(CreateTontineDto tontineDto) async {
-    final token = storage.read(MemberService.KEY_TOKEN);
+    final token = TokenStorage.instance.token;
     final response = await client.post(
       Uri.parse('$urlApi/tontine'),
       body: jsonEncode(tontineDto.toJson()),
@@ -136,7 +137,7 @@ class TontineService {
 
   Future<void> addMemberToTontine(
       int tontineId, CreateMemberDto memberDto) async {
-    final token = storage.read(MemberService.KEY_TOKEN);
+    final token = TokenStorage.instance.token;
     final responseCreateMember = await client.post(
       Uri.parse('$urlApi/member'),
       headers: {
@@ -202,7 +203,7 @@ class TontineService {
   Future<RapportMeeting?> createRapport(
       int tontineId, CreateMeetingRapportDto rapportDto) async {
     try {
-      final token = storage.read(MemberService.KEY_TOKEN);
+      final token = TokenStorage.instance.token;
       final uri = Uri.parse('$urlApi/tontine/$tontineId/rapport');
       dynamic body = jsonEncode(rapportDto.toJson());
 
@@ -252,7 +253,7 @@ class TontineService {
   }
 
   Future<List<RapportMeeting>> getRapports(int tontineId) async {
-    final token = storage.read(MemberService.KEY_TOKEN);
+    final token = TokenStorage.instance.token;
     final response = await client
         .get(Uri.parse('$urlApi/tontine/$tontineId/rapport'), headers: {
       'Authorization': 'Bearer $token',
@@ -329,7 +330,7 @@ class TontineService {
   }
 
   Future<void> deleteSanction(int tontineId, int sanctionId) async {
-    final token = storage.read(MemberService.KEY_TOKEN);
+    final token = TokenStorage.instance.token;
     final response = await client.delete(
       Uri.parse('$urlApi/tontine/$tontineId/sanction/$sanctionId'),
       headers: {
@@ -391,7 +392,7 @@ class TontineService {
   }
 
   Future<List<Deposit>> getDeposits(int tontineId) async {
-    final token = storage.read(MemberService.KEY_TOKEN);
+    final token = TokenStorage.instance.token;
     final response = await client
         .get(Uri.parse('$urlApi/tontine/$tontineId/deposit'), headers: {
       'Authorization': 'Bearer $token',
@@ -405,7 +406,7 @@ class TontineService {
 
   // Deposits
   Future<void> createDeposit(int tontineId, CreateDepositDto depositDto) async {
-    final token = storage.read(MemberService.KEY_TOKEN);
+    final token = TokenStorage.instance.token;
     final response = await client.post(
       Uri.parse('$urlApi/tontine/$tontineId/deposit'),
       headers: {
@@ -440,7 +441,7 @@ class TontineService {
 
   Future<void> updateDeposit(
       int tontineId, int depositId, CreateDepositDto depositDto) async {
-    final token = storage.read(MemberService.KEY_TOKEN);
+    final token = TokenStorage.instance.token;
     final response = await client.patch(
       Uri.parse('$urlApi/tontine/$tontineId/deposit/$depositId'),
       headers: {
@@ -456,7 +457,7 @@ class TontineService {
   }
 
   Future<void> deleteDeposit(int tontineId, int depositId) async {
-    final token = storage.read(MemberService.KEY_TOKEN);
+    final token = TokenStorage.instance.token;
     final response = await client.delete(
       Uri.parse('$urlApi/tontine/$tontineId/deposit/$depositId'),
       headers: {
@@ -470,7 +471,7 @@ class TontineService {
 
   Future<void> validateDeposit(
       int tontineId, int depositId, StatusDeposit status) async {
-    final token = storage.read(MemberService.KEY_TOKEN);
+    final token = TokenStorage.instance.token;
     final response = await client.patch(
       Uri.parse('$urlApi/tontine/$tontineId/deposit/$depositId/status'),
       headers: {
@@ -502,7 +503,7 @@ class TontineService {
 
   Future<void> updateTontineConfig(
       int tontineId, CreateConfigTontineDto configDto) async {
-    final token = storage.read(MemberService.KEY_TOKEN);
+    final token = TokenStorage.instance.token;
     final response = await client.patch(
       Uri.parse('$urlApi/tontine/$tontineId/config'),
       headers: {
@@ -518,7 +519,7 @@ class TontineService {
   }
 
   Future<void> deleteRapport(int tontineId, int rapportId) async {
-    final token = storage.read(MemberService.KEY_TOKEN);
+    final token = TokenStorage.instance.token;
     final response = await client.delete(
       Uri.parse('$urlApi/tontine/$tontineId/rapport/$rapportId'),
       headers: {'Authorization': 'Bearer $token'},
@@ -529,7 +530,7 @@ class TontineService {
   }
 
   Future<File> downloadRapportAttachment(int tontineId, int rapportId) async {
-    final token = storage.read(MemberService.KEY_TOKEN);
+    final token = TokenStorage.instance.token;
     final response = await client.get(
       Uri.parse('$urlApi/tontine/$tontineId/rapport/$rapportId/attachment'),
       headers: {'Authorization': 'Bearer $token'},
@@ -564,7 +565,7 @@ class TontineService {
   }
 
   Future<void> removeMemberFromTontine(int tontineId, int memberId) async {
-    final token = storage.read(MemberService.KEY_TOKEN);
+    final token = TokenStorage.instance.token;
     final response = await client.delete(
       Uri.parse('$urlApi/tontine/$tontineId/member/$memberId'),
       headers: {
@@ -606,7 +607,7 @@ class TontineService {
   /// Met à jour les rôles d'un membre dans une tontine spécifique.
   Future<void> updateMemberRolesForTontine(
       int tontineId, int memberId, List<Role> roles) async {
-    final token = storage.read(MemberService.KEY_TOKEN);
+    final token = TokenStorage.instance.token;
     final response = await client.patch(
       Uri.parse('$urlApi/tontine/$tontineId/member/$memberId/roles'),
       headers: {
@@ -628,7 +629,7 @@ class TontineService {
 
   Future<PotDistribution> createDistribution(
       int tontineId, CreatePotDistributionDto dto) async {
-    final token = storage.read(MemberService.KEY_TOKEN);
+    final token = TokenStorage.instance.token;
     final response = await client.post(
       Uri.parse('$urlApi/tontine/$tontineId/distribution'),
       headers: {
@@ -646,7 +647,7 @@ class TontineService {
 
   Future<List<PotDistribution>> getDistributions(int tontineId) async {
     try {
-      final token = storage.read(MemberService.KEY_TOKEN);
+      final token = TokenStorage.instance.token;
       final response = await client.get(
         Uri.parse('$urlApi/tontine/$tontineId/distribution'),
         headers: {'Authorization': 'Bearer $token'},
@@ -669,7 +670,7 @@ class TontineService {
   Future<List<MemberContribution>> getMembersContributions(
       int tontineId) async {
     try {
-      final token = storage.read(MemberService.KEY_TOKEN);
+      final token = TokenStorage.instance.token;
       final response = await client.get(
         Uri.parse('$urlApi/tontine/$tontineId/members/contributions'),
         headers: {'Authorization': 'Bearer $token'},
@@ -693,7 +694,7 @@ class TontineService {
 
   /// Télécharge le rapport CSV financier et l'enregistre dans les documents.
   Future<File> exportFinancialCsv(int tontineId) async {
-    final token = storage.read(MemberService.KEY_TOKEN);
+    final token = TokenStorage.instance.token;
     final response = await client.get(
       Uri.parse('$urlApi/tontine/$tontineId/export/financial'),
       headers: {'Authorization': 'Bearer $token'},
@@ -710,7 +711,7 @@ class TontineService {
   }
 
   Future<void> deleteTontine(int tontineId) async {
-    final token = storage.read(MemberService.KEY_TOKEN);
+    final token = TokenStorage.instance.token;
     final response = await client.delete(
       Uri.parse('$urlApi/tontine/$tontineId'),
       headers: {

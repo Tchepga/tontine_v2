@@ -8,6 +8,7 @@ import '../screen/services/dto/member_dto.dart';
 import '../screen/services/dto/password_dto.dart';
 import '../screen/services/dto/register_president_result.dart';
 import '../screen/services/member_service.dart';
+import '../services/token_storage.dart';
 
 class AuthProvider extends ChangeNotifier {
   final _memberService = MemberService();
@@ -117,7 +118,8 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  void logout() {
+  Future<void> logout() async {
+    await TokenStorage.instance.clear();
     _memberService.logout();
     _storage.remove(KEY_PROFILE);
     _currentUser = null;

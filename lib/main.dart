@@ -1,30 +1,35 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:provider/provider.dart';
 import 'package:logging/logging.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 import 'src/services/local_notification_service.dart';
+import 'src/services/push_notification_service.dart';
 import 'src/services/realtime_notification_service.dart';
+import 'src/services/token_storage.dart';
 
 import 'src/app.dart';
 import 'src/providers/auth_provider.dart';
 import 'src/settings/settings_controller.dart';
 import 'src/settings/settings_service.dart';
 import 'src/providers/tontine_provider.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'src/providers/loan_provider.dart';
 import 'src/providers/event_provider.dart';
 import 'src/providers/notification_provider.dart';
 
-// Environnement injecté via --dart-define=ENV=local (ou production)
+// Environnement injecté via --dart-define=ENV=local|staging|production
 // Par défaut : production
 const String _env = String.fromEnvironment('ENV', defaultValue: 'production');
+const String _sentryDsn = String.fromEnvironment('SENTRY_DSN', defaultValue: '');
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized(); // Important !
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
 
   final envFile = 'assets/env/.env.$_env';
   await dotenv.load(fileName: envFile);
-  debugPrint('🌍 Environnement chargé : $envFile');
+  debugPrint('Environnement chargé : $envFile');
 
   final apiUrl = dotenv.env['API_URL']?.trim();
   if (apiUrl == null || apiUrl.isEmpty) {
@@ -35,44 +40,51 @@ void main() async {
   }
 
   await GetStorage.init();
+  await TokenStorage.instance.init();
 
-  // Initialiser les notifications locales
-  await LocalNotificationService().init();
-
-  // Initialiser le service de notifications en temps réel (non bloquant)
-  RealtimeNotificationService().initialize();
-
-  Logger.root.level = Level.ALL;
+  Logger.root.level = kReleaseMode ? Level.WARNING : Level.ALL;
   Logger.root.onRecord.listen((record) {
+    if (kReleaseMode && record.level < Level.WARNING) return;
     debugPrint('${record.level.name}: ${record.time}: ${record.message}');
   });
 
-  // Set up the SettingsController, which will glue user settings to multiple
-  // Flutter Widgets.
   final settingsController = SettingsController(SettingsService());
-
-  // Load the user's preferred theme while the splash screen is displayed.
-  // This prevents a sudden theme change when the app is first displayed.
   await settingsController.loadSettings();
 
-  // Run the app and pass in the SettingsController. The app listens to the
-  // SettingsController for changes, then passes it further down to the
-  // SettingsView.
-  //await WebSocketService().connect();
+  Future<void> startApp() async {
+    await LocalNotificationService().init();
+    await PushNotificationService.instance.init();
+    RealtimeNotificationService().initialize();
 
-  runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => AuthProvider()),
-        ChangeNotifierProvider(create: (_) => TontineProvider()),
-        ChangeNotifierProvider(create: (_) => LoanProvider()),
-        ChangeNotifierProvider(create: (_) => EventProvider()),
-        ChangeNotifierProvider(create: (_) => NotificationProvider()),
-      ],
-      child: MyApp(settingsController: settingsController),
-    ),
-  );
+    runApp(
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider(create: (_) => AuthProvider()),
+          ChangeNotifierProvider(create: (_) => TontineProvider()),
+          ChangeNotifierProvider(create: (_) => LoanProvider()),
+          ChangeNotifierProvider(create: (_) => EventProvider()),
+          ChangeNotifierProvider(create: (_) => NotificationProvider()),
+        ],
+        child: MyApp(settingsController: settingsController),
+      ),
+    );
+  }
 
-  // Suppression de l'appel WebSocket
-  // WebSocketService().connect();
+  final sentryDsn = _sentryDsn.isNotEmpty
+      ? _sentryDsn
+      : (dotenv.env['SENTRY_DSN']?.trim() ?? '');
+
+  if (sentryDsn.isNotEmpty) {
+    await SentryFlutter.init(
+      (options) {
+        options.dsn = sentryDsn;
+        options.environment = _env;
+        options.tracesSampleRate = kReleaseMode ? 0.2 : 1.0;
+        options.sendDefaultPii = false;
+      },
+      appRunner: startApp,
+    );
+  } else {
+    await startApp();
+  }
 }

@@ -1,8 +1,7 @@
 import 'package:socket_io_client/socket_io_client.dart' as io;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:logging/logging.dart';
-import 'package:get_storage/get_storage.dart';
-import '../screen/services/member_service.dart';
+import 'token_storage.dart';
 
 /// Callback pour les événements WebSocket
 typedef WebSocketEventCallback = void Function(
@@ -11,7 +10,6 @@ typedef WebSocketEventCallback = void Function(
 class WebSocketService {
   static final WebSocketService _instance = WebSocketService._internal();
   final _logger = Logger('WebSocketService');
-  final _storage = GetStorage();
   io.Socket? _socket;
   bool _isConnecting = false;
   bool _isConnected = false;
@@ -65,19 +63,21 @@ class WebSocketService {
 
     try {
       final wsUrl = dotenv.env['WS_URL']?.trim();
-      final token = _storage.read(MemberService.KEY_TOKEN);
+      final token = TokenStorage.instance.token;
 
       if (wsUrl != null && token != null) {
-        _logger.info('WS_URL from env: $wsUrl');
         _logger.info('Connecting to Socket.IO server...');
 
-        // Nettoyer l'URL : retirer le protocole ws:// ou wss:// pour Socket.IO
-        // Socket.IO gère automatiquement le protocole
+        // Forcer TLS : ws:// → wss:// avant conversion Socket.IO
         String serverUrl = wsUrl;
+        if (serverUrl.startsWith('ws://')) {
+          serverUrl = serverUrl.replaceFirst('ws://', 'wss://');
+          _logger.warning('WS_URL was ws:// — upgraded to wss://');
+        }
         if (serverUrl.startsWith('wss://')) {
           serverUrl = serverUrl.replaceFirst('wss://', 'https://');
-        } else if (serverUrl.startsWith('ws://')) {
-          serverUrl = serverUrl.replaceFirst('ws://', 'http://');
+        } else if (serverUrl.startsWith('http://')) {
+          serverUrl = serverUrl.replaceFirst('http://', 'https://');
         }
 
         // Créer la connexion Socket.IO

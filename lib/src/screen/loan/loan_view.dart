@@ -15,6 +15,8 @@ import '../../widgets/status_badge.dart';
 import '../../widgets/responsive_padding.dart';
 import '../../utils/responsive_helper.dart';
 import '../../theme/app_theme.dart';
+import '../../utils/money_utils.dart';
+import '../../utils/submit_guard.dart';
 import 'package:intl/intl.dart';
 
 import '../services/dto/loan_dto.dart';
@@ -28,6 +30,8 @@ class LoanView extends StatefulWidget {
 }
 
 class _LoanViewState extends State<LoanView> {
+  final _loanSubmitGuard = SubmitGuard();
+
   @override
   void initState() {
     super.initState();
@@ -353,13 +357,9 @@ class _LoanViewState extends State<LoanView> {
                   ),
                   keyboardType: TextInputType.number,
                   validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Le montant est requis';
-                    }
-                    final amount = double.tryParse(value);
-                    if (amount == null || amount <= 0) {
-                      return 'Montant invalide';
-                    }
+                    final base = MoneyUtils.validateAmountInput(value);
+                    if (base != null) return base;
+                    final amount = MoneyUtils.parseToApiAmount(value)!;
                     if (amount < currentTontine!.config.minLoanAmount) {
                       return 'Le montant minimum est de ${currentTontine.config.minLoanAmount} FCFA';
                     }
@@ -440,19 +440,23 @@ class _LoanViewState extends State<LoanView> {
                 foregroundColor: Colors.white,
               ),
               onPressed: () async {
-                if (formKey.currentState!.validate() &&
-                    currentTontine != null) {
-                  try {
-                    if (!mounted) return;
-                    final loanDto = CreateLoanDto(
-                      amount: double.parse(amountController.text),
-                      currency: currentTontine.cashFlow.currency,
-                      tontineId: currentTontine.id,
-                      redemptionDate: selectedDate,
-                    );
+                await _loanSubmitGuard.run(() async {
+                  if (formKey.currentState!.validate() &&
+                      currentTontine != null) {
+                    try {
+                      if (!mounted) return;
+                      final amount =
+                          MoneyUtils.parseToApiAmount(amountController.text);
+                      if (amount == null) return;
+                      final loanDto = CreateLoanDto(
+                        amount: amount,
+                        currency: currentTontine.cashFlow.currency,
+                        tontineId: currentTontine.id,
+                        redemptionDate: selectedDate,
+                      );
 
-                    await loanProvider.createLoan(loanDto);
-                    await loanProvider.loadLoans(currentTontine.id);
+                      await loanProvider.createLoan(loanDto);
+                      await loanProvider.loadLoans(currentTontine.id);
 
                     // ignore: use_build_context_synchronously
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -484,6 +488,7 @@ class _LoanViewState extends State<LoanView> {
                     );
                   }
                 }
+                });
               },
               child: const Text('Créer'),
             ),

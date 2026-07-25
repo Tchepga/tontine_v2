@@ -1,11 +1,12 @@
 import 'dart:async';
 
 import 'package:http_interceptor/http_interceptor.dart';
-import 'package:get_storage/get_storage.dart';
 import 'package:logging/logging.dart';
 
+import '../../../services/session_manager.dart';
+import '../../../services/token_storage.dart';
+
 class AuthInterceptor implements HttpInterceptor {
-  final storage = GetStorage();
   final _logger = Logger('AuthInterceptor');
 
   static const List<String> publicPaths = [
@@ -14,6 +15,8 @@ class AuthInterceptor implements HttpInterceptor {
     'verify',
     'register',
     'register-president',
+    'forgot-password',
+    'reset-password',
   ];
 
   bool _isPublicPath(String path) {
@@ -28,20 +31,13 @@ class AuthInterceptor implements HttpInterceptor {
       return request;
     }
 
-    final token = storage.read('token');
-    // Toujours injecter le token (sans condition de comparaison) :
-    // http_interceptor v3 peut reconstruire l'objet request et perdre les
-    // headers passés manuellement dans les services.
-    if (token != null) {
-      final tokenStr = token.toString();
-      request.headers['Authorization'] = 'Bearer $tokenStr';
-      _logger.fine(
-          'interceptRequest [${request.method}] ${request.url.path} '
-          'token[0..15]="${tokenStr.substring(0, tokenStr.length.clamp(0, 15))}..."');
+    final token = TokenStorage.instance.token;
+    if (token != null && token.isNotEmpty) {
+      request.headers['Authorization'] = 'Bearer $token';
     } else {
       _logger.warning(
           'interceptRequest [${request.method}] ${request.url.path} — '
-          'AUCUN token en storage, requête envoyée sans Authorization');
+          'aucun token, requête sans Authorization');
     }
     request.headers['Content-Type'] = 'application/json';
     return request;
@@ -52,10 +48,9 @@ class AuthInterceptor implements HttpInterceptor {
       {required BaseResponse response}) async {
     final path = response.request?.url.path ?? '';
     if (response.statusCode == 401 && !_isPublicPath(path)) {
-      _logger.severe(
-          'interceptResponse 401 Unauthorized — '
-          'url=${response.request?.url} | '
-          'token présent=${storage.hasData("token")}');
+      _logger.warning(
+          'interceptResponse 401 Unauthorized — url=${response.request?.url}');
+      await SessionManager.handleUnauthorized();
     }
     return response;
   }

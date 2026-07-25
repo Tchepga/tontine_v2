@@ -63,9 +63,11 @@ test-results.html
 # Env files
 .env
 .env.local
-# Placeholders versionnés pour le bundle (valeurs réelles : surcharge locale hors repo si besoin)
-!assets/env/.env.local
+.env.staging
 .env.production
+# Placeholders versionnés pour le bundle
+!assets/env/.env.local
+!assets/env/.env.staging
 !assets/env/.env.production
 
 # Firebase (ne pas committer les fichiers de config)

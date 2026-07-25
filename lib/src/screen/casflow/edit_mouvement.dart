@@ -6,6 +6,8 @@ import '../../providers/models/enum/status_deposit.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/tontine_provider.dart';
 import '../../providers/models/member.dart';
+import '../../utils/money_utils.dart';
+import '../../utils/submit_guard.dart';
 import '../services/dto/deposit_dto.dart';
 
 class EditMouvement extends StatefulWidget {
@@ -20,6 +22,7 @@ class EditMouvement extends StatefulWidget {
 class _EditMouvementState extends State<EditMouvement> {
   final _formKey = GlobalKey<FormState>();
   final _amountController = TextEditingController();
+  final _submitGuard = SubmitGuard();
   Member? _selectedAuthor;
   DepositReason _selectedReason = DepositReason.VERSEMENT;
   List<DepositReason> depositReasons = DepositReason.values.toList();
@@ -91,14 +94,10 @@ class _EditMouvementState extends State<EditMouvement> {
                     controller: _amountController,
                     decoration: const InputDecoration(
                       labelText: 'Montant',
+                      hintText: 'Entier positif (ex. 10000)',
                     ),
                     keyboardType: TextInputType.number,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Veuillez entrer un montant';
-                      }
-                      return null;
-                    },
+                    validator: MoneyUtils.validateAmountInput,
                   ),
                   const SizedBox(height: 16),
                   if (canValidate) ...[
@@ -183,9 +182,11 @@ class _EditMouvementState extends State<EditMouvement> {
                   ),
                   const SizedBox(height: 24),
                   ElevatedButton(
-                    onPressed: () async {
-                      await _handleSubmit(context, tontineProvider);
-                    },
+                    onPressed: _submitGuard.isBusy
+                        ? null
+                        : () async {
+                            await _handleSubmit(context, tontineProvider);
+                          },
                     child: const Text('Enregistrer'),
                   ),
                 ],
@@ -199,64 +200,80 @@ class _EditMouvementState extends State<EditMouvement> {
 
   Future<void> _handleSubmit(
       BuildContext context, TontineProvider tontineProvider) async {
-    final currentTontine = tontineProvider.currentTontine;
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final isPresident = authProvider.isPresident();
-    final isAccountManager = authProvider.isAccountManager();
-    final canValidate = isPresident || isAccountManager;
+    await _submitGuard.run(() async {
+      final currentTontine = tontineProvider.currentTontine;
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final isPresident = authProvider.isPresident();
+      final isAccountManager = authProvider.isAccountManager();
+      final canValidate = isPresident || isAccountManager;
 
-    // Pour les membres normaux, utiliser l'utilisateur actuel
-    final author = canValidate ? _selectedAuthor : authProvider.currentUser;
+      // Pour les membres normaux, utiliser l'utilisateur actuel
+      final author = canValidate ? _selectedAuthor : authProvider.currentUser;
 
-    if (_formKey.currentState!.validate() &&
-        author != null &&
-        currentTontine != null &&
-        author.id != null) {
-      final depositDto = CreateDepositDto(
-        amount: double.parse(_amountController.text),
-        currency: currentTontine.cashFlow.currency,
-        memberId: author.id!,
-        status: StatusDeposit.PENDING,
-        cashFlowId: currentTontine.cashFlow.id,
-        reasons: depositReasonToString(_selectedReason),
-      );
-
-      try {
-        if (widget.deposit != null) {
-          await tontineProvider.updateDeposit(
-            currentTontine.id,
-            widget.deposit!.id,
-            depositDto,
-          );
-        } else {
-          await tontineProvider.createDeposit(
-            currentTontine.id,
-            depositDto,
-          );
-        }
+      final amount = MoneyUtils.parseToApiAmount(_amountController.text);
+      if (amount == null) {
         if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            backgroundColor: Colors.green[300],
-            content: Text(widget.deposit != null
-                ? 'Mouvement modifié avec succès'
-                : 'Mouvement créé avec succès'),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            duration: const Duration(seconds: 5),
-            behavior: SnackBarBehavior.floating,
+          const SnackBar(
+            content: Text('Montant invalide'),
+            backgroundColor: Colors.red,
           ),
         );
-        Navigator.of(context).pop();
-      } catch (e) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Erreur lors de l\'opération'),
-          duration: Duration(seconds: 5),
-        ));
+        return;
       }
-    }
+
+      if (_formKey.currentState!.validate() &&
+          author != null &&
+          currentTontine != null &&
+          author.id != null) {
+        final depositDto = CreateDepositDto(
+          amount: amount,
+          currency: currentTontine.cashFlow.currency,
+          memberId: author.id!,
+          status: StatusDeposit.PENDING,
+          cashFlowId: currentTontine.cashFlow.id,
+          reasons: depositReasonToString(_selectedReason),
+        );
+
+        try {
+          if (widget.deposit != null) {
+            await tontineProvider.updateDeposit(
+              currentTontine.id,
+              widget.deposit!.id,
+              depositDto,
+            );
+          } else {
+            await tontineProvider.createDeposit(
+              currentTontine.id,
+              depositDto,
+            );
+          }
+          if (!context.mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              backgroundColor: Colors.green[300],
+              content: Text(widget.deposit != null
+                  ? 'Mouvement modifié avec succès'
+                  : 'Mouvement créé avec succès'),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              duration: const Duration(seconds: 5),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+          Navigator.of(context).pop();
+        } catch (e) {
+          if (!context.mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Erreur: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    });
   }
 
   @override

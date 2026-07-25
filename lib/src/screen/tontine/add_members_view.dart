@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../providers/tontine_provider.dart';
 import '../../services/error_catchable.dart';
+import '../../utils/temp_password.dart';
 import '../dashboard_view.dart';
 import './add_member_form.dart';
 
@@ -76,13 +78,22 @@ class _AddMembersViewState extends State<AddMembersView> {
                             .pushReplacementNamed(DashboardView.routeName);
                       }
                       try {
-                        // set default password
-                        memberDto = memberDto.copyWith(password: 'changeme');
+                        final tempPassword = TempPassword.generate();
+                        memberDto =
+                            memberDto.copyWith(password: tempPassword);
                         await tontineProvider.addMemberToTontine(
                           currentTontine.id,
                           memberDto,
                         );
                         tontineProvider.loadTontines();
+                        if (!context.mounted) return;
+                        final username = memberDto.username ??
+                            '${memberDto.firstname} ${memberDto.lastname}';
+                        await _showCredentialsDialog(
+                          context,
+                          username: username,
+                          password: tempPassword,
+                        );
                         if (!context.mounted) return;
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
@@ -156,6 +167,55 @@ class _AddMembersViewState extends State<AddMembersView> {
               child: const Text('Continuer vers le tableau de bord'),
             ),
           ),
+        );
+      },
+    );
+  }
+
+  Future<void> _showCredentialsDialog(
+    BuildContext context, {
+    required String username,
+    required String password,
+  }) async {
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) {
+        return AlertDialog(
+          title: const Text('Identifiants temporaires'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Communiquez ces identifiants au membre de façon sécurisée. '
+                'Ils ne seront plus réaffichés.',
+              ),
+              const SizedBox(height: 16),
+              SelectableText('Utilisateur : $username'),
+              const SizedBox(height: 8),
+              SelectableText('Mot de passe : $password'),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Clipboard.setData(
+                  ClipboardData(
+                    text: 'Utilisateur : $username\nMot de passe : $password',
+                  ),
+                );
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Identifiants copiés')),
+                );
+              },
+              child: const Text('Copier'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('OK'),
+            ),
+          ],
         );
       },
     );

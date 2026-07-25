@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
+import '../../services/token_storage.dart';
 import 'package:provider/provider.dart';
-import 'package:get_storage/get_storage.dart';
 import '../../providers/auth_provider.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/responsive_helper.dart';
 import '../services/dto/password_dto.dart';
-import '../services/member_service.dart';
 
 class ResetPasswordView extends StatefulWidget {
   static const routeName = '/reset-password';
@@ -22,7 +21,6 @@ class _ResetPasswordViewState extends State<ResetPasswordView> {
   final _formKey = GlobalKey<FormState>();
   final _newPasswordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  final _storage = GetStorage();
   bool _isLoading = false;
   bool _showNewPassword = false;
   bool _showConfirmPassword = false;
@@ -37,7 +35,7 @@ class _ResetPasswordViewState extends State<ResetPasswordView> {
   @override
   Widget build(BuildContext context) {
     // Vérifier si un token existe dans le storage
-    final token = _storage.read(MemberService.KEY_TOKEN);
+    final token = TokenStorage.instance.token;
     if (token == null) {
       // Pas de token, rediriger vers la connexion
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -396,7 +394,7 @@ class _ResetPasswordViewState extends State<ResetPasswordView> {
 
       try {
         // Récupérer le token depuis le storage
-        final token = _storage.read(MemberService.KEY_TOKEN);
+        final token = TokenStorage.instance.token;
 
         if (token == null) {
           throw Exception('Token de réinitialisation non trouvé');
