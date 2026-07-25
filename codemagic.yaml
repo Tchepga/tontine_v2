@@ -31,16 +31,13 @@ workflows:
 
   # ══════════════════════════════════════════════════════════════════════════
   # WORKFLOW 2 — Android → Play Store internal track
+  # DÉSACTIVÉ : publication Android via GitHub Actions (.github/workflows/deploy.yml).
+  # Ne pas réactiver le triggering push sans désactiver Actions (double upload).
   # ══════════════════════════════════════════════════════════════════════════
   android-deploy:
     name: 🤖 Android → Play Store
     max_build_duration: 60
-    triggering:
-      events:
-        - push
-      branch_patterns:
-        - pattern: master
-          include: true
+    # triggering: désactivé (Android = GitHub Actions)
     environment:
       flutter: 3.38.10
       java: 17

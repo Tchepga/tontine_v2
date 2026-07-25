@@ -10,7 +10,6 @@ on:
 env:
   FLUTTER_VERSION: '3.38.10'
   JAVA_VERSION: '17'
-  RUBY_VERSION: '3.2'
 
 # ══════════════════════════════════════════════════════════════════════════════
 # JOB 1 — TESTS (bloque le déploiement si échec)
@@ -177,76 +176,22 @@ jobs:
           rm -f android/key.properties
 
 # ══════════════════════════════════════════════════════════════════════════════
-# JOB 3 — DÉPLOIEMENT iOS (uniquement sur master, après tests OK)
+# JOB 3 — iOS (Codemagic, pas GitHub Actions)
+# Fastlane n’est pas utilisé dans ce repo : TestFlight est publié via codemagic.yaml
+# (workflow ios-deploy). Ce job ne fait que documenter le partage des rôles.
 # ══════════════════════════════════════════════════════════════════════════════
-  deploy-ios:
-    name: 🍎 iOS → TestFlight
-    runs-on: macos-latest
-    needs: test  # ← bloqué si les tests échouent
+  ios-status:
+    name: 🍎 iOS → Codemagic (TestFlight)
+    runs-on: ubuntu-latest
+    needs: test
     if: github.ref == 'refs/heads/master' && github.event_name == 'push'
-    # hashFiles() n'est pas autorisé dans job.if — on détecte fastlane/Fastfile après checkout.
-    outputs:
-      fastlane_used: ${{ steps.fastlane.outputs.present }}
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Détection fastlane/Fastfile
-        id: fastlane
+      - name: Rappel déploiement iOS
         run: |
-          if [ -f fastlane/Fastfile ]; then
-            echo "present=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "present=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::Pas de fastlane/Fastfile — étapes iOS ignorées (ajoutez Fastlane ou utilisez Codemagic)."
-          fi
-
-      - name: Setup Flutter
-        if: steps.fastlane.outputs.present == 'true'
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: ${{ env.FLUTTER_VERSION }}
-          cache: true
-
-      - name: Setup Ruby
-        if: steps.fastlane.outputs.present == 'true'
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: ${{ env.RUBY_VERSION }}
-          bundler-cache: true
-          working-directory: fastlane
-
-      - name: Install Fastlane
-        if: steps.fastlane.outputs.present == 'true'
-        run: |
-          cd fastlane
-          bundle install
-
-      - name: Flutter pub get
-        if: steps.fastlane.outputs.present == 'true'
-        run: flutter pub get
-
-      - name: Build iOS (sans codesign — Fastlane gère)
-        if: steps.fastlane.outputs.present == 'true'
-        run: |
-          flutter build ios --release --no-codesign \
-            --dart-define=ENV=production
-
-      - name: Sync certificats via Match & Upload TestFlight
-        if: steps.fastlane.outputs.present == 'true'
-        env:
-          MATCH_PASSWORD:     ${{ secrets.MATCH_PASSWORD }}
-          MATCH_GIT_URL:      ${{ secrets.MATCH_GIT_URL }}
-          APPLE_ID:           ${{ secrets.APPLE_ID }}
-          ASC_KEY_ID:         ${{ secrets.ASC_KEY_ID }}
-          ASC_ISSUER_ID:      ${{ secrets.ASC_ISSUER_ID }}
-          ASC_KEY_CONTENT:    ${{ secrets.ASC_KEY_CONTENT }}
-          APP_STORE_TEAM_ID:  ${{ secrets.APP_STORE_TEAM_ID }}
-          DEVELOPER_TEAM_ID:  ${{ secrets.DEVELOPER_TEAM_ID }}
-        run: |
-          cd fastlane
-          bundle exec fastlane ios deploy
+          echo "::notice::iOS / TestFlight est géré par Codemagic (codemagic.yaml → ios-deploy), pas par GitHub Actions."
+          echo "## iOS" >> "$GITHUB_STEP_SUMMARY"
+          echo "Déploiement TestFlight via **Codemagic** (\`ios-deploy\`)." >> "$GITHUB_STEP_SUMMARY"
+          echo "GitHub Actions ne build / ne publie **pas** iOS." >> "$GITHUB_STEP_SUMMARY"
 
 # ══════════════════════════════════════════════════════════════════════════════
 # JOB 4 — RAPPORT FINAL
@@ -254,7 +199,7 @@ jobs:
   notify:
     name: 📊 Rapport déploiement
     runs-on: ubuntu-latest
-    needs: [deploy-android, deploy-ios]
+    needs: [deploy-android, ios-status]
     if: always() && github.ref == 'refs/heads/master'
     steps:
       - name: Résumé
@@ -262,20 +207,14 @@ jobs:
           echo "## Résultat du déploiement" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           if [ "${{ needs.deploy-android.outputs.play_uploaded }}" = "true" ]; then
-            echo "✅ **Android** → Play Store internal track" >> $GITHUB_STEP_SUMMARY
+            echo "✅ **Android** → Play Store internal track (GitHub Actions)" >> $GITHUB_STEP_SUMMARY
           elif [ "${{ needs.deploy-android.result }}" = "success" ]; then
             echo "⏭️ **Android** → Non publié (secrets Actions manquants — voir notice dans le job deploy-android)" >> $GITHUB_STEP_SUMMARY
           else
             echo "❌ **Android** → Échec (${{ needs.deploy-android.result }})" >> $GITHUB_STEP_SUMMARY
           fi
-          ios="${{ needs.deploy-ios.result }}"
-          fl="${{ needs.deploy-ios.outputs.fastlane_used }}"
-          if [ "$ios" = "success" ] && [ "$fl" = "true" ]; then
-            echo "✅ **iOS** → TestFlight" >> $GITHUB_STEP_SUMMARY
-          elif [ "$ios" = "success" ] && [ "$fl" != "true" ]; then
-            echo "⏭️ **iOS** → Ignoré (pas de fastlane/Fastfile — Codemagic ou ajout Fastlane au repo)" >> $GITHUB_STEP_SUMMARY
-          elif [ "$ios" = "skipped" ]; then
-            echo "⏭️ **iOS** → Job ignoré" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ needs.ios-status.result }}" = "success" ]; then
+            echo "ℹ️ **iOS** → Via Codemagic (\`ios-deploy\`), hors de ce workflow" >> $GITHUB_STEP_SUMMARY
           else
-            echo "❌ **iOS** → Échec ($ios)" >> $GITHUB_STEP_SUMMARY
+            echo "⚠️ **iOS** → Job statut: ${{ needs.ios-status.result }}" >> $GITHUB_STEP_SUMMARY
           fi
