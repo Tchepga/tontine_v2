@@ -3,6 +3,7 @@ import '../../../theme/app_theme.dart';
 
 enum Role {
   PRESIDENT,
+  VICE_PRESIDENT,
   ACCOUNT_MANAGER,
   OFFICE_MANAGER,
   TONTINARD,
@@ -10,7 +11,10 @@ enum Role {
 }
 
 Role fromStringToRole(String role) {
-  return Role.values.firstWhere((r) => r.toString().split('.').last == role);
+  return Role.values.firstWhere(
+    (r) => r.toString().split('.').last == role,
+    orElse: () => Role.TONTINARD,
+  );
 }
 
 Role parseRole(dynamic role) {
@@ -28,6 +32,8 @@ extension RoleExtension on Role {
     switch (this) {
       case Role.PRESIDENT:
         return 'Président';
+      case Role.VICE_PRESIDENT:
+        return 'Vice-président';
       case Role.ACCOUNT_MANAGER:
         return 'Trésorier';
       case Role.OFFICE_MANAGER:
@@ -43,6 +49,8 @@ extension RoleExtension on Role {
     switch (this) {
       case Role.PRESIDENT:
         return 'Tous les droits - Gestion complète';
+      case Role.VICE_PRESIDENT:
+        return 'Droits étendus (hors actions réservées au président)';
       case Role.ACCOUNT_MANAGER:
         return 'Gestion de la trésorerie';
       case Role.OFFICE_MANAGER:
@@ -58,6 +66,8 @@ extension RoleExtension on Role {
     switch (this) {
       case Role.PRESIDENT:
         return Icons.stars;
+      case Role.VICE_PRESIDENT:
+        return Icons.star_half;
       case Role.ACCOUNT_MANAGER:
         return Icons.account_balance;
       case Role.OFFICE_MANAGER:
@@ -73,6 +83,8 @@ extension RoleExtension on Role {
     switch (this) {
       case Role.PRESIDENT:
         return AppColors.primary;
+      case Role.VICE_PRESIDENT:
+        return AppColors.primary.withValues(alpha: 0.75);
       case Role.ACCOUNT_MANAGER:
         return AppColors.success;
       case Role.OFFICE_MANAGER:

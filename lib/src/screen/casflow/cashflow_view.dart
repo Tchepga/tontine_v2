@@ -74,10 +74,8 @@ class _CashflowViewState extends State<CashflowView> {
             children: [
               _buildBalanceCard(context, currentTontine),
               ResponsiveSpacing(height: 16),
-              // Filtres modernisés
               _buildFiltersSection(context),
               ResponsiveSpacing(height: 16),
-              // Section versements en attente (si président/trésorier)
               if (canValidate) ...[
                 _buildPendingDepositsSection(
                     context, deposits, tontineProvider, currentTontine!.id),

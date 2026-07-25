@@ -466,11 +466,12 @@ class TontineProvider extends ChangeNotifier {
     return (daysSinceFirstDay / 7).ceil();
   }
 
-  /// Met à jour les rôles d'un membre (global — conservé pour compatibilité)
+  /// Met à jour les rôles d'un membre dans une tontine.
   Future<void> updateMemberRoles(
       int tontineId, int memberId, List<Role> roles) async {
     try {
-      await _tontineService.updateMemberRoles(memberId, roles);
+      await _tontineService.updateMemberRolesForTontine(
+          tontineId, memberId, roles);
       await loadTontines();
       notifyListeners();
     } catch (e) {

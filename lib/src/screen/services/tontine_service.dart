@@ -619,8 +619,31 @@ class TontineService {
       }),
     );
     if (response.statusCode != 200) {
-      throw Exception('Failed to update member roles for tontine');
+      throw Exception(_extractApiErrorMessage(
+        response.body,
+        fallback: response.statusCode == 403
+            ? 'Seul le président peut modifier les rôles des membres.'
+            : 'Erreur lors de la mise à jour des rôles.',
+      ));
     }
+  }
+
+  String _extractApiErrorMessage(String body, {required String fallback}) {
+    try {
+      final decoded = jsonDecode(body);
+      if (decoded is Map<String, dynamic>) {
+        final message = decoded['message'];
+        if (message is String && message.trim().isNotEmpty) {
+          return message;
+        }
+        if (message is List && message.isNotEmpty) {
+          return message.join(', ');
+        }
+      }
+    } catch (_) {
+      // ignore parse errors
+    }
+    return fallback;
   }
 
   // ─────────────────────────────────────────────────────────────────────────────
