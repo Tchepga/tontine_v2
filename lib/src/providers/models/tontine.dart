@@ -53,24 +53,47 @@ class PartOrder {
     this.period,
   });
 
+  /// ID membre résolu depuis l'objet nested ou la FK `memberId`.
+  int? get memberId => member.id;
+
   factory PartOrder.fromJson(Map<String, dynamic> json) {
+    Member member;
+    if (json['member'] is Map) {
+      member = Member.fromJson(Map<String, dynamic>.from(json['member'] as Map));
+    } else {
+      final rawId = json['memberId'] ??
+          json['member_id'] ??
+          (json['member'] is num ? json['member'] : null);
+      final parsedId = rawId is int
+          ? rawId
+          : rawId is num
+              ? rawId.toInt()
+              : int.tryParse(rawId?.toString() ?? '');
+      member = Member(
+        id: parsedId,
+        email: '',
+        firstname: null,
+        lastname: null,
+        phone: null,
+        avatar: null,
+        country: null,
+        user: null,
+      );
+    }
+
+    DateTime? period;
+    final rawPeriod = json['period'];
+    if (rawPeriod is String) {
+      period = DateTime.tryParse(rawPeriod);
+    } else if (rawPeriod is DateTime) {
+      period = rawPeriod;
+    }
+
     return PartOrder(
       id: json['id'] ?? 0,
       order: json['order'] ?? 0,
-      member: json['member'] is Map
-          ? Member.fromJson(Map<String, dynamic>.from(json['member'] as Map))
-          : Member(
-              email: '',
-              firstname: null,
-              lastname: null,
-              phone: null,
-              avatar: null,
-              country: null,
-              user: null,
-            ),
-      period: json['period'] is String
-          ? DateTime.tryParse(json['period'] as String)
-          : null,
+      member: member,
+      period: period,
     );
   }
 
@@ -79,6 +102,7 @@ class PartOrder {
       'id': id,
       'order': order,
       'member': member.toJson(),
+      'memberId': member.id,
       'period': period?.toIso8601String(),
     };
   }

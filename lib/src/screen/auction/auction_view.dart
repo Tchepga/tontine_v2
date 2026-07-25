@@ -13,6 +13,7 @@ import '../../theme/app_theme.dart';
 import '../../widgets/menu_widget.dart';
 import 'create_auction_dialog.dart';
 import 'auction_details_dialog.dart';
+import '../../utils/dialog_utils.dart';
 
 class AuctionView extends StatefulWidget {
   const AuctionView({super.key});
@@ -379,12 +380,14 @@ class _AuctionViewState extends State<AuctionView> {
 
   void _showCreateAuctionDialog(
       BuildContext context, TontineProvider tontineProvider, int tontineId) {
-    showDialog(
+    final messenger = ScaffoldMessenger.of(context);
+    showAppDialog(
       context: context,
       builder: (BuildContext context) {
         return CreateAuctionDialog(
           tontineId: tontineId,
           tontineProvider: tontineProvider,
+          hostMessenger: messenger,
         );
       },
     );
@@ -392,13 +395,15 @@ class _AuctionViewState extends State<AuctionView> {
 
   void _showAuctionDetails(BuildContext context, Auction auction,
       TontineProvider tontineProvider, AuthProvider authProvider) {
-    showDialog(
+    final messenger = ScaffoldMessenger.of(context);
+    showAppDialog(
       context: context,
       builder: (BuildContext context) {
         return AuctionDetailsDialog(
           auction: auction,
           tontineProvider: tontineProvider,
           authProvider: authProvider,
+          hostMessenger: messenger,
         );
       },
     );

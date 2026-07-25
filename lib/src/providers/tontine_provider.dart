@@ -9,8 +9,8 @@ import 'models/enum/status_deposit.dart';
 import 'models/event.dart';
 import 'models/sanction.dart';
 import 'models/tontine.dart';
+import 'models/member.dart';
 import 'models/auction.dart';
-import 'models/enum/loop_period.dart';
 import 'models/enum/role.dart';
 import 'models/pot_distribution.dart';
 import 'models/member_contribution.dart';
@@ -27,6 +27,8 @@ import '../screen/services/auction_service.dart';
 import 'models/rapport_meeting.dart';
 import 'package:get_storage/get_storage.dart';
 import 'models/part.dart';
+import '../utils/part_order_utils.dart';
+import '../utils/role_permissions.dart';
 
 class TontineProvider extends ChangeNotifier {
   static const KEY_SELECTED_TONTINE_ID = 'selectedTontineId';
@@ -397,73 +399,14 @@ class TontineProvider extends ChangeNotifier {
 
   /// Retourne l'ordre actuel et le suivant basé sur la période de boucle
   Map<String, PartOrder?> getCurrentAndNextPartOrders() {
-    if (_currentTontine?.config.parts == null ||
-        _currentTontine!.config.parts!.isEmpty) {
+    final parts = _currentTontine?.config.parts;
+    if (parts == null || parts.isEmpty) {
       return {'current': null, 'next': null};
     }
-
-    final now = DateTime.now();
-    final parts = _currentTontine!.config.parts!;
-    final loopPeriod = _currentTontine!.config.loopPeriod;
-
-    // Trier les parts par ordre
-    final sortedParts = List<PartOrder>.from(parts)
-      ..sort((a, b) => a.order.compareTo(b.order));
-
-    PartOrder? currentPart;
-    PartOrder? nextPart;
-
-    for (int i = 0; i < sortedParts.length; i++) {
-      final part = sortedParts[i];
-      if (part.period == null) continue;
-
-      if (_isPeriodMatching(now, part.period!, loopPeriod)) {
-        currentPart = part;
-        // Le suivant est le prochain dans la liste, ou le premier si on est à la fin
-        nextPart = sortedParts[(i + 1) % sortedParts.length];
-        break;
-      }
-    }
-
-    // Si aucun ordre actuel trouvé, chercher le prochain ordre à venir
-    if (currentPart == null) {
-      for (final part in sortedParts) {
-        if (part.period != null && part.period!.isAfter(now)) {
-          nextPart = part;
-          break;
-        }
-      }
-    }
-
-    return {'current': currentPart, 'next': nextPart};
-  }
-
-  /// Vérifie si la date actuelle correspond à la période de la part selon le loopPeriod
-  bool _isPeriodMatching(
-      DateTime currentDate, DateTime partDate, LoopPeriod loopPeriod) {
-    switch (loopPeriod) {
-      case LoopPeriod.DAILY:
-        return currentDate.year == partDate.year &&
-            currentDate.month == partDate.month &&
-            currentDate.day == partDate.day;
-
-      case LoopPeriod.WEEKLY:
-        // Comparer les semaines de l'année
-        final currentWeek = _getWeekOfYear(currentDate);
-        final partWeek = _getWeekOfYear(partDate);
-        return currentDate.year == partDate.year && currentWeek == partWeek;
-
-      case LoopPeriod.MONTHLY:
-        return currentDate.year == partDate.year &&
-            currentDate.month == partDate.month;
-    }
-  }
-
-  /// Calcule le numéro de semaine dans l'année
-  int _getWeekOfYear(DateTime date) {
-    final firstDayOfYear = DateTime(date.year, 1, 1);
-    final daysSinceFirstDay = date.difference(firstDayOfYear).inDays;
-    return (daysSinceFirstDay / 7).ceil();
+    return resolveCurrentAndNextPartOrders(
+      parts: parts,
+      loopPeriod: _currentTontine!.config.loopPeriod,
+    );
   }
 
   /// Met à jour les rôles d'un membre dans une tontine.
@@ -472,8 +415,18 @@ class TontineProvider extends ChangeNotifier {
     try {
       await _tontineService.updateMemberRolesForTontine(
           tontineId, memberId, roles);
-      await loadTontines();
+      // Mise à jour locale immédiate (rôles = MemberRole par tontine).
+      // loadTontines() peut encore renvoyer User.roles globaux si l'API
+      // n'applique pas withTontineScopedRoles — on réapplique après.
+      _applyMemberRolesLocally(tontineId, memberId, roles);
       notifyListeners();
+      try {
+        await loadTontines();
+        _applyMemberRolesLocally(tontineId, memberId, roles);
+        notifyListeners();
+      } catch (e) {
+        _logger.warning('Reload after role update failed: $e');
+      }
     } catch (e) {
       rethrow;
     }
@@ -485,11 +438,48 @@ class TontineProvider extends ChangeNotifier {
     try {
       await _tontineService.updateMemberRolesForTontine(
           tontineId, memberId, roles);
+      _applyMemberRolesLocally(tontineId, memberId, roles);
       notifyListeners();
     } catch (e) {
       _logger.severe('Error updating member roles for tontine: $e');
       rethrow;
     }
+  }
+
+  /// Applique les rôles sur le membre en mémoire (liste + tontine courante).
+  void _applyMemberRolesLocally(
+      int tontineId, int memberId, List<Role> roles) {
+    final updatedRoles = List<Role>.from(roles);
+
+    Member updateMember(Member member) {
+      return member.copyWith(
+        user: (member.user ?? User()).copyWith(roles: updatedRoles),
+      );
+    }
+
+    void updateInList(List<Member> members) {
+      final index = members.indexWhere((m) => m.id == memberId);
+      if (index != -1) {
+        members[index] = updateMember(members[index]);
+      }
+    }
+
+    final tontineIndex = _tontines.indexWhere((t) => t.id == tontineId);
+    if (tontineIndex != -1) {
+      updateInList(_tontines[tontineIndex].members);
+    }
+    if (_currentTontine?.id == tontineId) {
+      updateInList(_currentTontine!.members);
+    }
+  }
+
+  /// Rôles du membre dans la tontine courante (pas les rôles globaux User).
+  List<Role> rolesInCurrentTontine(int? memberId) {
+    return rolesForMemberInTontine(_currentTontine, memberId);
+  }
+
+  bool hasRoleInCurrentTontine(int? memberId, Role role) {
+    return rolesInCurrentTontine(memberId).contains(role);
   }
 
   // ─────────────────────────────────────────────────────────────────────────────

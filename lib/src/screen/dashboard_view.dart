@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:tontine_v2/src/screen/casflow/cashflow_view.dart';
 import 'package:tontine_v2/src/screen/event/event_view.dart';
 import 'package:tontine_v2/src/screen/loan/loan_view.dart';
@@ -41,10 +40,6 @@ class _DashboardViewState extends State<DashboardView> {
     });
   }
 
-  void navigateToView(dynamic context, String route) {
-    Navigator.pushNamed(context, route);
-  }
-
   @override
   Widget build(BuildContext context) {
     return Consumer2<AuthProvider, TontineProvider>(
@@ -64,88 +59,42 @@ class _DashboardViewState extends State<DashboardView> {
               child: Text('Aucune tontine sélectionnée'),
             ),
           );
-        } else {
-          // Largeur maximale adaptative selon la taille de l'écran
-          final maxWidth = ResponsiveHelper.getAdaptiveValue(
-            context,
-            small: double.infinity, // Pas de limite sur mobile
-            medium: 900.0, // Limite à 900px sur tablette
-            large: 1200.0, // Limite à 1200px sur desktop
-          );
-          
-          return Scaffold(
-            appBar: ActionMenu(title: 'Dashboard'),
-            drawer: const AppDrawer(),
-            backgroundColor: AppColors.background,
-            body: Center(
-              child: ConstrainedBox(
-                constraints: BoxConstraints(maxWidth: maxWidth),
-                child: Column(
-                  children: [
-                    Expanded(
-                      child: ListView(
-                        padding: ResponsiveHelper.getAdaptivePadding(
-                          context,
-                          horizontal: 16.0,
-                          vertical: 0.0,
-                        ),
-                        children: [
-                      ResponsiveSpacing(height: 24),
-                      _buildCurrentOrderSection(context, tontineProvider),
-                      ResponsiveSpacing(height: 24),
-                      AnnualMovementsChart(deposits: tontineProvider.deposits),
-                      ResponsiveSpacing(height: 24),
-                      GridView.count(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        crossAxisCount:
-                            ResponsiveHelper.getAdaptiveCrossAxisCount(context),
-                        mainAxisSpacing: ResponsiveHelper.getAdaptiveSpacing(
-                            context,
-                            base: 24.0),
-                        crossAxisSpacing: ResponsiveHelper.getAdaptiveSpacing(
-                            context,
-                            base: 24.0),
-                        childAspectRatio:
-                            ResponsiveHelper.getAdaptiveAspectRatio(context),
-                        children: [
-                          _buildMenuCard(
-                              context,
-                              'Banque',
-                              'assets/images/undraw_wallet_diag.svg',
-                              CashflowView.routeName),
-                          _buildMenuCard(
-                              context,
-                              'Membres',
-                              'assets/images/undraw_fans_icv6.svg',
-                              MemberView.routeName),
-                          _buildMenuCard(
-                              context,
-                              'Emprunts',
-                              'assets/images/undraw_investment_ojxu.svg',
-                              LoanView.routeName),
-                          _buildMenuCard(
-                              context,
-                              'Événements',
-                              'assets/images/undraw_special-event_hv54.svg',
-                              EventView.routeName),
-                          _buildMenuCard(
-                              context,
-                              'Rapports',
-                              'assets/images/undraw_uploading_nu4x.svg',
-                              RapportView.routeName),
-                        ],
-                      ),
-                    ],
-                  ),
+        }
+
+        final maxWidth = ResponsiveHelper.getAdaptiveValue(
+          context,
+          small: double.infinity,
+          medium: 900.0,
+          large: 1200.0,
+        );
+
+        return Scaffold(
+          appBar: ActionMenu(title: 'Dashboard'),
+          drawer: const AppDrawer(),
+          backgroundColor: AppColors.background,
+          body: Center(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: maxWidth),
+              child: ListView(
+                padding: ResponsiveHelper.getAdaptivePadding(
+                  context,
+                  horizontal: 16.0,
+                  vertical: 0.0,
                 ),
-                  ],
-                ),
+                children: [
+                  ResponsiveSpacing(height: 16),
+                  _buildCurrentOrderSection(context, tontineProvider),
+                  ResponsiveSpacing(height: 16),
+                  _buildQuickAccessSection(context),
+                  ResponsiveSpacing(height: 20),
+                  AnnualMovementsChart(deposits: tontineProvider.deposits),
+                  ResponsiveSpacing(height: 24),
+                ],
               ),
             ),
-            bottomNavigationBar: const MenuWidget(),
-          );
-        }
+          ),
+          bottomNavigationBar: const MenuWidget(),
+        );
       },
     );
   }
@@ -153,16 +102,21 @@ class _DashboardViewState extends State<DashboardView> {
   Widget _buildCurrentOrderSection(
       BuildContext context, TontineProvider tontineProvider) {
     final orderData = tontineProvider.getCurrentAndNextPartOrders();
-    final currentPart = orderData['current'];
-    final nextPart = orderData['next'];
+    final members = tontineProvider.currentTontine?.members ?? const [];
+    final currentPart = orderData['current'] == null
+        ? null
+        : enrichPartOrder(orderData['current']!, members);
+    final nextPart = orderData['next'] == null
+        ? null
+        : enrichPartOrder(orderData['next']!, members);
 
     if (currentPart == null && nextPart == null) {
       return const SizedBox.shrink();
     }
 
-    final cardPadding = ResponsiveHelper.getAdaptivePadding(context, all: 20.0);
-    final iconSize = ResponsiveHelper.getAdaptiveIconSize(context, base: 24.0);
-    final spacing = ResponsiveHelper.getAdaptiveSpacing(context, base: 16.0);
+    final cardPadding = ResponsiveHelper.getAdaptivePadding(context, all: 16.0);
+    final iconSize = ResponsiveHelper.getAdaptiveIconSize(context, base: 22.0);
+    final spacing = ResponsiveHelper.getAdaptiveSpacing(context, base: 12.0);
 
     return Card(
       elevation: 2,
@@ -185,9 +139,9 @@ class _DashboardViewState extends State<DashboardView> {
                   style: TextStyle(
                     fontSize: ResponsiveHelper.getAdaptiveValue(
                       context,
-                      small: 16.0,
-                      medium: 18.0,
-                      large: 18.0,
+                      small: 15.0,
+                      medium: 17.0,
+                      large: 17.0,
                     ),
                     fontWeight: FontWeight.bold,
                   ),
@@ -222,68 +176,137 @@ class _DashboardViewState extends State<DashboardView> {
     );
   }
 
-  Widget _buildMenuCard(
-      BuildContext context, String title, String imagePath, String route) {
-    final iconSize = ResponsiveHelper.getAdaptiveIconSize(context, base: 70.0);
-    final verticalPadding = ResponsiveHelper.getAdaptiveHeightValue(
-      context,
-      short: 16.0,
-      medium: 20.0,
-      tall: 10.0,
-    );
-    final horizontalPadding = ResponsiveHelper.getAdaptiveValue(
-      context,
-      small: 6.0,
-      medium: 8.0,
-      large: 8.0,
-    );
-    final containerPadding =
-        ResponsiveHelper.getAdaptivePadding(context, all: 16.0);
-    final spacing = ResponsiveHelper.getAdaptiveSpacing(context, base: 16.0);
-    final fontSize = ResponsiveHelper.getAdaptiveValue(
-      context,
-      small: 13.0,
-      medium: 14.0,
-      large: 15.0,
-    );
+  /// Raccourcis compacts (2 colonnes) visibles sans scroller.
+  Widget _buildQuickAccessSection(BuildContext context) {
+    const items = [
+      _QuickAccessItem(
+        title: 'Trésorerie',
+        icon: Icons.account_balance_wallet_outlined,
+        route: CashflowView.routeName,
+        color: AppColors.primary,
+      ),
+      _QuickAccessItem(
+        title: 'Membres',
+        icon: Icons.groups_outlined,
+        route: MemberView.routeName,
+        color: AppColors.info,
+      ),
+      _QuickAccessItem(
+        title: 'Emprunts',
+        icon: Icons.handshake_outlined,
+        route: LoanView.routeName,
+        color: AppColors.secondaryDark,
+      ),
+      _QuickAccessItem(
+        title: 'Événements',
+        icon: Icons.event_outlined,
+        route: EventView.routeName,
+        color: AppColors.success,
+      ),
+      _QuickAccessItem(
+        title: 'Rapports',
+        icon: Icons.bar_chart_outlined,
+        route: RapportView.routeName,
+        color: AppColors.warning,
+      ),
+    ];
 
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Accès rapide',
+          style: TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w700,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 10),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final crossAxisCount = constraints.maxWidth >= 700 ? 3 : 2;
+            return GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: items.length,
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: crossAxisCount,
+                mainAxisSpacing: 10,
+                crossAxisSpacing: 10,
+                mainAxisExtent: 64,
+              ),
+              itemBuilder: (context, index) {
+                final item = items[index];
+                return _QuickAccessTile(item: item);
+              },
+            );
+          },
+        ),
+      ],
+    );
+  }
+}
+
+class _QuickAccessItem {
+  final String title;
+  final IconData icon;
+  final String route;
+  final Color color;
+
+  const _QuickAccessItem({
+    required this.title,
+    required this.icon,
+    required this.route,
+    required this.color,
+  });
+}
+
+class _QuickAccessTile extends StatelessWidget {
+  final _QuickAccessItem item;
+
+  const _QuickAccessTile({required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white,
+      elevation: 1,
+      shadowColor: Colors.black26,
+      borderRadius: BorderRadius.circular(14),
       child: InkWell(
-        borderRadius: BorderRadius.circular(20),
-        onTap: () => Navigator.pushNamed(context, route),
+        borderRadius: BorderRadius.circular(14),
+        onTap: () => Navigator.pushNamed(context, item.route),
         child: Padding(
-          padding: EdgeInsets.symmetric(
-              vertical: verticalPadding, horizontal: horizontalPadding),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          child: Row(
             children: [
               Container(
+                width: 40,
+                height: 40,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
+                  color: item.color.withAlpha(22),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                padding: containerPadding,
-                child: imagePath.endsWith('.svg')
-                    ? SvgPicture.asset(
-                        imagePath,
-                        width: iconSize,
-                        height: iconSize,
-                      )
-                    : Image.asset(
-                        imagePath,
-                        width: iconSize * 0.57,
-                        height: iconSize * 0.57,
-                      ),
+                child: Icon(item.icon, color: item.color, size: 22),
               ),
-              SizedBox(height: spacing),
-              Text(
-                title,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: fontSize,
-                  fontWeight: FontWeight.w600,
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  item.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
+              ),
+              Icon(
+                Icons.chevron_right,
+                size: 18,
+                color: Colors.grey.shade400,
               ),
             ],
           ),

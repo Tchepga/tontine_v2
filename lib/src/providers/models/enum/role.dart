@@ -11,8 +11,9 @@ enum Role {
 }
 
 Role fromStringToRole(String role) {
+  final normalized = role.trim().toUpperCase();
   return Role.values.firstWhere(
-    (r) => r.toString().split('.').last == role,
+    (r) => r.name == normalized,
     orElse: () => Role.TONTINARD,
   );
 }

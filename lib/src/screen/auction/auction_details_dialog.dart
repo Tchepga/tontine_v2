@@ -7,17 +7,20 @@ import '../../providers/models/enum/auction_status.dart';
 import '../../providers/models/enum/currency.dart';
 import '../../theme/app_theme.dart';
 import '../services/dto/auction_dto.dart';
+import '../../utils/dialog_utils.dart';
 
 class AuctionDetailsDialog extends StatefulWidget {
   final Auction auction;
   final TontineProvider tontineProvider;
   final AuthProvider authProvider;
+  final ScaffoldMessengerState hostMessenger;
 
   const AuctionDetailsDialog({
     super.key,
     required this.auction,
     required this.tontineProvider,
     required this.authProvider,
+    required this.hostMessenger,
   });
 
   @override
@@ -506,30 +509,27 @@ class _AuctionDetailsDialogState extends State<AuctionDetailsDialog> {
       if (!mounted) return;
 
       if (success) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Enchère placée avec succès'),
-            backgroundColor: AppColors.success,
-          ),
+        showAppSnackBar(
+          context,
+          message: 'Enchère placée avec succès',
+          backgroundColor: AppColors.success,
         );
         _bidController.clear();
         // Rafraîchir les détails de l'enchère
         // Note: Dans une vraie implémentation, on devrait recharger l'enchère depuis le serveur
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Erreur lors du placement de l\'enchère'),
-            backgroundColor: AppColors.error,
-          ),
+        showAppSnackBar(
+          context,
+          message: 'Erreur lors du placement de l\'enchère',
+          backgroundColor: AppColors.error,
         );
       }
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Erreur: ${e.toString()}'),
-          backgroundColor: AppColors.error,
-        ),
+      showAppSnackBar(
+        context,
+        message: 'Erreur: ${e.toString()}',
+        backgroundColor: AppColors.error,
       );
     } finally {
       if (mounted) {
@@ -552,28 +552,26 @@ class _AuctionDetailsDialogState extends State<AuctionDetailsDialog> {
       if (!mounted) return;
 
       if (auction != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        Navigator.of(context).pop();
+        widget.hostMessenger.showSnackBar(
           const SnackBar(
             content: Text('Enchère terminée avec succès'),
             backgroundColor: AppColors.success,
           ),
         );
-        Navigator.of(context).pop();
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Erreur lors de la finalisation de l\'enchère'),
-            backgroundColor: AppColors.error,
-          ),
+        showAppSnackBar(
+          context,
+          message: 'Erreur lors de la finalisation de l\'enchère',
+          backgroundColor: AppColors.error,
         );
       }
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Erreur: ${e.toString()}'),
-          backgroundColor: AppColors.error,
-        ),
+      showAppSnackBar(
+        context,
+        message: 'Erreur: ${e.toString()}',
+        backgroundColor: AppColors.error,
       );
     } finally {
       if (mounted) {
@@ -596,28 +594,26 @@ class _AuctionDetailsDialogState extends State<AuctionDetailsDialog> {
       if (!mounted) return;
 
       if (auction != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        Navigator.of(context).pop();
+        widget.hostMessenger.showSnackBar(
           const SnackBar(
             content: Text('Enchère annulée'),
             backgroundColor: AppColors.warning,
           ),
         );
-        Navigator.of(context).pop();
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Erreur lors de l\'annulation de l\'enchère'),
-            backgroundColor: AppColors.error,
-          ),
+        showAppSnackBar(
+          context,
+          message: 'Erreur lors de l\'annulation de l\'enchère',
+          backgroundColor: AppColors.error,
         );
       }
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Erreur: ${e.toString()}'),
-          backgroundColor: AppColors.error,
-        ),
+      showAppSnackBar(
+        context,
+        message: 'Erreur: ${e.toString()}',
+        backgroundColor: AppColors.error,
       );
     } finally {
       if (mounted) {

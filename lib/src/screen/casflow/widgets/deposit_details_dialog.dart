@@ -9,28 +9,34 @@ import '../../../providers/tontine_provider.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../theme/app_theme.dart';
 import '../edit_mouvement.dart';
+import '../../../utils/dialog_utils.dart';
+import '../../../utils/role_permissions.dart';
 
 class DepositDetailsDialog extends StatelessWidget {
   final Deposit deposit;
   final TontineProvider tontineProvider;
   final int tontineId;
+  final ScaffoldMessengerState hostMessenger;
+  final BuildContext hostContext;
 
   const DepositDetailsDialog({
     super.key,
     required this.deposit,
     required this.tontineProvider,
     required this.tontineId,
+    required this.hostMessenger,
+    required this.hostContext,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<AuthProvider>(
-      builder: (context, authProvider, child) {
-        final canValidate = authProvider.canValidateDeposits();
-        final isPresident = authProvider.isPresident();
-        final isAccountManager = authProvider.isAccountManager();
+    return Consumer2<AuthProvider, TontineProvider>(
+      builder: (context, authProvider, tontineProvider, child) {
+        final roles =
+            tontineProvider.rolesInCurrentTontine(authProvider.currentUser?.id);
+        final canValidate = canValidateDeposits(roles);
         final currentUser = authProvider.currentUser;
-        final canEdit = (isPresident || isAccountManager) ||
+        final canEdit = canValidate ||
             (deposit.author != null &&
                 currentUser?.user?.username ==
                     deposit.author!.user?.username &&
@@ -327,12 +333,13 @@ class DepositDetailsDialog extends StatelessWidget {
     return OutlinedButton.icon(
       onPressed: () {
         Navigator.of(context).pop();
-        showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return EditMouvement(deposit: deposit);
-          },
-        ).then((_) {
+        Navigator.of(context)
+            .push(
+          MaterialPageRoute(
+            builder: (context) => EditMouvement(deposit: deposit),
+          ),
+        )
+            .then((_) {
           tontineProvider.loadTontines();
           tontineProvider.loadDeposits(tontineId);
         });
@@ -382,7 +389,7 @@ class DepositDetailsDialog extends StatelessWidget {
           tontineId, deposit.id, StatusDeposit.VALIDATED);
       if (!context.mounted) return;
       Navigator.of(context).pop();
-      ScaffoldMessenger.of(context).showSnackBar(
+      hostMessenger.showSnackBar(
         const SnackBar(
           content: Text('Versement validé avec succès'),
           backgroundColor: AppColors.success,
@@ -390,19 +397,18 @@ class DepositDetailsDialog extends StatelessWidget {
       );
     } catch (e) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Erreur: ${e.toString()}'),
-          backgroundColor: AppColors.error,
-        ),
+      showAppSnackBar(
+        context,
+        message: 'Erreur: ${e.toString()}',
+        backgroundColor: AppColors.error,
       );
     }
   }
 
   void _showDeleteConfirmation(BuildContext context) {
     Navigator.of(context).pop();
-    showDialog(
-      context: context,
+    showAppDialog(
+      context: hostContext,
       builder: (BuildContext context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('Supprimer ce mouvement ?'),
@@ -428,7 +434,7 @@ class DepositDetailsDialog extends StatelessWidget {
       await tontineProvider.deleteDeposit(tontineId, deposit.id);
       if (!context.mounted) return;
       Navigator.of(context).pop();
-      ScaffoldMessenger.of(context).showSnackBar(
+      hostMessenger.showSnackBar(
         const SnackBar(
           content: Text('Mouvement supprimé avec succès'),
           backgroundColor: AppColors.success,
@@ -437,7 +443,7 @@ class DepositDetailsDialog extends StatelessWidget {
     } catch (e) {
       if (!context.mounted) return;
       Navigator.of(context).pop();
-      ScaffoldMessenger.of(context).showSnackBar(
+      hostMessenger.showSnackBar(
         const SnackBar(
           content: Text('Erreur lors de la suppression'),
           backgroundColor: AppColors.error,

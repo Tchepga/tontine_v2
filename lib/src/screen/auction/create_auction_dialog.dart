@@ -4,15 +4,18 @@ import '../../providers/tontine_provider.dart';
 import '../../providers/models/enum/currency.dart';
 import '../../theme/app_theme.dart';
 import '../services/dto/auction_dto.dart';
+import '../../utils/dialog_utils.dart';
 
 class CreateAuctionDialog extends StatefulWidget {
   final int tontineId;
   final TontineProvider tontineProvider;
+  final ScaffoldMessengerState hostMessenger;
 
   const CreateAuctionDialog({
     super.key,
     required this.tontineId,
     required this.tontineProvider,
+    required this.hostMessenger,
   });
 
   @override
@@ -358,28 +361,26 @@ class _CreateAuctionDialogState extends State<CreateAuctionDialog> {
       if (!mounted) return;
 
       if (auction != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        Navigator.of(context).pop();
+        widget.hostMessenger.showSnackBar(
           const SnackBar(
             content: Text('Enchère créée avec succès'),
             backgroundColor: AppColors.success,
           ),
         );
-        Navigator.of(context).pop();
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Erreur lors de la création de l\'enchère'),
-            backgroundColor: AppColors.error,
-          ),
+        showAppSnackBar(
+          context,
+          message: 'Erreur lors de la création de l\'enchère',
+          backgroundColor: AppColors.error,
         );
       }
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Erreur: ${e.toString()}'),
-          backgroundColor: AppColors.error,
-        ),
+      showAppSnackBar(
+        context,
+        message: 'Erreur: ${e.toString()}',
+        backgroundColor: AppColors.error,
       );
     } finally {
       if (mounted) {

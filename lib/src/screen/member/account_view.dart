@@ -10,6 +10,7 @@ import '../../theme/app_theme.dart';
 import '../services/dto/member_dto.dart';
 import '../services/dto/password_dto.dart';
 import '../services/member_service.dart';
+import '../../utils/dialog_utils.dart';
 
 class AccountView extends StatefulWidget {
   const AccountView({super.key});
@@ -516,9 +517,10 @@ class _AccountViewState extends State<AccountView> {
   }
 
   void _showEditDialog(Member? member) {
-    showDialog(
+    final messenger = ScaffoldMessenger.of(context);
+    showAppDialog(
       context: context,
-      builder: (BuildContext context) {
+      builder: (BuildContext dialogContext) {
         return AlertDialog(
           title: const Text('Éditer les informations personnelles'),
           content: Form(
@@ -586,11 +588,14 @@ class _AccountViewState extends State<AccountView> {
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(context).pop(),
+              onPressed: () => Navigator.of(dialogContext).pop(),
               child: const Text('Annuler'),
             ),
             FilledButton(
-              onPressed: () => _saveProfile(),
+              onPressed: () => _saveProfile(
+                dialogContext: dialogContext,
+                messenger: messenger,
+              ),
               child: const Text('Sauvegarder'),
             ),
           ],
@@ -657,7 +662,10 @@ class _AccountViewState extends State<AccountView> {
     );
   }
 
-  Future<void> _saveProfile() async {
+  Future<void> _saveProfile({
+    required BuildContext dialogContext,
+    required ScaffoldMessengerState messenger,
+  }) async {
     if (_formKey.currentState!.validate()) {
       try {
         final authProvider = Provider.of<AuthProvider>(context, listen: false);
@@ -674,21 +682,20 @@ class _AccountViewState extends State<AccountView> {
 
         await MemberService().updateMemberInfo(updatedMember);
 
-        if (!mounted) return;
-        Navigator.of(context).pop();
-        ScaffoldMessenger.of(context).showSnackBar(
+        if (!dialogContext.mounted) return;
+        Navigator.of(dialogContext).pop();
+        messenger.showSnackBar(
           const SnackBar(
             content: Text('Informations mises à jour avec succès'),
             backgroundColor: AppColors.success,
           ),
         );
       } catch (e) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Erreur lors de la mise à jour'),
-            backgroundColor: AppColors.error,
-          ),
+        if (!dialogContext.mounted) return;
+        showAppSnackBar(
+          dialogContext,
+          message: 'Erreur lors de la mise à jour',
+          backgroundColor: AppColors.error,
         );
       }
     }
@@ -731,8 +738,9 @@ class _AccountViewState extends State<AccountView> {
     bool showCurrentPassword = false;
     bool showNewPassword = false;
     bool showConfirmPassword = false;
+    final messenger = ScaffoldMessenger.of(context);
 
-    showDialog(
+    showAppDialog(
       context: context,
       builder: (BuildContext context) {
         return StatefulBuilder(
@@ -925,8 +933,7 @@ class _AccountViewState extends State<AccountView> {
 
                                           if (!context.mounted) return;
                                           Navigator.pop(context);
-                                          ScaffoldMessenger.of(context)
-                                              .showSnackBar(
+                                          messenger.showSnackBar(
                                             const SnackBar(
                                               content: Text(
                                                   'Mot de passe modifié avec succès'),
@@ -936,13 +943,10 @@ class _AccountViewState extends State<AccountView> {
                                           );
                                         } catch (e) {
                                           if (!context.mounted) return;
-                                          ScaffoldMessenger.of(context)
-                                              .showSnackBar(
-                                            SnackBar(
-                                              content: Text(
-                                                  'Erreur: ${e.toString()}'),
-                                              backgroundColor: AppColors.error,
-                                            ),
+                                          showAppSnackBar(
+                                            context,
+                                            message: 'Erreur: ${e.toString()}',
+                                            backgroundColor: AppColors.error,
                                           );
                                         } finally {
                                           if (mounted) {

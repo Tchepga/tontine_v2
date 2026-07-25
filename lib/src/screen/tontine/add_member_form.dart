@@ -5,6 +5,7 @@ import '../../providers/models/enum/role.dart';
 import '../../services/error_catchable.dart';
 import '../services/dto/member_dto.dart';
 import '../services/member_service.dart';
+import '../../utils/dialog_utils.dart';
 
 class AddMemberForm extends StatefulWidget {
   final Function(CreateMemberDto) onSubmit;
@@ -102,11 +103,10 @@ class _AddMemberFormState extends State<AddMemberForm> {
                         _countryController.text =
                             _selectedMember?.country ?? '';
                       } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Utilisateur non trouvé'),
-                            backgroundColor: Colors.orange,
-                          ),
+                        showAppSnackBar(
+                          context,
+                          message: 'Utilisateur non trouvé',
+                          backgroundColor: Colors.orange,
                         );
                       }
                     });
@@ -359,11 +359,10 @@ class _AddMemberFormState extends State<AddMemberForm> {
 
           if (userExists != null) {
             if (!mounted) return;
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Un utilisateur avec ce nom existe déjà'),
-                backgroundColor: Colors.red,
-              ),
+            showAppSnackBar(
+              context,
+              message: 'Un utilisateur avec ce nom existe déjà',
+              backgroundColor: Colors.red,
             );
             return;
           }
@@ -386,19 +385,16 @@ class _AddMemberFormState extends State<AddMemberForm> {
         } catch (e) {
           if (!mounted) return;
           if (e == ErrorCatchable.USER_ALREADY_EXISTS) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Un utilisateur avec ce nom existe déjà'),
-                backgroundColor: Colors.red,
-              ),
+            showAppSnackBar(
+              context,
+              message: 'Un utilisateur avec ce nom existe déjà',
+              backgroundColor: Colors.red,
             );
           } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content:
-                    Text('Erreur lors de la vérification de l\'utilisateur'),
-                backgroundColor: Colors.red,
-              ),
+            showAppSnackBar(
+              context,
+              message: 'Erreur lors de la vérification de l\'utilisateur',
+              backgroundColor: Colors.red,
             );
           }
 

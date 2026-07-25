@@ -6,6 +6,7 @@ import '../../services/error_catchable.dart';
 import '../../utils/temp_password.dart';
 import '../dashboard_view.dart';
 import './add_member_form.dart';
+import '../../utils/dialog_utils.dart';
 
 class AddMembersView extends StatefulWidget {
   static const routeName = '/add-members';
@@ -177,7 +178,7 @@ class _AddMembersViewState extends State<AddMembersView> {
     required String username,
     required String password,
   }) async {
-    await showDialog<void>(
+    await showAppDialog<void>(
       context: context,
       barrierDismissible: false,
       builder: (ctx) {
@@ -205,8 +206,9 @@ class _AddMembersViewState extends State<AddMembersView> {
                     text: 'Utilisateur : $username\nMot de passe : $password',
                   ),
                 );
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Identifiants copiés')),
+                showAppSnackBar(
+                  ctx,
+                  message: 'Identifiants copiés',
                 );
               },
               child: const Text('Copier'),

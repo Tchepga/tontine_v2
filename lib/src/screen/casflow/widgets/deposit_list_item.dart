@@ -8,6 +8,7 @@ import '../../../providers/models/enum/currency.dart';
 import '../../../providers/tontine_provider.dart';
 import '../../../theme/app_theme.dart';
 import 'deposit_details_dialog.dart';
+import '../../../utils/dialog_utils.dart';
 
 class DepositListItem extends StatelessWidget {
   final Deposit deposit;
@@ -213,13 +214,16 @@ class DepositListItem extends StatelessWidget {
   }
 
   void _showDetails(BuildContext context) {
-    showDialog(
+    final messenger = ScaffoldMessenger.of(context);
+    showAppDialog(
       context: context,
-      builder: (BuildContext context) {
+      builder: (BuildContext dialogContext) {
         return DepositDetailsDialog(
           deposit: deposit,
           tontineProvider: tontineProvider,
           tontineId: tontineId,
+          hostMessenger: messenger,
+          hostContext: context,
         );
       },
     );

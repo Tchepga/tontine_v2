@@ -16,9 +16,10 @@ import 'package:intl/intl.dart';
 import 'package:file_picker/file_picker.dart';
 import 'dart:io';
 import '../../providers/auth_provider.dart';
-import '../../providers/models/enum/role.dart';
 import '../../providers/models/enum/type_sanction.dart';
+import '../../utils/role_permissions.dart';
 import '../services/dto/sanction_dto.dart';
+import '../../utils/dialog_utils.dart';
 
 class RapportView extends StatefulWidget {
   static const routeName = '/rapport';
@@ -374,17 +375,13 @@ class _RapportViewState extends State<RapportView>
 
   @override
   Widget build(BuildContext context) {
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final currentUser = authProvider.currentUser;
-    final canEdit = currentUser?.user?.roles?.any((role) =>
-            role == Role.PRESIDENT ||
-            role == Role.SECRETARY ||
-            role == Role.ACCOUNT_MANAGER ||
-            role == Role.OFFICE_MANAGER) ??
-        false;
+    return Consumer2<AuthProvider, TontineProvider>(
+      builder: (context, authProvider, tontineProvider, child) {
+        final currentUser = authProvider.currentUser;
+        final roles =
+            tontineProvider.rolesInCurrentTontine(currentUser?.id);
+        final canEdit = canManageReports(roles);
 
-    return Consumer<TontineProvider>(
-      builder: (context, tontineProvider, child) {
         final rapports = tontineProvider.currentTontine?.rapports ?? [];
         final sanctions = tontineProvider.currentTontine?.sanctions ?? [];
 
@@ -497,7 +494,8 @@ class _RapportViewState extends State<RapportView>
     DateTime? endDate;
     int? selectedMemberId;
 
-    showDialog(
+    final messenger = ScaffoldMessenger.of(context);
+    showAppDialog(
       context: context,
       builder: (BuildContext context) {
         return StatefulBuilder(
@@ -676,7 +674,7 @@ class _RapportViewState extends State<RapportView>
                                       .getSanctionsForTontine(tontineId);
                                   if (!context.mounted) return;
                                   Navigator.pop(context);
-                                  ScaffoldMessenger.of(context).showSnackBar(
+                                  messenger.showSnackBar(
                                     SnackBar(
                                       content: const Text(
                                           'Sanction créée avec succès'),
@@ -688,16 +686,11 @@ class _RapportViewState extends State<RapportView>
                                     ),
                                   );
                                 } catch (e) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: const Text(
-                                          'Erreur lors de la création'),
-                                      backgroundColor: AppColors.error,
-                                      behavior: SnackBarBehavior.fixed,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                    ),
+                                  if (!context.mounted) return;
+                                  showAppSnackBar(
+                                    context,
+                                    message: 'Erreur lors de la création',
+                                    backgroundColor: AppColors.error,
                                   );
                                 }
                               }
@@ -902,12 +895,9 @@ class _RapportViewState extends State<RapportView>
   Widget _buildSanctionCard(dynamic sanction, TontineProvider tontineProvider) {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final currentUser = authProvider.currentUser;
-    final canDelete = currentUser?.user?.roles?.any((role) =>
-            role == Role.PRESIDENT ||
-            role == Role.SECRETARY ||
-            role == Role.ACCOUNT_MANAGER ||
-            role == Role.OFFICE_MANAGER) ??
-        false;
+    final canDelete = canManageReports(
+      tontineProvider.rolesInCurrentTontine(currentUser?.id),
+    );
 
     return ModernCard(
       type: _getSanctionCardType(sanction.type),
@@ -1176,11 +1166,12 @@ class _RapportViewState extends State<RapportView>
 
   Future<void> _handleDeleteSanction(BuildContext context, dynamic sanction,
       TontineProvider tontineProvider) async {
+    final messenger = ScaffoldMessenger.of(context);
     try {
       Navigator.of(context).pop(); // Fermer le dialog de confirmation
 
       // Afficher un indicateur de chargement
-      showDialog(
+      showAppDialog(
         context: context,
         barrierDismissible: false,
         builder: (BuildContext context) => const AlertDialog(
@@ -1200,8 +1191,7 @@ class _RapportViewState extends State<RapportView>
       if (!context.mounted) return;
       Navigator.of(context).pop(); // Fermer l'indicateur de chargement
 
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      messenger.showSnackBar(
         SnackBar(
           content: const Text('Sanction supprimée avec succès'),
           backgroundColor: AppColors.success,
@@ -1215,8 +1205,7 @@ class _RapportViewState extends State<RapportView>
       if (!context.mounted) return;
       Navigator.of(context).pop(); // Fermer l'indicateur de chargement
 
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      messenger.showSnackBar(
         SnackBar(
           content: Text('Erreur lors de la suppression : ${e.toString()}'),
           backgroundColor: AppColors.error,

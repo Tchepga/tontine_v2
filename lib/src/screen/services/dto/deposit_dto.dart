@@ -9,6 +9,7 @@ class CreateDepositDto {
   final int cashFlowId;
   final String? reasons;
   final String? comment;
+  final DateTime? creationDate;
 
   CreateDepositDto({
     required this.amount,
@@ -18,6 +19,7 @@ class CreateDepositDto {
     required this.cashFlowId,
     this.reasons,
     this.comment,
+    this.creationDate,
   });
 
   Map<String, dynamic> toJson() {
@@ -29,6 +31,8 @@ class CreateDepositDto {
       'cashFlowId': cashFlowId,
       if (reasons != null) 'reasons': reasons,
       if (comment != null) 'comment': comment,
+      if (creationDate != null)
+        'creationDate': creationDate!.toIso8601String(),
     };
   }
 }

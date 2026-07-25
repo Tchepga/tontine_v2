@@ -17,9 +17,11 @@ import '../../utils/responsive_helper.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/money_utils.dart';
 import '../../utils/submit_guard.dart';
+import '../../utils/role_permissions.dart';
 import 'package:intl/intl.dart';
 
 import '../services/dto/loan_dto.dart';
+import '../../utils/dialog_utils.dart';
 
 class LoanView extends StatefulWidget {
   static const routeName = '/loan';
@@ -105,9 +107,8 @@ class _LoanViewState extends State<LoanView> {
 
   Widget _buildLoanCard(BuildContext context, Loan loan, bool isMyLoan,
       Tontine? currentTontine, Member? currentUser) {
-    final canManageStatus = currentUser?.user?.roles?.any(
-            (role) => role == Role.ACCOUNT_MANAGER || role == Role.PRESIDENT) ??
-        false;
+    final roles = _rolesInTontine(currentTontine, currentUser);
+    final canManageStatus = canManageLoans(roles);
 
     return ModernCard(
       type: _getLoanCardType(loan.status),
@@ -315,7 +316,8 @@ class _LoanViewState extends State<LoanView> {
     DateTime selectedDate = DateTime.now()
         .add(const Duration(days: 30)); // Date par défaut à 30 jours
 
-    showDialog(
+    final messenger = ScaffoldMessenger.of(context);
+    showAppDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
@@ -458,36 +460,28 @@ class _LoanViewState extends State<LoanView> {
                       await loanProvider.createLoan(loanDto);
                       await loanProvider.loadLoans(currentTontine.id);
 
-                    // ignore: use_build_context_synchronously
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: const Text(
-                            'Prêt créé avec succès. Il devra être validé par la suite'),
-                        backgroundColor: AppColors.success,
-                        behavior: SnackBarBehavior.floating,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                      if (!context.mounted) return;
+                      Navigator.of(context).pop();
+                      messenger.showSnackBar(
+                        SnackBar(
+                          content: const Text(
+                              'Prêt créé avec succès. Il devra être validé par la suite'),
+                          backgroundColor: AppColors.success,
+                          behavior: SnackBarBehavior.floating,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
                         ),
-                      ),
-                    );
-                    // ignore: use_build_context_synchronously
-                    Navigator.of(context).pop();
-                  } catch (e) {
-                    if (!mounted) return;
-                    // ignore: use_build_context_synchronously
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content:
-                            const Text('Erreur lors de la création du prêt'),
+                      );
+                    } catch (e) {
+                      if (!context.mounted) return;
+                      showAppSnackBar(
+                        context,
+                        message: 'Erreur lors de la création du prêt',
                         backgroundColor: AppColors.error,
-                        behavior: SnackBarBehavior.floating,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                    );
+                      );
+                    }
                   }
-                }
                 });
               },
               child: const Text('Créer'),
@@ -651,8 +645,9 @@ class _LoanViewState extends State<LoanView> {
     StatusLoan selectedStatus = loan.status;
     final rejectionReasonController = TextEditingController();
     bool isSubmitting = false;
+    final messenger = ScaffoldMessenger.of(context);
 
-    showDialog(
+    showAppDialog(
       context: context,
       builder: (BuildContext context) {
         return StatefulBuilder(
@@ -828,23 +823,41 @@ class _LoanViewState extends State<LoanView> {
                       : () async {
                           if (selectedStatus == StatusLoan.REJECTED &&
                               rejectionReasonController.text.trim().isEmpty) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                    'Veuillez saisir la raison du rejet'),
-                                backgroundColor: AppColors.warning,
-                              ),
+                            showAppSnackBar(
+                              context,
+                              message: 'Veuillez saisir la raison du rejet',
+                              backgroundColor: AppColors.warning,
                             );
                             return;
                           }
                           setDialogState(() => isSubmitting = true);
-                          final ok = await _updateLoanStatus(
+                          final error = await _updateLoanStatus(
                             loan,
                             selectedStatus,
                             rejectionReasonController.text.trim(),
+                            notify: false,
                           );
                           if (!context.mounted) return;
-                          if (ok) Navigator.of(context).pop();
+                          if (error == null) {
+                            Navigator.of(context).pop();
+                            messenger.showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                    'Statut mis à jour : ${selectedStatus.displayName}'),
+                                backgroundColor: AppColors.success,
+                                behavior: SnackBarBehavior.floating,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                            );
+                          } else {
+                            showAppSnackBar(
+                              context,
+                              message: error,
+                              backgroundColor: AppColors.error,
+                            );
+                          }
                           setDialogState(() => isSubmitting = false);
                         },
                   child: isSubmitting
@@ -901,9 +914,14 @@ class _LoanViewState extends State<LoanView> {
     }
   }
 
-  /// Retourne `true` si la mise à jour a réussi.
-  Future<bool> _updateLoanStatus(
-      Loan loan, StatusLoan newStatus, String reason) async {
+  /// Retourne `null` si succès, sinon le message d'erreur.
+  /// Si [notify] est true, affiche aussi les SnackBars sur l'écran parent.
+  Future<String?> _updateLoanStatus(
+    Loan loan,
+    StatusLoan newStatus,
+    String reason, {
+    bool notify = true,
+  }) async {
     final loanProvider = Provider.of<LoanProvider>(context, listen: false);
     try {
       switch (newStatus) {
@@ -924,31 +942,53 @@ class _LoanViewState extends State<LoanView> {
           // Le passage en PAID se fait via un remboursement, pas ici
           break;
       }
-      if (!mounted) return false;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Statut mis à jour : ${newStatus.displayName}'),
-          backgroundColor: AppColors.success,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
+      if (!mounted) return 'Opération annulée';
+      if (notify) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Statut mis à jour : ${newStatus.displayName}'),
+            backgroundColor: AppColors.success,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
           ),
-        ),
-      );
-      return true;
+        );
+      }
+      return null;
     } catch (e) {
-      if (!mounted) return false;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Erreur : ${e.toString()}'),
-          backgroundColor: AppColors.error,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
+      if (!mounted) return 'Erreur : ${e.toString()}';
+      final message = 'Erreur : ${e.toString()}';
+      if (notify) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(message),
+            backgroundColor: AppColors.error,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
           ),
-        ),
-      );
-      return false;
+        );
+      }
+      return message;
     }
+  }
+
+  /// Rôles du membre dans la tontine (MemberRole), pas les rôles globaux User.
+  List<Role> _rolesInTontine(Tontine? tontine, Member? user) {
+    if (tontine == null || user?.id == null) {
+      return const [Role.TONTINARD];
+    }
+    for (final member in tontine.members) {
+      if (member.id == user!.id) {
+        final roles = member.user?.roles;
+        if (roles == null || roles.isEmpty) {
+          return const [Role.TONTINARD];
+        }
+        return roles;
+      }
+    }
+    return const [Role.TONTINARD];
   }
 }

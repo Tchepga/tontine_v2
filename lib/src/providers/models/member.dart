@@ -23,16 +23,24 @@ class Member {
   });
 
   factory Member.fromJson(Map<String, dynamic> json) {
+    final rawId = json['id'];
+    final id = rawId is int
+        ? rawId
+        : rawId is num
+            ? rawId.toInt()
+            : int.tryParse(rawId?.toString() ?? '');
+
     return Member(
-      id: json['id'],
+      id: id,
       email: json['email'] ?? '',
       firstname: json['firstname'],
       lastname: json['lastname'],
       phone: json['phone'],
       avatar: json['avatar'] ?? '',
       country: json['country'] ?? '',
-      user: json['user'] != null ? User.fromJson(json['user']) : null,
-      // loans: json['loans'] ?? ''
+      user: json['user'] != null
+          ? User.fromJson(Map<String, dynamic>.from(json['user'] as Map))
+          : null,
     );
   }
 
@@ -47,6 +55,28 @@ class Member {
       'country': country,
       'user': user?.toJson(),
     };
+  }
+
+  Member copyWith({
+    int? id,
+    String? email,
+    String? firstname,
+    String? lastname,
+    String? phone,
+    String? avatar,
+    String? country,
+    User? user,
+  }) {
+    return Member(
+      id: id ?? this.id,
+      email: email ?? this.email,
+      firstname: firstname ?? this.firstname,
+      lastname: lastname ?? this.lastname,
+      phone: phone ?? this.phone,
+      avatar: avatar ?? this.avatar,
+      country: country ?? this.country,
+      user: user ?? this.user,
+    );
   }
 
   @override
@@ -73,6 +103,16 @@ class User {
       roles: json['roles'] != null
           ? List<Role>.from(json['roles'].map((role) => parseRole(role)))
           : [],
+    );
+  }
+
+  User copyWith({
+    String? username,
+    List<Role>? roles,
+  }) {
+    return User(
+      username: username ?? this.username,
+      roles: roles ?? this.roles,
     );
   }
 

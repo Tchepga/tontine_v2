@@ -13,6 +13,7 @@ import '../../providers/event_provider.dart';
 import 'package:table_calendar/table_calendar.dart';
 import '../../services/local_notification_service.dart';
 import '../../theme/app_theme.dart';
+import '../../utils/dialog_utils.dart';
 
 class EventView extends StatefulWidget {
   static const routeName = '/event';
@@ -27,6 +28,7 @@ class _EventViewState extends State<EventView> {
   final localNotificationService = LocalNotificationService();
   final _logger = Logger('EventView');
   bool _isCreatingEvent = false;
+  EventType? _selectedTypeFilter;
 
   @override
   void initState() {
@@ -128,8 +130,14 @@ class _EventViewState extends State<EventView> {
   Widget build(BuildContext context) {
     return Consumer2<TontineProvider, EventProvider>(
       builder: (context, tontineProvider, eventProvider, child) {
-        final eventsForTontine =
-            _getEventsForSelectedDate(eventProvider.events);
+        final eventsForDay = _getEventsForSelectedDate(eventProvider.events);
+        final filteredEvents = _selectedTypeFilter == null
+            ? eventsForDay
+            : eventsForDay
+                .where((event) => event.type == _selectedTypeFilter)
+                .toList();
+        final availableTypes =
+            eventProvider.events.map((event) => event.type).toSet().toList();
 
         return Scaffold(
           backgroundColor: AppColors.background,
@@ -141,60 +149,13 @@ class _EventViewState extends State<EventView> {
           ),
           body: Column(
             children: [
-              // Date Picker
-              TableCalendar<Event>(
-                calendarBuilders: CalendarBuilders<Event>(
-                  defaultBuilder: (context, date, events) {
-                    final hasEvent =
-                        isAnyEventThisDay(date, eventProvider.events);
-                    return Container(
-                      margin: const EdgeInsets.all(3),
-                      alignment: Alignment.center,
-                      decoration: hasEvent
-                          ? BoxDecoration(
-                              color: AppColors.primary.withAlpha(30),
-                              shape: BoxShape.circle,
-                            )
-                          : null,
-                      child: Text(date.day.toString()),
-                    );
-                  },
-                ),
-                firstDay: DateTime.utc(2010, 10, 16),
-                lastDay: DateTime.utc(2030, 3, 14),
-                focusedDay: selectedDate,
-                selectedDayPredicate: (day) => isSameDay(day, selectedDate),
-                eventLoader: (day) {
-                  return _groupEventsByDay(eventProvider.events)[day] ?? [];
-                },
-                onDaySelected: (selectedDay, focusedDay) {
-                  setState(() {
-                    selectedDate = selectedDay;
-                  });
-                },
-                calendarStyle: CalendarStyle(
-                  markerDecoration: const BoxDecoration(
-                    color: AppColors.primary,
-                    shape: BoxShape.circle,
-                  ),
-                  markersMaxCount: 1,
-                  markerSize: 8,
-                  selectedDecoration: const BoxDecoration(
-                    color: AppColors.primary,
-                    shape: BoxShape.circle,
-                  ),
-                  todayDecoration: BoxDecoration(
-                    color: AppColors.primary.withAlpha(50),
-                    shape: BoxShape.circle,
-                  ),
-                  markerMargin: const EdgeInsets.only(top: 1),
-                ),
-                calendarFormat: CalendarFormat.month,
-                headerStyle: const HeaderStyle(
-                  formatButtonVisible: false,
-                  titleCentered: true,
-                ),
-              ),
+              _buildCalendarSection(context, eventProvider),
+              _buildDayHeader(context, filteredEvents.length),
+              if (availableTypes.isNotEmpty) ...[
+                ResponsiveSpacing(height: 8),
+                _buildTypeFilterChips(context, availableTypes),
+              ],
+              ResponsiveSpacing(height: 8),
 
               // Liste des événements
               Expanded(
@@ -204,240 +165,22 @@ class _EventViewState extends State<EventView> {
                           color: AppColors.primary,
                         ),
                       )
-                    : eventsForTontine.isEmpty
-                        ? Card(
-                            margin: ResponsiveHelper.getAdaptivePadding(context, all: 16.0),
-                            elevation: 4,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(16),
-                                gradient: LinearGradient(
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                  colors: [
-                                    AppColors.surface,
-                                    AppColors.surface.withAlpha(50),
-                                  ],
-                                ),
-                              ),
-                              child: Padding(
-                                padding: ResponsiveHelper.getAdaptivePadding(context, all: 24.0),
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Container(
-                                      padding: ResponsiveHelper.getAdaptivePadding(context, all: 16.0),
-                                      decoration: BoxDecoration(
-                                        color: AppColors.primary.withAlpha(20),
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: Icon(
-                                        Icons.event_busy,
-                                        size: ResponsiveHelper.getAdaptiveIconSize(context, base: 48.0),
-                                        color: AppColors.primary,
-                                      ),
-                                    ),
-                                    ResponsiveSpacing(height: 20),
-                                    Text(
-                                      'Aucun événement le ${DateFormat('dd/MM/yyyy').format(selectedDate)}',
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                        fontSize: ResponsiveHelper.getAdaptiveValue(
-                                          context,
-                                          small: 14.0,
-                                          medium: 15.0,
-                                          large: 16.0,
-                                        ),
-                                        color: AppColors.textPrimary,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                    ResponsiveSpacing(height: 20),
-                                    FilledButton.icon(
-                                      onPressed: _isCreatingEvent
-                                          ? null
-                                          : () => _showCreateEventDialog(
-                                              context,
-                                              tontineProvider,
-                                              eventProvider),
-                                      icon: _isCreatingEvent
-                                          ? const SizedBox(
-                                              width: 16,
-                                              height: 16,
-                                              child: CircularProgressIndicator(
-                                                color: Colors.white,
-                                                strokeWidth: 2,
-                                              ),
-                                            )
-                                          : const Icon(Icons.add),
-                                      label: Text(_isCreatingEvent
-                                          ? 'Création...'
-                                          : 'Ajouter un événement'),
-                                      style: FilledButton.styleFrom(
-                                        backgroundColor: AppColors.primary,
-                                        foregroundColor: Colors.white,
-                                        padding: ResponsiveHelper.getAdaptivePadding(
-                                          context,
-                                          horizontal: 24.0,
-                                          vertical: 12.0,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          )
+                    : filteredEvents.isEmpty
+                        ? _buildEmptyDayState(
+                            context, tontineProvider, eventProvider)
                         : ListView.builder(
-                            itemCount: eventsForTontine.length,
-                            padding: ResponsiveHelper.getAdaptivePadding(context, all: 16.0),
-                            itemBuilder: (context, index) {
-                              final event = eventsForTontine[index];
-                              return Card(
-                                margin: EdgeInsets.only(
-                                  bottom: ResponsiveHelper.getAdaptiveSpacing(context, base: 12.0),
-                                ),
-                                elevation: 2,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(12),
-                                    gradient: LinearGradient(
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                      colors: [
-                                        AppColors.surface,
-                                        AppColors.surface.withAlpha(30),
-                                      ],
-                                    ),
-                                  ),
-                                  child: ListTile(
-                                    contentPadding: ResponsiveHelper.getAdaptivePadding(context, all: 16.0),
-                                    onTap: () => _showEventDetails(context,
-                                        event, tontineProvider, eventProvider),
-                                    leading: Container(
-                                      padding: ResponsiveHelper.getAdaptivePadding(context, all: 8.0),
-                                      decoration: BoxDecoration(
-                                        color: _getChipColor(event.type)
-                                            .withAlpha(20),
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      child: Icon(
-                                        _getEventIcon(event.type),
-                                        color: _getChipColor(event.type),
-                                        size: ResponsiveHelper.getAdaptiveIconSize(context, base: 24.0),
-                                      ),
-                                    ),
-                                    title: Text(
-                                      event.title,
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                        color: AppColors.textPrimary,
-                                        fontSize: ResponsiveHelper.getAdaptiveValue(
-                                          context,
-                                          small: 14.0,
-                                          medium: 15.0,
-                                          large: 16.0,
-                                        ),
-                                      ),
-                                    ),
-                                    subtitle: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        ResponsiveSpacing(height: 4),
-                                        Text(
-                                          event.description,
-                                          style: TextStyle(
-                                            color: AppColors.textSecondary,
-                                            fontSize: ResponsiveHelper.getAdaptiveValue(
-                                              context,
-                                              small: 12.0,
-                                              medium: 13.0,
-                                              large: 14.0,
-                                            ),
-                                          ),
-                                          maxLines: 2,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                        ResponsiveSpacing(height: 8),
-                                        Row(
-                                          children: [
-                                            Container(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                horizontal: 8,
-                                                vertical: 4,
-                                              ),
-                                              decoration: BoxDecoration(
-                                                color: _getChipColor(event.type)
-                                                    .withAlpha(20),
-                                                borderRadius:
-                                                    BorderRadius.circular(12),
-                                                border: Border.all(
-                                                  color:
-                                                      _getChipColor(event.type),
-                                                  width: 1,
-                                                ),
-                                              ),
-                                              child: Text(
-                                                event.type.displayName,
-                                                style: TextStyle(
-                                                  color:
-                                                      _getChipColor(event.type),
-                                                  fontSize: 12,
-                                                  fontWeight: FontWeight.w600,
-                                                ),
-                                              ),
-                                            ),
-                                            const Spacer(),
-                                            Container(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                horizontal: 8,
-                                                vertical: 4,
-                                              ),
-                                              decoration: BoxDecoration(
-                                                color: AppColors.secondary
-                                                    .withAlpha(20),
-                                                borderRadius:
-                                                    BorderRadius.circular(12),
-                                              ),
-                                              child: Row(
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  Icon(
-                                                    Icons.people,
-                                                    size: 14,
-                                                    color: AppColors.secondary,
-                                                  ),
-                                                  const SizedBox(width: 4),
-                                                  Text(
-                                                    '${event.participants?.length ?? 0}',
-                                                    style: TextStyle(
-                                                      color:
-                                                          AppColors.secondary,
-                                                      fontSize: 12,
-                                                      fontWeight:
-                                                          FontWeight.w600,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              );
-                            },
+                            itemCount: filteredEvents.length,
+                            padding: ResponsiveHelper.getAdaptivePadding(
+                              context,
+                              horizontal: 16.0,
+                              vertical: 4.0,
+                            ),
+                            itemBuilder: (context, index) => _buildEventCard(
+                              context,
+                              filteredEvents[index],
+                              tontineProvider,
+                              eventProvider,
+                            ),
                           ),
               ),
             ],
@@ -463,6 +206,507 @@ class _EventViewState extends State<EventView> {
           bottomNavigationBar: const MenuWidget(),
         );
       },
+    );
+  }
+
+  /// Carte du calendrier avec en-tête section et style TableCalendar épuré.
+  Widget _buildCalendarSection(
+      BuildContext context, EventProvider eventProvider) {
+    final margin = ResponsiveHelper.getAdaptivePadding(
+      context,
+      horizontal: 16.0,
+      vertical: 12.0,
+    );
+    final iconPadding = ResponsiveHelper.getAdaptivePadding(context, all: 8.0);
+    final iconSize = ResponsiveHelper.getAdaptiveIconSize(context, base: 20.0);
+
+    return Card(
+      margin: margin,
+      elevation: 3,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Colors.white,
+              Colors.grey.shade50,
+            ],
+          ),
+        ),
+        padding: const EdgeInsets.fromLTRB(12, 16, 12, 4),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: iconPadding,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withAlpha(20),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    Icons.calendar_month,
+                    color: AppColors.primary,
+                    size: iconSize,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Text(
+                  'Calendrier',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            TableCalendar<Event>(
+              calendarBuilders: CalendarBuilders<Event>(
+                defaultBuilder: (context, date, events) {
+                  final hasEvent =
+                      isAnyEventThisDay(date, eventProvider.events);
+                  return Container(
+                    margin: const EdgeInsets.all(3),
+                    alignment: Alignment.center,
+                    decoration: hasEvent
+                        ? BoxDecoration(
+                            color: AppColors.primary.withAlpha(30),
+                            shape: BoxShape.circle,
+                          )
+                        : null,
+                    child: Text(
+                      date.day.toString(),
+                      style: const TextStyle(color: AppColors.textPrimary),
+                    ),
+                  );
+                },
+              ),
+              firstDay: DateTime.utc(2010, 10, 16),
+              lastDay: DateTime.utc(2030, 3, 14),
+              focusedDay: selectedDate,
+              selectedDayPredicate: (day) => isSameDay(day, selectedDate),
+              eventLoader: (day) {
+                return _groupEventsByDay(eventProvider.events)[day] ?? [];
+              },
+              onDaySelected: (selectedDay, focusedDay) {
+                setState(() {
+                  selectedDate = selectedDay;
+                });
+              },
+              calendarStyle: CalendarStyle(
+                outsideDaysVisible: false,
+                weekendTextStyle: const TextStyle(color: AppColors.textPrimary),
+                defaultTextStyle: const TextStyle(color: AppColors.textPrimary),
+                markerDecoration: const BoxDecoration(
+                  color: AppColors.primary,
+                  shape: BoxShape.circle,
+                ),
+                markersMaxCount: 1,
+                markerSize: 6,
+                selectedDecoration: const BoxDecoration(
+                  color: AppColors.primary,
+                  shape: BoxShape.circle,
+                ),
+                selectedTextStyle: const TextStyle(color: Colors.white),
+                todayDecoration: BoxDecoration(
+                  color: AppColors.primary.withAlpha(40),
+                  shape: BoxShape.circle,
+                ),
+                todayTextStyle: const TextStyle(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.bold,
+                ),
+                markerMargin: const EdgeInsets.only(top: 1),
+              ),
+              daysOfWeekStyle: DaysOfWeekStyle(
+                weekdayStyle: TextStyle(
+                  color: AppColors.textSecondary,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12,
+                ),
+                weekendStyle: TextStyle(
+                  color: AppColors.textSecondary,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12,
+                ),
+              ),
+              calendarFormat: CalendarFormat.month,
+              headerStyle: const HeaderStyle(
+                formatButtonVisible: false,
+                titleCentered: true,
+                titleTextStyle: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
+                leftChevronIcon: Icon(
+                  Icons.chevron_left,
+                  color: AppColors.primary,
+                ),
+                rightChevronIcon: Icon(
+                  Icons.chevron_right,
+                  color: AppColors.primary,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Ligne "Événements du dd/MM/yyyy" avec chip du nombre d'événements.
+  Widget _buildDayHeader(BuildContext context, int count) {
+    return Padding(
+      padding: ResponsiveHelper.getAdaptivePadding(
+        context,
+        horizontal: 16.0,
+        vertical: 0,
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              'Événements du ${DateFormat('dd/MM/yyyy').format(selectedDate)}',
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPrimary,
+              ),
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withAlpha(20),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              '$count',
+              style: const TextStyle(
+                color: AppColors.primary,
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Chips de filtre horizontal par type d'événement ("Tous" + types présents).
+  Widget _buildTypeFilterChips(BuildContext context, List<EventType> types) {
+    return SizedBox(
+      height: 36,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: ResponsiveHelper.getAdaptivePadding(
+          context,
+          horizontal: 16.0,
+          vertical: 0,
+        ),
+        children: [
+          _buildFilterChip(
+            label: 'Tous',
+            selected: _selectedTypeFilter == null,
+            color: AppColors.textSecondary,
+            onTap: () => setState(() => _selectedTypeFilter = null),
+          ),
+          ...types.map(
+            (type) => Padding(
+              padding: const EdgeInsets.only(left: 8),
+              child: _buildFilterChip(
+                label: type.displayName,
+                selected: _selectedTypeFilter == type,
+                color: _getChipColor(type),
+                icon: _getEventIcon(type),
+                onTap: () => setState(() => _selectedTypeFilter = type),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFilterChip({
+    required String label,
+    required bool selected,
+    required Color color,
+    IconData? icon,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: selected ? color.withAlpha(20) : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: selected ? color : AppColors.border,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (icon != null) ...[
+              Icon(
+                icon,
+                size: 14,
+                color: selected ? color : AppColors.textSecondary,
+              ),
+              const SizedBox(width: 6),
+            ],
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: selected ? color : AppColors.textSecondary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// État vide simplifié pour un jour sans événement.
+  Widget _buildEmptyDayState(BuildContext context,
+      TontineProvider tontineProvider, EventProvider eventProvider) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          padding: ResponsiveHelper.getAdaptivePadding(
+            context,
+            horizontal: 24.0,
+            vertical: 12.0,
+          ),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withAlpha(15),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.event_busy,
+                      size: ResponsiveHelper.getAdaptiveIconSize(
+                        context,
+                        base: 32.0,
+                      ),
+                      color: AppColors.primary,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'Aucun événement',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'le ${DateFormat('dd/MM/yyyy').format(selectedDate)}',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  FilledButton.icon(
+                    onPressed: _isCreatingEvent
+                        ? null
+                        : () => _showCreateEventDialog(
+                            context, tontineProvider, eventProvider),
+                    icon: _isCreatingEvent
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : const Icon(Icons.add),
+                    label: Text(_isCreatingEvent
+                        ? 'Création...'
+                        : 'Ajouter un événement'),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 10,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  /// Carte d'un événement : icône par type, titre, horaires, description,
+  /// chip de type et nombre de participants.
+  Widget _buildEventCard(BuildContext context, Event event,
+      TontineProvider tontineProvider, EventProvider eventProvider) {
+    final color = _getChipColor(event.type);
+    final timeFormat = DateFormat('HH:mm');
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Colors.white,
+              Colors.grey.shade50,
+            ],
+          ),
+        ),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () =>
+              _showEventDetails(context, event, tontineProvider, eventProvider),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: color.withAlpha(20),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    _getEventIcon(event.type),
+                    color: color,
+                    size: 22,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        event.title,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textPrimary,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.access_time,
+                            size: 14,
+                            color: AppColors.textSecondary,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            event.endDate != null
+                                ? '${timeFormat.format(event.startDate)} - ${timeFormat.format(event.endDate!)}'
+                                : timeFormat.format(event.startDate),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: AppColors.textSecondary,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (event.description.isNotEmpty) ...[
+                        const SizedBox(height: 6),
+                        Text(
+                          event.description,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: AppColors.textSecondary,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: color.withAlpha(20),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: color, width: 1),
+                            ),
+                            child: Text(
+                              event.type.displayName,
+                              style: TextStyle(
+                                color: color,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          const Spacer(),
+                          Icon(
+                            Icons.people,
+                            size: 14,
+                            color: AppColors.secondaryDark,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${event.participants?.length ?? 0}',
+                            style: const TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -725,7 +969,8 @@ class _EventViewState extends State<EventView> {
     EventType selectedType = EventType.MEETING;
     List<int> selectedParticipants = [];
 
-    showDialog(
+    final messenger = ScaffoldMessenger.of(context);
+    showAppDialog(
       context: context,
       builder: (BuildContext context) {
         return StatefulBuilder(
@@ -929,13 +1174,11 @@ class _EventViewState extends State<EventView> {
 
                                       if (titleController.text.isEmpty ||
                                           descriptionController.text.isEmpty) {
-                                        ScaffoldMessenger.of(context)
-                                            .showSnackBar(
-                                          const SnackBar(
-                                            content: Text(
-                                                'Veuillez remplir tous les champs obligatoires'),
-                                            backgroundColor: AppColors.warning,
-                                          ),
+                                        showAppSnackBar(
+                                          context,
+                                          message:
+                                              'Veuillez remplir tous les champs obligatoires',
+                                          backgroundColor: AppColors.warning,
                                         );
                                         return;
                                       }
@@ -957,14 +1200,11 @@ class _EventViewState extends State<EventView> {
 
                                       if (_isEventAlreadySubmitted(
                                           eventProvider.events, eventDto)) {
-                                        ScaffoldMessenger.of(context)
-                                            .showSnackBar(
-                                          const SnackBar(
-                                            content: Text(
+                                        showAppSnackBar(
+                                          context,
+                                          message:
                                               'Un événement avec ce titre existe déjà à cette date',
-                                            ),
-                                            backgroundColor: AppColors.warning,
-                                          ),
+                                          backgroundColor: AppColors.warning,
                                         );
                                         return;
                                       }
@@ -977,8 +1217,7 @@ class _EventViewState extends State<EventView> {
                                             .createEvent(eventDto);
                                         if (!context.mounted) return;
                                         Navigator.pop(context);
-                                        ScaffoldMessenger.of(context)
-                                            .showSnackBar(
+                                        messenger.showSnackBar(
                                           const SnackBar(
                                             content: Text(
                                                 'Événement créé avec succès'),
@@ -987,13 +1226,10 @@ class _EventViewState extends State<EventView> {
                                         );
                                       } catch (e) {
                                         if (!context.mounted) return;
-                                        ScaffoldMessenger.of(context)
-                                            .showSnackBar(
-                                          SnackBar(
-                                            content:
-                                                Text('Erreur: ${e.toString()}'),
-                                            backgroundColor: AppColors.error,
-                                          ),
+                                        showAppSnackBar(
+                                          context,
+                                          message: 'Erreur: ${e.toString()}',
+                                          backgroundColor: AppColors.error,
                                         );
                                       } finally {
                                         _setEventSubmissionInProgress(false);
@@ -1252,7 +1488,8 @@ class _EventViewState extends State<EventView> {
 
   void _showDeleteConfirmation(BuildContext context, Event event,
       TontineProvider tontineProvider, EventProvider eventProvider) {
-    showDialog(
+    final messenger = ScaffoldMessenger.of(context);
+    showAppDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
@@ -1270,16 +1507,14 @@ class _EventViewState extends State<EventView> {
                   Navigator.pop(context);
                   await eventProvider.deleteEvent(
                       tontineProvider.currentTontine!.id, event.id);
-                  if (!context.mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(
+                  messenger.showSnackBar(
                     const SnackBar(
                       content: Text('Événement supprimé avec succès'),
                       backgroundColor: AppColors.success,
                     ),
                   );
                 } catch (e) {
-                  if (!context.mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(
+                  messenger.showSnackBar(
                     SnackBar(
                       content: Text(
                           'Erreur lors de la suppression: ${e.toString()}'),

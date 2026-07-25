@@ -18,6 +18,7 @@ import '../../utils/responsive_helper.dart';
 import '../../theme/app_theme.dart';
 import '../tontine/add_member_form.dart';
 import '../../services/local_notification_service.dart';
+import '../../utils/dialog_utils.dart';
 
 class MemberView extends StatefulWidget {
   static const routeName = '/members';
@@ -157,8 +158,13 @@ class _MemberViewState extends State<MemberView>
       builder: (context, tontineProvider, authProvider, child) {
         final currentTontine = tontineProvider.currentTontine;
         final currentUser = authProvider.currentUser;
-        final isPresident =
-            currentUser?.user?.roles?.contains(Role.PRESIDENT) ?? false;
+        // Droits basés sur le rôle DANS la tontine (MemberRole), pas le rôle global.
+        final isPresident = currentTontine?.members.any(
+              (m) =>
+                  m.id == currentUser?.id &&
+                  (m.user?.roles?.contains(Role.PRESIDENT) ?? false),
+            ) ??
+            false;
         final isTontineFull = tontineProvider.isTontineFull();
 
         if (currentTontine == null) {
@@ -752,120 +758,91 @@ class _MemberViewState extends State<MemberView>
   ) {
     final messenger = ScaffoldMessenger.of(context);
 
-    showDialog(
+    showAppDialog(
       context: context,
       barrierDismissible: true,
       builder: (BuildContext context) {
-        return ScaffoldMessenger(
-          child: Builder(
-            builder: (context) {
-              return Scaffold(
-                backgroundColor: Colors.transparent,
-                body: Stack(
-                  children: [
-                    // Zone hors dialogue : ferme au tap (le Scaffold plein écran
-                    // empêche autrement barrierDismissible de fonctionner)
-                    Positioned.fill(
-                      child: GestureDetector(
-                        onTap: () => Navigator.of(context).pop(),
-                        behavior: HitTestBehavior.opaque,
-                      ),
-                    ),
-                    Center(
-                      child: Dialog(
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16)),
-                        child: SingleChildScrollView(
-                          child: Padding(
-                            padding: const EdgeInsets.all(20),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Row(
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.all(8),
-                                      decoration: BoxDecoration(
-                                        color: AppColors.primary.withAlpha(20),
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      child: Icon(
-                                        Icons.person_add,
-                                        color: AppColors.primary,
-                                        size: 20,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    const Text(
-                                      'Ajouter un membre',
-                                      style: TextStyle(
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.bold,
-                                        color: AppColors.textPrimary,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 20),
-                                AddMemberForm(
-                                  existingMembers: tontineProvider
-                                          .currentTontine?.members ??
-                                      [],
-                                  onSubmit: (memberDto) async {
-                                    setState(() {
-                                      _isAddingMember = true;
-                                    });
-
-                                    try {
-                                      await tontineProvider.addMemberToTontine(
-                                        tontineProvider.currentTontine!.id,
-                                        memberDto,
-                                      );
-                                      await _notificationService
-                                          .showNotification(
-                                        title: 'Nouveau membre',
-                                        body:
-                                            'Un nouveau membre a été ajouté à la tontine',
-                                        payload: '/members',
-                                      );
-                                      if (!context.mounted) return;
-                                      Navigator.pop(context);
-                                      messenger.showSnackBar(
-                                        const SnackBar(
-                                          content: Text(
-                                              'Membre ajouté avec succès'),
-                                          backgroundColor: AppColors.success,
-                                        ),
-                                      );
-                                    } catch (e) {
-                                      if (!context.mounted) return;
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        const SnackBar(
-                                          content: Text(
-                                              'Erreur lors de l\'ajout du membre'),
-                                          backgroundColor: AppColors.error,
-                                        ),
-                                      );
-                                    } finally {
-                                      if (mounted) {
-                                        setState(() {
-                                          _isAddingMember = false;
-                                        });
-                                      }
-                                    }
-                                  },
-                                ),
-                              ],
-                            ),
-                          ),
+        return Dialog(
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16)),
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withAlpha(20),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(
+                          Icons.person_add,
+                          color: AppColors.primary,
+                          size: 20,
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              );
-            },
+                      const SizedBox(width: 12),
+                      const Text(
+                        'Ajouter un membre',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  AddMemberForm(
+                    existingMembers:
+                        tontineProvider.currentTontine?.members ?? [],
+                    onSubmit: (memberDto) async {
+                      setState(() {
+                        _isAddingMember = true;
+                      });
+
+                      try {
+                        await tontineProvider.addMemberToTontine(
+                          tontineProvider.currentTontine!.id,
+                          memberDto,
+                        );
+                        await _notificationService.showNotification(
+                          title: 'Nouveau membre',
+                          body:
+                              'Un nouveau membre a été ajouté à la tontine',
+                          payload: '/members',
+                        );
+                        if (!context.mounted) return;
+                        Navigator.pop(context);
+                        messenger.showSnackBar(
+                          const SnackBar(
+                            content: Text('Membre ajouté avec succès'),
+                            backgroundColor: AppColors.success,
+                          ),
+                        );
+                      } catch (e) {
+                        if (!context.mounted) return;
+                        showAppSnackBar(
+                          context,
+                          message: 'Erreur lors de l\'ajout du membre',
+                          backgroundColor: AppColors.error,
+                        );
+                      } finally {
+                        if (mounted) {
+                          setState(() {
+                            _isAddingMember = false;
+                          });
+                        }
+                      }
+                    },
+                  ),
+                ],
+              ),
+            ),
           ),
         );
       },
@@ -883,218 +860,207 @@ class _MemberViewState extends State<MemberView>
     final currentTontine = tontineProvider.currentTontine!;
     final messenger = ScaffoldMessenger.of(context);
 
-    showDialog(
+    showAppDialog(
       context: context,
       builder: (BuildContext context) {
-        return ScaffoldMessenger(
-          child: Builder(
-            builder: (context) {
-              return StatefulBuilder(
-                builder: (context, setState) {
-                  return Scaffold(
-                    backgroundColor: Colors.transparent,
-                    body: Center(
-                      child: AlertDialog(
-                        title: Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: AppColors.secondary.withAlpha(20),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Icon(
-                                Icons.admin_panel_settings,
-                                color: AppColors.secondary,
-                                size: 20,
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.secondary.withAlpha(20),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      Icons.admin_panel_settings,
+                      color: AppColors.secondary,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Gérer les rôles de ${member.firstname}',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: Role.values.map((role) {
+                    final hasRole = selectedRoles.contains(role);
+                    final holder = _memberHoldingRole(
+                        role, member, currentTontine);
+                    final isRoleOccupied = holder != null;
+
+                    return CheckboxListTile(
+                      title: Row(
+                        children: [
+                          Icon(
+                            role.icon,
+                            color: role.color,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              role.displayName,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                color: role.color,
                               ),
                             ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                'Gérer les rôles de ${member.firstname}',
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.textPrimary,
+                          ),
+                          if (isRoleOccupied && !hasRole) ...[
+                            const SizedBox(width: 6),
+                            Flexible(
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: Colors.orange.withAlpha(20),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  'Occupé par ${holder.firstname ?? holder.user?.username ?? '?'}',
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontSize: 10,
+                                    color: Colors.orange,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
                               ),
                             ),
                           ],
-                        ),
-                        content: SingleChildScrollView(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: Role.values.map((role) {
-                              final hasRole = selectedRoles.contains(role);
-                              final isRoleOccupied =
-                                  _isRoleOccupiedByOtherMember(
-                                      role, member, currentTontine);
-                              final canSelect = !isRoleOccupied || hasRole;
-
-                              return CheckboxListTile(
-                                title: Row(
-                                  children: [
-                                    Icon(
-                                      role.icon,
-                                      color:
-                                          canSelect ? role.color : Colors.grey,
-                                      size: 20,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      role.displayName,
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                        color: canSelect
-                                            ? role.color
-                                            : Colors.grey,
-                                      ),
-                                    ),
-                                    if (isRoleOccupied && !hasRole) ...[
-                                      const SizedBox(width: 8),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 6, vertical: 2),
-                                        decoration: BoxDecoration(
-                                          color: Colors.orange.withAlpha(20),
-                                          borderRadius:
-                                              BorderRadius.circular(8),
-                                        ),
-                                        child: const Text(
-                                          'Occupé',
-                                          style: TextStyle(
-                                            fontSize: 10,
-                                            color: Colors.orange,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ],
-                                ),
-                                subtitle: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      role.description,
-                                      style: const TextStyle(
-                                        fontSize: 12,
-                                        color: AppColors.textSecondary,
-                                      ),
-                                    ),
-                                    if (isRoleOccupied && !hasRole) ...[
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        'Ce rôle est déjà attribué à un autre membre',
-                                        style: TextStyle(
-                                          fontSize: 10,
-                                          color: Colors.orange.shade700,
-                                          fontStyle: FontStyle.italic,
-                                        ),
-                                      ),
-                                    ],
-                                  ],
-                                ),
-                                value: hasRole,
-                                onChanged: canSelect
-                                    ? (bool? value) {
-                                        setState(() {
-                                          if (value == true) {
-                                            if (!selectedRoles.contains(role)) {
-                                              selectedRoles.add(role);
-                                            }
-                                          } else {
-                                            // Vérifier si c'est le dernier président
-                                            if (role == Role.PRESIDENT) {
-                                              final presidentCount =
-                                                  currentTontine.members
-                                                      .where((m) =>
-                                                          m.user?.roles
-                                                              ?.contains(Role
-                                                                  .PRESIDENT) ??
-                                                          false)
-                                                      .length;
-                                              if (presidentCount <= 1) {
-                                                ScaffoldMessenger.of(context)
-                                                    .showSnackBar(
-                                                  const SnackBar(
-                                                    content: Text(
-                                                        'Il doit y avoir au moins un président'),
-                                                    backgroundColor:
-                                                        AppColors.warning,
-                                                  ),
-                                                );
-                                                return;
-                                              }
-                                            }
-                                            selectedRoles.remove(role);
-                                          }
-                                        });
-                                      }
-                                    : null,
-                                activeColor: role.color,
-                              );
-                            }).toList(),
+                        ],
+                      ),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            role.description,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: AppColors.textSecondary,
+                            ),
                           ),
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.of(context).pop(),
-                            child: const Text('Annuler'),
-                          ),
-                          FilledButton(
-                            onPressed: () async {
-                              if (selectedRoles.isEmpty) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                        'Un membre doit avoir au moins un rôle'),
-                                    backgroundColor: AppColors.warning,
-                                  ),
+                          if (isRoleOccupied && !hasRole) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              'Déjà attribué — le cocher le transfère à ce membre',
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: Colors.orange.shade700,
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                      value: hasRole,
+                      onChanged: (bool? value) {
+                        setState(() {
+                          if (value == true) {
+                            if (!selectedRoles.contains(role)) {
+                              selectedRoles.add(role);
+                            }
+                          } else {
+                            if (role == Role.PRESIDENT) {
+                              final presidentCount = currentTontine.members
+                                  .where((m) =>
+                                      m.user?.roles
+                                          ?.contains(Role.PRESIDENT) ??
+                                      false)
+                                  .length;
+                              final isCurrentPresident = member.user?.roles
+                                      ?.contains(Role.PRESIDENT) ??
+                                  false;
+                              if (isCurrentPresident &&
+                                  presidentCount <= 1) {
+                                showAppSnackBar(
+                                  context,
+                                  message:
+                                      'Il doit y avoir au moins un président',
+                                  backgroundColor: AppColors.warning,
                                 );
                                 return;
                               }
+                            }
+                            selectedRoles.remove(role);
+                          }
+                        });
+                      },
+                      activeColor: role.color,
+                    );
+                  }).toList(),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Annuler'),
+                ),
+                FilledButton(
+                  onPressed: () async {
+                    if (selectedRoles.isEmpty) {
+                      showAppSnackBar(
+                        context,
+                        message: 'Un membre doit avoir au moins un rôle',
+                        backgroundColor: AppColors.warning,
+                      );
+                      return;
+                    }
 
-                              try {
-                                await tontineProvider.updateMemberRoles(
-                                  tontineId,
-                                  member.id!,
-                                  selectedRoles,
-                                );
-                                if (!context.mounted) return;
-                                Navigator.of(context).pop();
-                                messenger.showSnackBar(
-                                  const SnackBar(
-                                    content:
-                                        Text('Rôles mis à jour avec succès'),
-                                    backgroundColor: AppColors.success,
-                                  ),
-                                );
-                              } catch (e) {
-                                if (!context.mounted) return;
-                                final raw = e.toString();
-                                final message = raw.startsWith('Exception: ')
-                                    ? raw.substring('Exception: '.length)
-                                    : raw;
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(message),
-                                    backgroundColor: AppColors.error,
-                                  ),
-                                );
-                              }
-                            },
-                            child: const Text('Sauvegarder'),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              );
-            },
-          ),
+                    try {
+                      await _transferExclusiveRolesIfNeeded(
+                        tontineProvider: tontineProvider,
+                        tontineId: tontineId,
+                        tontine: currentTontine,
+                        targetMember: member,
+                        selectedRoles: selectedRoles,
+                      );
+                      await tontineProvider.updateMemberRoles(
+                        tontineId,
+                        member.id!,
+                        selectedRoles,
+                      );
+                      if (!context.mounted) return;
+                      Navigator.of(context).pop();
+                      messenger.showSnackBar(
+                        const SnackBar(
+                          content: Text('Rôles mis à jour avec succès'),
+                          backgroundColor: AppColors.success,
+                        ),
+                      );
+                    } catch (e) {
+                      if (!context.mounted) return;
+                      final raw = e.toString();
+                      final message = raw.startsWith('Exception: ')
+                          ? raw.substring('Exception: '.length)
+                          : raw;
+                      showAppSnackBar(
+                        context,
+                        message: message,
+                        backgroundColor: AppColors.error,
+                      );
+                    }
+                  },
+                  child: const Text('Sauvegarder'),
+                ),
+              ],
+            );
+          },
         );
       },
     );
@@ -1108,79 +1074,93 @@ class _MemberViewState extends State<MemberView>
   ) {
     final messenger = ScaffoldMessenger.of(context);
 
-    showDialog(
+    showAppDialog(
       context: context,
-      builder: (BuildContext context) => ScaffoldMessenger(
-        child: Builder(
-          builder: (context) => Scaffold(
-            backgroundColor: Colors.transparent,
-            body: Center(
-              child: AlertDialog(
-                title: const Text('Confirmation'),
-                content: Text(
-                  'Voulez-vous vraiment supprimer ${member.firstname} ${member.lastname} ?',
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('Annuler'),
-                  ),
-                  FilledButton(
-                    onPressed: () async {
-                      if (member.id != null) {
-                        try {
-                          await tontineProvider.removeMemberFromTontine(
-                              tontineId, member.id!);
-                          await _notificationService.showNotification(
-                            title: 'Membre supprimé',
-                            body: 'Un membre a été retiré de la tontine',
-                            payload: '/members',
-                          );
-                          if (!context.mounted) return;
-                          Navigator.of(context).pop();
-                          messenger.showSnackBar(
-                            const SnackBar(
-                              content: Text('Membre supprimé avec succès'),
-                              backgroundColor: AppColors.success,
-                            ),
-                          );
-                        } catch (e) {
-                          if (!context.mounted) return;
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Erreur lors de la suppression'),
-                              backgroundColor: AppColors.error,
-                            ),
-                          );
-                        }
-                      }
-                    },
-                    style:
-                        FilledButton.styleFrom(backgroundColor: AppColors.error),
-                    child: const Text('Supprimer'),
-                  ),
-                ],
-              ),
-            ),
-          ),
+      builder: (BuildContext context) => AlertDialog(
+        title: const Text('Confirmation'),
+        content: Text(
+          'Voulez-vous vraiment supprimer ${member.firstname} ${member.lastname} ?',
         ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Annuler'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              if (member.id != null) {
+                try {
+                  await tontineProvider.removeMemberFromTontine(
+                      tontineId, member.id!);
+                  await _notificationService.showNotification(
+                    title: 'Membre supprimé',
+                    body: 'Un membre a été retiré de la tontine',
+                    payload: '/members',
+                  );
+                  if (!context.mounted) return;
+                  Navigator.of(context).pop();
+                  messenger.showSnackBar(
+                    const SnackBar(
+                      content: Text('Membre supprimé avec succès'),
+                      backgroundColor: AppColors.success,
+                    ),
+                  );
+                } catch (e) {
+                  if (!context.mounted) return;
+                  showAppSnackBar(
+                    context,
+                    message: 'Erreur lors de la suppression',
+                    backgroundColor: AppColors.error,
+                  );
+                }
+              }
+            },
+            style: FilledButton.styleFrom(backgroundColor: AppColors.error),
+            child: const Text('Supprimer'),
+          ),
+        ],
       ),
     );
   }
 
-  bool _isRoleOccupiedByOtherMember(
+  /// Membre (autre que [currentMember]) qui détient déjà ce rôle exclusif.
+  Member? _memberHoldingRole(
       Role role, Member currentMember, Tontine tontine) {
-    // TONTINARD peut être attribué à plusieurs membres
-    if (role == Role.TONTINARD) {
-      return false;
-    }
+    if (role == Role.TONTINARD) return null;
 
-    return tontine.members.any((member) {
-      if (member.id == currentMember.id) {
-        return false; // Exclure le membre actuel
+    for (final other in tontine.members) {
+      if (other.id == currentMember.id) continue;
+      if (other.user?.roles?.contains(role) ?? false) {
+        return other;
       }
-      return member.user?.roles?.contains(role) ?? false;
-    });
+    }
+    return null;
+  }
+
+  /// Retire les rôles exclusifs sélectionnés des autres membres avant affectation.
+  Future<void> _transferExclusiveRolesIfNeeded({
+    required TontineProvider tontineProvider,
+    required int tontineId,
+    required Tontine tontine,
+    required Member targetMember,
+    required List<Role> selectedRoles,
+  }) async {
+    for (final role in selectedRoles) {
+      if (role == Role.TONTINARD) continue;
+      final holder = _memberHoldingRole(role, targetMember, tontine);
+      if (holder?.id == null) continue;
+
+      final remaining = List<Role>.from(holder!.user?.roles ?? [])
+        ..remove(role);
+      if (remaining.isEmpty) {
+        remaining.add(Role.TONTINARD);
+      }
+      await tontineProvider.updateMemberRoles(
+        tontineId,
+        holder.id!,
+        remaining,
+      );
+    }
   }
 
   void _shareInvitationLink(BuildContext context, Tontine tontine) {

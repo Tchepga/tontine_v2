@@ -12,6 +12,7 @@ import '../../theme/app_theme.dart';
 import '../../providers/models/enum/currency.dart';
 import 'package:intl/intl.dart';
 import 'select_tontine_view.dart';
+import '../../utils/dialog_utils.dart';
 
 class SettingTontineView extends StatefulWidget {
   static const routeName = '/setting-tontine';
@@ -53,7 +54,7 @@ class _SettingTontineViewState extends State<SettingTontineView> {
     _movementType = tontine.config.movementType;
     _countMaxMember = tontine.config.countMaxMember;
     _rateMaps = List.from(tontine.config.rateMaps);
-    _parts = List.from(tontine.config.parts ?? []);
+    _parts = enrichPartOrders(tontine.config.parts ?? [], tontine.members);
     _reminderMissingDepositsEnabled =
         tontine.config.reminderMissingDepositsEnabled;
   }
@@ -505,60 +506,59 @@ class _SettingTontineViewState extends State<SettingTontineView> {
             child: Padding(
               padding: const EdgeInsets.all(20),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: AppColors.primary.withAlpha(20),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Icon(
-                              Icons.people_alt,
-                              color: AppColors.primary,
-                              size: 20,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          const Text(
-                            'Ordres',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF2D3748),
-                            ),
-                          ),
-                        ],
-                      ),
-                      FilledButton.icon(
-                        onPressed: () => _showAddPartDialog(
-                            context, tontineProvider.currentTontine!, _parts),
-                        style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 12,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withAlpha(20),
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                        icon: const Icon(Icons.add,
-                            color: Colors.white, size: 18),
-                        label: const Text(
-                          'Ajouter une part',
+                        child: Icon(
+                          Icons.people_alt,
+                          color: AppColors.primary,
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      const Expanded(
+                        child: Text(
+                          'Ordre des parts',
                           style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF2D3748),
                           ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
+                  ),
+                  const SizedBox(height: 12),
+                  FilledButton.icon(
+                    onPressed: () => _showAddPartDialog(
+                        context, tontineProvider.currentTontine!, _parts),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    icon: const Icon(Icons.add, color: Colors.white, size: 18),
+                    label: const Text(
+                      'Ajouter une part',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -566,7 +566,26 @@ class _SettingTontineViewState extends State<SettingTontineView> {
           ),
         ),
         const SizedBox(height: 16),
-        CircularOrderGrid(parts: _parts),
+        Builder(
+          builder: (context) {
+            final orderData = tontineProvider.getCurrentAndNextPartOrders();
+            final tontine = tontineProvider.currentTontine;
+            final liveParts = tontine?.config.parts ?? _parts;
+            final members = tontine?.members ?? const [];
+            // Toujours enrichir depuis les membres de la tontine (API peut
+            // n'envoyer que memberId sans firstname/lastname).
+            return CircularOrderGrid(
+              parts: enrichPartOrders(liveParts, members),
+              members: members,
+              currentPart: orderData['current'] == null
+                  ? null
+                  : enrichPartOrder(orderData['current']!, members),
+              nextPart: orderData['next'] == null
+                  ? null
+                  : enrichPartOrder(orderData['next']!, members),
+            );
+          },
+        ),
       ],
     );
   }
@@ -597,7 +616,8 @@ class _SettingTontineViewState extends State<SettingTontineView> {
             !existingParts.any((part) => part.member.id == member.id))
         .toList();
 
-    return showDialog(
+    final messenger = ScaffoldMessenger.of(context);
+    return showAppDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
@@ -742,21 +762,24 @@ class _SettingTontineViewState extends State<SettingTontineView> {
                     await tontineProvider.addPart(partDto);
 
                     if (!context.mounted) return;
-                    Navigator.of(context).pop();
+                    final updated = tontineProvider.currentTontine;
+                    if (updated != null && mounted) {
+                      setState(() => _initializeFields(updated));
+                    }
                     if (!context.mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(
+                    Navigator.of(context).pop();
+                    messenger.showSnackBar(
                       const SnackBar(
                         content: Text('Part ajoutée avec succès'),
                         backgroundColor: Colors.green,
                       ),
                     );
                   } catch (e) {
-                    if (!mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Erreur lors de l\'ajout de la part'),
-                        backgroundColor: Colors.red,
-                      ),
+                    if (!context.mounted) return;
+                    showAppSnackBar(
+                      context,
+                      message: 'Erreur lors de l\'ajout de la part',
+                      backgroundColor: Colors.red,
                     );
                   }
                 }
@@ -1136,11 +1159,12 @@ class _SettingTontineViewState extends State<SettingTontineView> {
 
   Future<void> _handleDeleteTontine(BuildContext context,
       TontineProvider tontineProvider, Tontine currentTontine) async {
+    final messenger = ScaffoldMessenger.of(context);
     try {
       Navigator.of(context).pop(); // Fermer le dialog de confirmation
 
       // Afficher un indicateur de chargement
-      showDialog(
+      showAppDialog(
         context: context,
         barrierDismissible: false,
         builder: (BuildContext context) => const AlertDialog(
@@ -1166,8 +1190,7 @@ class _SettingTontineViewState extends State<SettingTontineView> {
         (route) => false,
       );
 
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      messenger.showSnackBar(
         SnackBar(
           content: const Text('Tontine supprimée avec succès'),
           backgroundColor: AppColors.success,
@@ -1181,8 +1204,7 @@ class _SettingTontineViewState extends State<SettingTontineView> {
       if (!context.mounted) return;
       Navigator.of(context).pop(); // Fermer l'indicateur de chargement
 
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      messenger.showSnackBar(
         SnackBar(
           content: const Text('Erreur lors de la suppression de la tontine'),
           backgroundColor: AppColors.error,

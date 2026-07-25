@@ -16,6 +16,7 @@ import '../../utils/currency_utils.dart';
 import '../../providers/models/enum/deposit_type.dart';
 import '../../providers/models/enum/status_deposit.dart';
 import '../../providers/auth_provider.dart';
+import '../../utils/role_permissions.dart';
 
 class CashflowView extends StatefulWidget {
   const CashflowView({super.key});
@@ -48,7 +49,10 @@ class _CashflowViewState extends State<CashflowView> {
       builder: (context, tontineProvider, authProvider, child) {
         final currentTontine = tontineProvider.currentTontine;
         final deposits = tontineProvider.deposits;
-        final canValidate = authProvider.canValidateDeposits();
+        // Droits trésorerie = rôles dans la tontine (MemberRole), pas User.roles global.
+        final roles =
+            tontineProvider.rolesInCurrentTontine(authProvider.currentUser?.id);
+        final canValidate = canValidateDeposits(roles);
 
         // Filtrage + tri du plus récent au plus ancien
         final filteredDeposits = deposits.where((deposit) {
@@ -513,12 +517,13 @@ class _CashflowViewState extends State<CashflowView> {
   void _showAddDeposit(
       BuildContext context, TontineProvider tontineProvider, int tontineId) {
     if (tontineProvider.canAddDeposit()) {
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return const EditMouvement();
-        },
-      ).then((_) {
+      Navigator.of(context)
+          .push(
+        MaterialPageRoute(
+          builder: (context) => const EditMouvement(),
+        ),
+      )
+          .then((_) {
         tontineProvider.loadTontines();
         tontineProvider.loadDeposits(tontineId);
       });
