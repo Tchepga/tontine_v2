@@ -85,7 +85,7 @@ jobs:
         id: check_android
         env:
           KS: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
-          PLAY_JSON: ${{ secrets.PLAY_STORE_JSON_KEY }}
+          PLAY_JSON: ${{ secrets.GOOGLE_PLAY_JSON_KEY }}
           STORE_PW: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           KEY_PW: ${{ secrets.ANDROID_KEY_PASSWORD }}
           KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
@@ -93,7 +93,7 @@ jobs:
           set -euo pipefail
           miss=""
           [ -z "${KS:-}" ] && miss="${miss} ANDROID_KEYSTORE_BASE64"
-          [ -z "${PLAY_JSON:-}" ] && miss="${miss} PLAY_STORE_JSON_KEY"
+          [ -z "${PLAY_JSON:-}" ] && miss="${miss} GOOGLE_PLAY_JSON_KEY"
           [ -z "${STORE_PW:-}" ] && miss="${miss} ANDROID_KEYSTORE_PASSWORD"
           [ -z "${KEY_PW:-}" ] && miss="${miss} ANDROID_KEY_PASSWORD"
           [ -z "${KEY_ALIAS:-}" ] && miss="${miss} ANDROID_KEY_ALIAS"
@@ -164,7 +164,7 @@ jobs:
         if: steps.check_android.outputs.upload == 'true'
         uses: r0adkll/upload-google-play@v1
         with:
-          serviceAccountJsonPlainText: ${{ secrets.PLAY_STORE_JSON_KEY }}
+          serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_JSON_KEY }}
           packageName: fr.devcoorp.tontine_v2
           releaseFiles: build/app/outputs/bundle/release/app-release.aab
           track: internal
