@@ -32,7 +32,11 @@ workflows:
   # ══════════════════════════════════════════════════════════════════════════
   # WORKFLOW 2 — Android → Play Store internal track
   # Keystore Codemagic : référence « tontine »
-  # Groupe env requis : google_play → GCLOUD_SERVICE_ACCOUNT_CREDENTIALS (JSON brut)
+  #
+  # OBLIGATOIRE dans Codemagic UI (sinon « No user-defined environment variables ») :
+  #   Environment variables → créer le groupe exactement nommé : google_play
+  #   Variable : GCLOUD_SERVICE_ACCOUNT_CREDENTIALS = JSON brut du service account
+  #   Cocher « Secure »
   # ══════════════════════════════════════════════════════════════════════════
   android-deploy:
     name: 🤖 Android → Play Store
@@ -52,6 +56,29 @@ workflows:
         - tontine
 
     scripts:
+      - name: Vérifier credentials Google Play
+        script: |
+          set -euo pipefail
+          if [ -z "${GCLOUD_SERVICE_ACCOUNT_CREDENTIALS:-}" ]; then
+            echo "::error::GCLOUD_SERVICE_ACCOUNT_CREDENTIALS est vide."
+            echo "Le groupe d'environnement « google_play » n'est pas importé ou n'existe pas."
+            echo ""
+            echo "À faire dans Codemagic → tontine_v2 → Environment variables :"
+            echo "  1. Créer un groupe nommé exactement : google_play"
+            echo "  2. Ajouter la variable GCLOUD_SERVICE_ACCOUNT_CREDENTIALS"
+            echo "  3. Coller le JSON complet du compte de service (commence par { )"
+            echo "  4. Cocher Secure"
+            echo "  5. Relancer le build"
+            exit 1
+          fi
+          FIRST="$(printf '%s' "$GCLOUD_SERVICE_ACCOUNT_CREDENTIALS" | head -c 1)"
+          if [ "$FIRST" != "{" ]; then
+            echo "::error::GCLOUD_SERVICE_ACCOUNT_CREDENTIALS ne commence pas par '{'."
+            echo "Collez le JSON brut (pas de base64, pas de chemin de fichier)."
+            exit 1
+          fi
+          echo "Credentials Google Play détectés (JSON OK)."
+
       - name: Set up local.properties
         script: echo "flutter.sdk=$HOME/programs/flutter" > "$CM_BUILD_DIR/android/local.properties"
 
