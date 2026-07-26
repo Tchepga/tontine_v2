@@ -13,7 +13,7 @@ workflows:
         - pattern: '*'
           include: true
     environment:
-      flutter: 3.38.10
+      flutter: 3.44.8
       xcode: latest
       java: 17
     scripts:
@@ -43,7 +43,7 @@ workflows:
         - pattern: master
           include: true
     environment:
-      flutter: 3.38.10
+      flutter: 3.44.8
       java: 17
       android_signing:
         - tontine_keystore
@@ -92,7 +92,7 @@ workflows:
         - pattern: master
           include: true
     environment:
-      flutter: 3.38.10
+      flutter: 3.44.8
       xcode: latest
       ios_signing:
         distribution_type: app_store
@@ -146,7 +146,7 @@ workflows:
         - pattern: develop
           include: true
     environment:
-      flutter: 3.38.10
+      flutter: 3.44.8
       java: 17
       xcode: latest
       android_signing:
