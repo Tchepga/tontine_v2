@@ -33,10 +33,14 @@ workflows:
   # WORKFLOW 2 — Android → Play Store internal track
   # Keystore Codemagic : référence « tontine »
   #
-  # OBLIGATOIRE dans Codemagic UI (sinon « No user-defined environment variables ») :
-  #   Environment variables → créer le groupe exactement nommé : google_play
-  #   Variable : GCLOUD_SERVICE_ACCOUNT_CREDENTIALS = JSON brut du service account
-  #   Cocher « Secure »
+  # Credentials Play (OBLIGATOIRE) — sans ça le publish échoue :
+  #   Codemagic → tontine_v2 → Environment variables
+  #   1) Créer un groupe (un de ces noms) : google_play | google_credentials
+  #   2) Variable Secure : GCLOUD_SERVICE_ACCOUNT_CREDENTIALS  (ou GOOGLE_PLAY_SERVICE_ACCOUNT_CREDENTIALS)
+  #   3) Valeur = JSON brut du service account (commence par { )
+  #
+  # Note : la publication est faite en script (pas dans publishing.google_play)
+  # pour éviter l’échec immédiat « Preparing build machine » si la var est vide.
   # ══════════════════════════════════════════════════════════════════════════
   android-deploy:
     name: 🤖 Android → Play Store
@@ -50,35 +54,14 @@ workflows:
     environment:
       groups:
         - google_play
+        - google_credentials
+        - google_play_credentials
       flutter: 3.44.8
       java: 17
       android_signing:
         - tontine
 
     scripts:
-      - name: Vérifier credentials Google Play
-        script: |
-          set -euo pipefail
-          if [ -z "${GCLOUD_SERVICE_ACCOUNT_CREDENTIALS:-}" ]; then
-            echo "::error::GCLOUD_SERVICE_ACCOUNT_CREDENTIALS est vide."
-            echo "Le groupe d'environnement « google_play » n'est pas importé ou n'existe pas."
-            echo ""
-            echo "À faire dans Codemagic → tontine_v2 → Environment variables :"
-            echo "  1. Créer un groupe nommé exactement : google_play"
-            echo "  2. Ajouter la variable GCLOUD_SERVICE_ACCOUNT_CREDENTIALS"
-            echo "  3. Coller le JSON complet du compte de service (commence par { )"
-            echo "  4. Cocher Secure"
-            echo "  5. Relancer le build"
-            exit 1
-          fi
-          FIRST="$(printf '%s' "$GCLOUD_SERVICE_ACCOUNT_CREDENTIALS" | head -c 1)"
-          if [ "$FIRST" != "{" ]; then
-            echo "::error::GCLOUD_SERVICE_ACCOUNT_CREDENTIALS ne commence pas par '{'."
-            echo "Collez le JSON brut (pas de base64, pas de chemin de fichier)."
-            exit 1
-          fi
-          echo "Credentials Google Play détectés (JSON OK)."
-
       - name: Set up local.properties
         script: echo "flutter.sdk=$HOME/programs/flutter" > "$CM_BUILD_DIR/android/local.properties"
 
@@ -105,14 +88,43 @@ workflows:
           test -f build/app/outputs/bundle/release/app-release.aab
           rm -f build/app/outputs/bundle/debug/*.aab || true
 
+      - name: Publish to Google Play (internal)
+        script: |
+          set -euo pipefail
+          CREDS="${GCLOUD_SERVICE_ACCOUNT_CREDENTIALS:-${GOOGLE_PLAY_SERVICE_ACCOUNT_CREDENTIALS:-}}"
+          if [ -z "$CREDS" ]; then
+            echo "============================================================"
+            echo "ERREUR : aucun credential Google Play dans l'environnement."
+            echo "Log Codemagic : « No user-defined environment variables were set »"
+            echo ""
+            echo "À configurer MAINTENANT dans Codemagic UI :"
+            echo "  App tontine_v2 → Environment variables"
+            echo "  1. Group name (exact) : google_play"
+            echo "  2. Variable name     : GCLOUD_SERVICE_ACCOUNT_CREDENTIALS"
+            echo "  3. Value             : coller tout le fichier .json (commence par {)"
+            echo "  4. Cocher Secure → Add"
+            echo "  5. Relancer ce workflow"
+            echo "============================================================"
+            exit 1
+          fi
+          case "$CREDS" in
+            \{*) ;;
+            *)
+              echo "ERREUR : le credential ne commence pas par '{'. Collez le JSON brut."
+              exit 1
+              ;;
+          esac
+          export GOOGLE_PLAY_SERVICE_ACCOUNT_CREDENTIALS="$CREDS"
+          google-play bundles publish \
+            --bundle "$CM_BUILD_DIR/build/app/outputs/bundle/release/app-release.aab" \
+            --track internal
+
     artifacts:
       - build/app/outputs/bundle/release/*.aab
 
     publishing:
-      google_play:
-        credentials: $GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
-        track: internal
-        submit_as_draft: false
+      # Pas de publishing.google_play ici : sinon Codemagic échoue dès
+      # « Preparing build machine » si $GCLOUD_… est vide.
       email:
         recipients:
           - tchepgapatrick@yahoo.fr
