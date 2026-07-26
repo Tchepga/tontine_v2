@@ -34,10 +34,8 @@ workflows:
   # Keystore Codemagic : référence « tontine »
   #
   # Credentials Play (OBLIGATOIRE) — sans ça le publish échoue :
-  #   Codemagic → tontine_v2 → Environment variables
-  #   1) Créer un groupe (un de ces noms) : google_play | google_credentials
-  #   2) Variable Secure : GCLOUD_SERVICE_ACCOUNT_CREDENTIALS  (ou GOOGLE_PLAY_SERVICE_ACCOUNT_CREDENTIALS)
-  #   3) Valeur = JSON brut du service account (commence par { )
+  #   Groupe UI actuel : basic-env
+  #   Variable Secure : GCLOUD_SERVICE_ACCOUNT_CREDENTIALS = JSON brut (commence par { )
   #
   # Note : la publication est faite en script (pas dans publishing.google_play)
   # pour éviter l’échec immédiat « Preparing build machine » si la var est vide.
@@ -53,6 +51,7 @@ workflows:
           include: true
     environment:
       groups:
+        - basic-env              # GCLOUD_SERVICE_ACCOUNT_CREDENTIALS (groupe actuel UI)
         - google_play
         - google_credentials
         - google_play_credentials
@@ -99,11 +98,10 @@ workflows:
             echo ""
             echo "À configurer MAINTENANT dans Codemagic UI :"
             echo "  App tontine_v2 → Environment variables"
-            echo "  1. Group name (exact) : google_play"
-            echo "  2. Variable name     : GCLOUD_SERVICE_ACCOUNT_CREDENTIALS"
-            echo "  3. Value             : coller tout le fichier .json (commence par {)"
-            echo "  4. Cocher Secure → Add"
-            echo "  5. Relancer ce workflow"
+            echo "  Groupe          : basic-env (déjà utilisé)"
+            echo "  Variable name   : GCLOUD_SERVICE_ACCOUNT_CREDENTIALS"
+            echo "  Value           : coller tout le fichier .json (commence par {)"
+            echo "  Puis relancer ce workflow"
             echo "============================================================"
             exit 1
           fi
