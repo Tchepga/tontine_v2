@@ -49,12 +49,12 @@ workflows:
       branch_patterns:
         - pattern: master
           include: true
+        - pattern: main
+          include: true
+      cancel_previous_builds: true
     environment:
       groups:
-        - basic-env              # GCLOUD_SERVICE_ACCOUNT_CREDENTIALS (groupe actuel UI)
-        - google_play
-        - google_credentials
-        - google_play_credentials
+        - basic-env
       flutter: 3.44.8
       java: 17
       android_signing:
