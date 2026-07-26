@@ -31,7 +31,8 @@ workflows:
 
   # ══════════════════════════════════════════════════════════════════════════
   # WORKFLOW 2 — Android → Play Store internal track
-  # GitHub Actions ne publie plus Android (évite double upload + mauvais .jks).
+  # Keystore Codemagic : référence « tontine »
+  # Groupe env requis : google_play → GCLOUD_SERVICE_ACCOUNT_CREDENTIALS (JSON brut)
   # ══════════════════════════════════════════════════════════════════════════
   android-deploy:
     name: 🤖 Android → Play Store
@@ -44,7 +45,7 @@ workflows:
           include: true
     environment:
       groups:
-        - google_play        # Contient GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
+        - google_play
       flutter: 3.44.8
       java: 17
       android_signing:
@@ -66,12 +67,15 @@ workflows:
       - name: Build AAB release (signé via CM_KEYSTORE_*)
         script: |
           set -euo pipefail
-          test -n "${CM_KEYSTORE_PATH:-}" || { echo "CM_KEYSTORE_PATH manquant — vérifiez android_signing: tontine"; exit 1; }
+          test -n "${CM_KEYSTORE_PATH:-}" || {
+            echo "CM_KEYSTORE_PATH manquant — vérifiez android_signing: tontine"
+            exit 1
+          }
+          BUILD_NO="${PROJECT_BUILD_NUMBER:-${BUILD_NUMBER:-1}}"
           flutter build appbundle --release \
             --dart-define=ENV=production \
-            --build-number=$BUILD_NUMBER
+            --build-number="$BUILD_NO"
           test -f build/app/outputs/bundle/release/app-release.aab
-          # Évite qu’un éventuel AAB debug soit re-signé / publié par Codemagic
           rm -f build/app/outputs/bundle/debug/*.aab || true
 
     artifacts:
@@ -80,7 +84,7 @@ workflows:
     publishing:
       google_play:
         credentials: $GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
-        track: internal          # internal → alpha → beta → production
+        track: internal
         submit_as_draft: false
       email:
         recipients:
@@ -91,6 +95,11 @@ workflows:
 
   # ══════════════════════════════════════════════════════════════════════════
   # WORKFLOW 3 — iOS → TestFlight
+  # ios_signing génère les profils ; « xcode-project use-profiles » crée
+  # /Users/builder/export_options.plist (NE PAS pointer vers un chemin inventé).
+  # Groupe env requis : app_store_connect →
+  #   APP_STORE_CONNECT_PRIVATE_KEY, APP_STORE_CONNECT_KEY_IDENTIFIER,
+  #   APP_STORE_CONNECT_ISSUER_ID
   # ══════════════════════════════════════════════════════════════════════════
   ios-deploy:
     name: 🍎 iOS → TestFlight
@@ -103,9 +112,10 @@ workflows:
           include: true
     environment:
       groups:
-        - app_store_connect  # APP_STORE_CONNECT_PRIVATE_KEY / KEY_IDENTIFIER / ISSUER_ID
+        - app_store_connect
       flutter: 3.44.8
       xcode: latest
+      cocoapods: default
       ios_signing:
         distribution_type: app_store
         bundle_identifier: fr.devcoorp.thoua
@@ -113,6 +123,12 @@ workflows:
     scripts:
       - name: Récupération des dépendances
         script: flutter pub get
+
+      - name: Install pods
+        script: find . -name "Podfile" -execdir pod install \;
+
+      - name: Set up code signing (génère export_options.plist)
+        script: xcode-project use-profiles
 
       - name: Analyse statique
         script: flutter analyze --no-fatal-infos
@@ -122,13 +138,23 @@ workflows:
 
       - name: Build IPA release
         script: |
+          set -euo pipefail
+          EXPORT_PLIST="/Users/builder/export_options.plist"
+          test -f "$EXPORT_PLIST" || {
+            echo "export_options.plist introuvable — « xcode-project use-profiles » a échoué"
+            echo "Vérifiez ios_signing (distribution_type: app_store, bundle_identifier: fr.devcoorp.thoua)"
+            echo "et que certificats + profils App Store sont uploadés dans Codemagic."
+            exit 1
+          }
+          BUILD_NO="${PROJECT_BUILD_NUMBER:-${BUILD_NUMBER:-1}}"
           flutter build ipa --release \
             --dart-define=ENV=production \
-            --build-number=$BUILD_NUMBER \
-            --export-options-plist=/Users/builder/export_options.plist
+            --build-number="$BUILD_NO" \
+            --export-options-plist="$EXPORT_PLIST"
 
     artifacts:
       - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
 
     publishing:
       app_store_connect:
@@ -137,7 +163,7 @@ workflows:
         issuer_id: $APP_STORE_CONNECT_ISSUER_ID
         submit_to_testflight: true
         beta_groups:
-          - Testeurs internes       # Nom du groupe dans TestFlight
+          - Testeurs internes
       email:
         recipients:
           - tchepgapatrick@yahoo.fr
@@ -161,6 +187,7 @@ workflows:
       flutter: 3.44.8
       java: 17
       xcode: latest
+      cocoapods: default
       android_signing:
         - tontine
       ios_signing:
@@ -168,30 +195,48 @@ workflows:
         bundle_identifier: fr.devcoorp.thoua
 
     scripts:
+      - name: Set up local.properties
+        script: echo "flutter.sdk=$HOME/programs/flutter" > "$CM_BUILD_DIR/android/local.properties"
+
       - name: Récupération des dépendances
         script: flutter pub get
+
+      - name: Install pods
+        script: find . -name "Podfile" -execdir pod install \;
+
+      - name: Set up code signing iOS (ad hoc)
+        script: xcode-project use-profiles
 
       - name: Tests
         script: flutter test --reporter=expanded
 
       - name: Build Android APK (pour testeurs)
         script: |
+          set -euo pipefail
+          BUILD_NO="${PROJECT_BUILD_NUMBER:-${BUILD_NUMBER:-1}}"
           flutter build apk --release \
             --dart-define=ENV=staging \
-            --build-number=$BUILD_NUMBER
+            --build-number="$BUILD_NO"
 
       - name: Build iOS IPA (ad hoc pour testeurs)
         script: |
+          set -euo pipefail
+          EXPORT_PLIST="/Users/builder/export_options.plist"
+          test -f "$EXPORT_PLIST" || {
+            echo "export_options.plist introuvable — vérifiez ios_signing ad_hoc + profils"
+            exit 1
+          }
+          BUILD_NO="${PROJECT_BUILD_NUMBER:-${BUILD_NUMBER:-1}}"
           flutter build ipa --release \
             --dart-define=ENV=staging \
-            --build-number=$BUILD_NUMBER
+            --build-number="$BUILD_NO" \
+            --export-options-plist="$EXPORT_PLIST"
 
     artifacts:
       - build/app/outputs/flutter-apk/app-release.apk
       - build/ios/ipa/*.ipa
 
     publishing:
-      # Lien de téléchargement envoyé automatiquement par Codemagic
       email:
         recipients:
           - tchepgapatrick@yahoo.fr
