@@ -49,6 +49,9 @@ workflows:
         - tontine_keystore
 
     scripts:
+      - name: Set up local.properties
+        script: echo "flutter.sdk=$HOME/programs/flutter" > "$CM_BUILD_DIR/android/local.properties"
+
       - name: Récupération des dépendances
         script: flutter pub get
 
@@ -58,14 +61,19 @@ workflows:
       - name: Tests — arrêt si échec
         script: flutter test --reporter=expanded
 
-      - name: Build AAB release
+      - name: Build AAB release (signé via CM_KEYSTORE_*)
         script: |
+          set -euo pipefail
+          test -n "${CM_KEYSTORE_PATH:-}" || { echo "CM_KEYSTORE_PATH manquant — vérifiez android_signing: tontine_keystore"; exit 1; }
           flutter build appbundle --release \
             --dart-define=ENV=production \
             --build-number=$BUILD_NUMBER
+          test -f build/app/outputs/bundle/release/app-release.aab
+          # Évite qu’un éventuel AAB debug soit re-signé / publié par Codemagic
+          rm -f build/app/outputs/bundle/debug/*.aab || true
 
     artifacts:
-      - build/app/outputs/bundle/release/app-release.aab
+      - build/app/outputs/bundle/release/*.aab
 
     publishing:
       google_play:
