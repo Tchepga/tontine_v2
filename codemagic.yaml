@@ -76,8 +76,14 @@ workflows:
       - name: Build AAB release (signé via CM_KEYSTORE_*)
         script: |
           set -euo pipefail
+          echo "CM_KEYSTORE_PATH=${CM_KEYSTORE_PATH:-<vide>}"
+          echo "CM_KEY_ALIAS=${CM_KEY_ALIAS:-<vide>}"
           test -n "${CM_KEYSTORE_PATH:-}" || {
             echo "CM_KEYSTORE_PATH manquant — vérifiez android_signing: tontine"
+            exit 1
+          }
+          test -f "$CM_KEYSTORE_PATH" || {
+            echo "Fichier keystore introuvable: $CM_KEYSTORE_PATH"
             exit 1
           }
           BUILD_NO="${PROJECT_BUILD_NUMBER:-${BUILD_NUMBER:-1}}"

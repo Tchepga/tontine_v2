@@ -41,32 +41,29 @@ android {
 
     signingConfigs {
         release {
-            // Codemagic injecte CM_* quand android_signing est configuré (CI=true).
-            if (System.getenv()["CI"] == "true") {
-                storeFile file(System.getenv()["CM_KEYSTORE_PATH"])
-                storePassword System.getenv()["CM_KEYSTORE_PASSWORD"]
-                keyAlias System.getenv()["CM_KEY_ALIAS"]
-                keyPassword System.getenv()["CM_KEY_PASSWORD"]
-            } else {
-                if (!keystorePropertiesFile.exists()) {
-                    throw new org.gradle.api.GradleException(
-                        "android/key.properties manquant. " +
-                        "Un build release ne peut pas être signé en debug. " +
-                        "Configurez le keystore ou utilisez Codemagic (tontine_keystore)."
-                    )
-                }
+            // Codemagic injecte CM_KEYSTORE_* via android_signing (plus fiable que CI=true).
+            def cmKeystorePath = System.getenv("CM_KEYSTORE_PATH")
+            if (cmKeystorePath != null && !cmKeystorePath.trim().isEmpty()) {
+                storeFile file(cmKeystorePath)
+                storePassword System.getenv("CM_KEYSTORE_PASSWORD")
+                keyAlias System.getenv("CM_KEY_ALIAS")
+                keyPassword System.getenv("CM_KEY_PASSWORD")
+            } else if (keystorePropertiesFile.exists()) {
                 def storeFilePath = keystoreProperties['storeFile']
                 if (storeFilePath == null || storeFilePath.toString().trim().isEmpty()) {
-                    throw new org.gradle.api.GradleException("storeFile manquant dans android/key.properties (chemin vers le keystore .jks)")
+                    throw new org.gradle.api.GradleException("storeFile manquant dans android/key.properties")
                 }
                 if (keystoreProperties['keyAlias'] == null || keystoreProperties['keyPassword'] == null || keystoreProperties['storePassword'] == null) {
                     throw new org.gradle.api.GradleException("keyAlias/keyPassword/storePassword manquants dans android/key.properties")
                 }
-
                 keyAlias keystoreProperties['keyAlias']
                 keyPassword keystoreProperties['keyPassword']
                 storeFile file(storeFilePath)
                 storePassword keystoreProperties['storePassword']
+            } else {
+                throw new org.gradle.api.GradleException(
+                    "Pas de signature release : ni CM_KEYSTORE_PATH (Codemagic) ni android/key.properties (local)."
+                )
             }
         }
     }
