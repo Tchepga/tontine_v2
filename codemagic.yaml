@@ -46,7 +46,7 @@ workflows:
       flutter: 3.44.8
       java: 17
       android_signing:
-        - tontine_keystore
+        - tontine
 
     scripts:
       - name: Set up local.properties
@@ -64,7 +64,7 @@ workflows:
       - name: Build AAB release (signé via CM_KEYSTORE_*)
         script: |
           set -euo pipefail
-          test -n "${CM_KEYSTORE_PATH:-}" || { echo "CM_KEYSTORE_PATH manquant — vérifiez android_signing: tontine_keystore"; exit 1; }
+          test -n "${CM_KEYSTORE_PATH:-}" || { echo "CM_KEYSTORE_PATH manquant — vérifiez android_signing: tontine"; exit 1; }
           flutter build appbundle --release \
             --dart-define=ENV=production \
             --build-number=$BUILD_NUMBER
@@ -158,7 +158,7 @@ workflows:
       java: 17
       xcode: latest
       android_signing:
-        - tontine_keystore
+        - tontine
       ios_signing:
         distribution_type: ad_hoc
         bundle_identifier: fr.devcoorp.thoua
