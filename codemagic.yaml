@@ -104,12 +104,8 @@ workflows:
   ios-deploy:
     name: 🍎 iOS → TestFlight
     max_build_duration: 90
-    triggering:
-      events:
-        - push
-      branch_patterns:
-        - pattern: master
-          include: true
+    # Pas de triggering auto : un push master ne lance que Android.
+    # Lancer iOS manuellement dans Codemagic quand les certificats sont prêts.
     environment:
       groups:
         - app_store_connect
