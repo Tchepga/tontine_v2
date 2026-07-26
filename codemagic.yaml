@@ -43,6 +43,8 @@ workflows:
         - pattern: master
           include: true
     environment:
+      groups:
+        - google_play        # Contient GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
       flutter: 3.44.8
       java: 17
       android_signing:
@@ -100,6 +102,8 @@ workflows:
         - pattern: master
           include: true
     environment:
+      groups:
+        - app_store_connect  # APP_STORE_CONNECT_PRIVATE_KEY / KEY_IDENTIFIER / ISSUER_ID
       flutter: 3.44.8
       xcode: latest
       ios_signing:
