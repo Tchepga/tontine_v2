@@ -346,14 +346,14 @@ class _RapportViewState extends State<RapportView>
 
   Future<void> _pickFile() async {
     try {
-      FilePickerResult? result = await FilePicker.pickFiles(
+      final file = await FilePicker.pickFile(
         type: FileType.custom,
         allowedExtensions: ['jpg', 'jpeg', 'png', 'pdf', 'doc', 'docx'],
       );
 
-      if (result != null) {
+      if (file != null) {
         setState(() {
-          _selectedFile = result.files.first;
+          _selectedFile = file;
         });
       }
     } catch (e) {

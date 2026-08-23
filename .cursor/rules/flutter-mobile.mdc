@@ -1,0 +1,13 @@
+---
+description: Conventions de l'app Flutter Thoua (Tontine v2)
+globs: "**/*.dart"
+alwaysApply: false
+---
+
+# Flutter — Tontine v2
+
+- Rester dans `tontine_v2`. L’API vit dans `tontine-api-v2`.
+- Patterns existants : Provider, services HTTP dans `lib/src/screen/services/`, DTOs colocalisés.
+- Base URL client : `${dotenv.env['API_URL']}/api`.
+- Réutiliser les widgets (`status_badge`, `role_badge`, thème) plutôt que d’en inventer.
+- Pas de nouveau package sans besoin réel. Pas de secrets dans le code.

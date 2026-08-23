@@ -130,8 +130,8 @@ Map<String, dynamic> depositJson({
     'status': status,
     'creationDate': '2026-07-15T10:00:00.000Z',
     'type': type,
-    if (reasons != null) 'reasons': reasons,
-    if (author != null) 'author': author,
+    'reasons': ?reasons,
+    'author': ?author,
   };
 }
 

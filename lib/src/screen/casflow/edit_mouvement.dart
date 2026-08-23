@@ -323,7 +323,7 @@ class _EditMouvementState extends State<EditMouvement> {
                             child: ListView.separated(
                               shrinkWrap: true,
                               itemCount: filteredMembers.length,
-                              separatorBuilder: (_, __) =>
+                              separatorBuilder: (_, _) =>
                                   const SizedBox(height: 8),
                               itemBuilder: (context, index) {
                                 final member = filteredMembers[index];

@@ -11,9 +11,7 @@ class TokenStorage {
   static const String keyToken = 'token';
   static const String keyMustChangePassword = 'must_change_password';
 
-  final _secure = const FlutterSecureStorage(
-    aOptions: AndroidOptions(encryptedSharedPreferences: true),
-  );
+  final _secure = const FlutterSecureStorage();
   final _logger = Logger('TokenStorage');
   String? _cached;
 

@@ -1,50 +1,22 @@
 {
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
-        {
-            "name": "🏠 Local (périphérique sélectionné)",
-            "request": "launch",
-            "type": "dart",
-            "args": [
-                "--dart-define=ENV=local"
-            ]
-        },
-        {
-            "name": "🚀 Production (périphérique sélectionné)",
-            "request": "launch",
-            "type": "dart",
-            "args": [
-                "--dart-define=ENV=production"
-            ]
-        },
-        {
-            "name": "🏠 Local — Profile (périphérique sélectionné)",
-            "request": "launch",
-            "type": "dart",
-            "flutterMode": "profile",
-            "args": [
-                "--dart-define=ENV=local"
-            ]
-        },
-        {
-            "name": "🚀 Production — Release (périphérique sélectionné)",
-            "request": "launch",
-            "type": "dart",
-            "flutterMode": "release",
-            "args": [
-                "--dart-define=ENV=production"
-            ]
-        },
         {
             "name": "🏠 Local — iOS Simulator",
             "request": "launch",
             "type": "dart",
-            "deviceId": "65ABC4D7-F398-4236-868B-6D9F21656CC3",
+            "deviceId": "apple_ios_simulator",
             "args": [
                 "--dart-define=ENV=local"
+            ]
+        },
+        {
+            "name": "🧪 Staging — iOS Simulator",
+            "request": "launch",
+            "type": "dart",
+            "deviceId": "apple_ios_simulator",
+            "args": [
+                "--dart-define=ENV=staging"
             ]
         },
         {
@@ -57,23 +29,19 @@
             ]
         },
         {
-            "name": "🏠 Local — Profile — iOS Simulator",
+            "name": "🏠 Local (périphérique sélectionné)",
             "request": "launch",
             "type": "dart",
-            "deviceId": "apple_ios_simulator",
-            "flutterMode": "profile",
             "args": [
                 "--dart-define=ENV=local"
             ]
         },
         {
-            "name": "🚀 Production — Release — iOS Simulator",
+            "name": "🧪 Staging (périphérique sélectionné)",
             "request": "launch",
             "type": "dart",
-            "deviceId": "apple_ios_simulator",
-            "flutterMode": "release",
             "args": [
-                "--dart-define=ENV=production"
+                "--dart-define=ENV=staging"
             ]
         }
     ]
