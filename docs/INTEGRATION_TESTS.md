@@ -31,8 +31,8 @@ Suite HTTP qui vérifie que **les fonctionnalités critiques** répondent correc
 | Notifications | `GET /api/notification/tontine/:id` |
 | Rapports | `GET /api/tontine/:id/rapport` |
 | Inscription (validation) | `POST /api/member/register-president` incomplet → 400 |
-| Mot de passe oublié (inconnu) | `POST /api/auth/forgot-password` → 404 |
-| Reset token invalide | `POST /api/auth/reset-password` → 4xx |
+| Mot de passe oublié (inconnu) | `POST /api/auth/forgot-password` `{username}` → 200/201 (message générique) |
+| Reset token invalide | `POST /api/auth/reset-password` `{token,newPassword}` → 400 |
 
 ### Full (écriture + cleanup)
 

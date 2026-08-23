@@ -344,6 +344,7 @@ class MemberService {
       if (response.statusCode == 404) {
         throw Exception('Aucun compte trouvé avec cet email ou username.');
       }
+      // L'API renvoie 200/201 même si l'identifiant est inconnu (pas de fuite).
       if (response.statusCode != 200 && response.statusCode != 201) {
         final errorBody = response.body;
         throw Exception(

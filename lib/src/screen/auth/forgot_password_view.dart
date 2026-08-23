@@ -78,7 +78,7 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Entrez votre adresse email pour recevoir un lien de réinitialisation',
+                      'Entrez votre email ou identifiant pour recevoir un lien de réinitialisation',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 16,
@@ -117,7 +117,7 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Email',
+                            'Email ou identifiant',
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
@@ -127,20 +127,16 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
                           const SizedBox(height: 8),
                           TextFormField(
                             controller: _emailController,
-                            keyboardType: TextInputType.emailAddress,
+                            keyboardType: TextInputType.text,
                             enabled: !_isLoading,
                             validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'L\'email est requis';
-                              }
-                              if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
-                                  .hasMatch(value)) {
-                                return 'Veuillez entrer un email valide';
+                              if (value == null || value.trim().isEmpty) {
+                                return 'Email ou identifiant requis';
                               }
                               return null;
                             },
                             decoration: InputDecoration(
-                              hintText: 'votre.email@exemple.com',
+                              hintText: 'prenom.nom ou votre.email@exemple.com',
                               prefixIcon: Container(
                                 margin: const EdgeInsets.all(8),
                                 padding: const EdgeInsets.all(8),

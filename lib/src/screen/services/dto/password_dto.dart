@@ -27,7 +27,7 @@ class ForgotPasswordDto {
 
   Map<String, dynamic> toJson() {
     return {
-      'usernameOrEmail': email,
+      'username': email,
     };
   }
 }
@@ -47,7 +47,6 @@ class ResetPasswordDto {
     return {
       'token': token,
       'newPassword': newPassword,
-      'confirmPassword': confirmPassword,
     };
   }
 }

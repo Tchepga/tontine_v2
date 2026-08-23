@@ -65,7 +65,7 @@ void main() {
   });
 
   group('Smoke — Mot de passe oublié', () {
-    test('identifiant inconnu → 404 (contrat MemberService.forgotPassword)', () async {
+    test('identifiant inconnu → 200/201 (pas de fuite 404)', () async {
       if (!ensurePublicApi()) return;
       final client = IntegrationHttpClient();
       addTearDown(client.dispose);
@@ -73,19 +73,26 @@ void main() {
       final response = await client.post(
         MobileRoutes.forgotPassword(),
         MobilePayloads.forgotPassword(
-          usernameOrEmail: 'nobody-it-${DateTime.now().millisecondsSinceEpoch}@example.test',
+          username: 'nobody-it-${DateTime.now().millisecondsSinceEpoch}',
         ),
       );
 
       expect(
         response.statusCode,
-        404,
+        anyOf(200, 201),
         reason:
-            'L\'app affiche « aucun compte » uniquement sur 404 : ${response.body}',
+            'L\'API masque l\'existence du compte (message générique) : '
+            '${response.body}',
       );
+      if (response.body.isNotEmpty) {
+        final body = jsonDecode(response.body);
+        if (body is Map) {
+          expect(body['message'], isNotNull);
+        }
+      }
     });
 
-    test('payload sans usernameOrEmail → 400', () async {
+    test('payload sans username → 400', () async {
       if (!ensurePublicApi()) return;
       final client = IntegrationHttpClient();
       addTearDown(client.dispose);
@@ -102,7 +109,7 @@ void main() {
       );
     });
 
-    test('reset-password avec token invalide → 4xx', () async {
+    test('reset-password avec token invalide → 400', () async {
       if (!ensurePublicApi()) return;
       final client = IntegrationHttpClient();
       addTearDown(client.dispose);
@@ -112,18 +119,18 @@ void main() {
         MobilePayloads.resetPassword(
           token: 'invalid-it-token',
           newPassword: 'NewPass123!',
-          confirmPassword: 'NewPass123!',
         ),
       );
 
       expect(
         response.statusCode,
-        anyOf(400, 401, 403, 404, 422),
+        anyOf(400, 401, 404),
         reason:
             'Un token invalide ne doit pas réinitialiser un mot de passe : '
             '${response.body}',
       );
       expect(response.statusCode, isNot(200));
+      expect(response.statusCode, isNot(201));
     });
   });
 
@@ -229,7 +236,7 @@ void main() {
 
       final forgot = await client.post(
         MobileRoutes.forgotPassword(),
-        MobilePayloads.forgotPassword(usernameOrEmail: username),
+        MobilePayloads.forgotPassword(username: username),
       );
 
       if (forgot.statusCode == 500 || forgot.statusCode == 503) {
@@ -274,8 +281,11 @@ Future<void> _bestEffortDeleteTontine(
     final tontines = jsonDecode(list.body);
     if (tontines is! List || tontines.isEmpty) return;
     final first = tontines.first;
-    if (first is! Map || first['id'] is! int) return;
-    await client.delete(MobileRoutes.deleteTontine(first['id'] as int));
+    if (first is! Map) return;
+    final rawId = first['id'];
+    final id = rawId is int ? rawId : (rawId is num ? rawId.toInt() : null);
+    if (id == null) return;
+    await client.delete(MobileRoutes.deleteTontine(id));
   } catch (_) {
     // Cleanup best-effort : l'assertion d'inscription a déjà réussi.
   }

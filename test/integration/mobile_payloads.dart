@@ -95,22 +95,22 @@ class MobilePayloads {
   }
 
   /// ForgotPasswordDto — forgot_password_view → POST /api/auth/forgot-password
+  /// L'API attend `username` (email ou identifiant), pas `usernameOrEmail`.
   static Map<String, dynamic> forgotPassword({
-    required String usernameOrEmail,
+    required String username,
   }) {
-    return {'usernameOrEmail': usernameOrEmail};
+    return {'username': username};
   }
 
   /// ResetPasswordDto — reset_password_view → POST /api/auth/reset-password
+  /// `confirmPassword` reste côté UI ; l'API le refuse (forbidNonWhitelisted).
   static Map<String, dynamic> resetPassword({
     required String token,
     required String newPassword,
-    required String confirmPassword,
   }) {
     return {
       'token': token,
       'newPassword': newPassword,
-      'confirmPassword': confirmPassword,
     };
   }
 }

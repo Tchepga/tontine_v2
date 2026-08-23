@@ -71,18 +71,19 @@ void main() {
       expect(json['password'], 'TestPass123!');
     });
 
-    test('forgotPassword envoie usernameOrEmail comme ForgotPasswordDto', () {
-      final json = MobilePayloads.forgotPassword(usernameOrEmail: 'alice@example.test');
-      expect(json, {'usernameOrEmail': 'alice@example.test'});
+    test('forgotPassword envoie username comme ForgotPasswordDto', () {
+      final json = MobilePayloads.forgotPassword(username: 'alice@example.test');
+      expect(json, {'username': 'alice@example.test'});
+      expect(json.containsKey('usernameOrEmail'), isFalse);
     });
 
-    test('resetPassword contient token + newPassword + confirmPassword', () {
+    test('resetPassword contient token + newPassword (sans confirmPassword)', () {
       final json = MobilePayloads.resetPassword(
         token: 'reset-token',
         newPassword: 'NewPass123!',
-        confirmPassword: 'NewPass123!',
       );
-      expect(json.keys, containsAll(['token', 'newPassword', 'confirmPassword']));
+      expect(json.keys, containsAll(['token', 'newPassword']));
+      expect(json.containsKey('confirmPassword'), isFalse);
       expect(json['token'], 'reset-token');
     });
 
