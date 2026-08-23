@@ -175,9 +175,9 @@ Map<String, dynamic> tontineJson({
       'currency': 'EUR',
       'dividendes': 0,
     },
-    if (status != null) 'status': status,
-    if (parentTontineId != null) 'parentTontineId': parentTontineId,
-    if (closedAt != null) 'closedAt': closedAt,
+    'status': ?status,
+    'parentTontineId': ?parentTontineId,
+    'closedAt': ?closedAt,
   };
 }
 

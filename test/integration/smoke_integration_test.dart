@@ -1,3 +1,6 @@
+@Tags(['integration'])
+library;
+
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -6,7 +9,6 @@ import 'integration_config.dart';
 import 'integration_http_client.dart';
 
 /// Tests smoke — lecture seule, safe sur prod.
-@Tags(['integration'])
 void main() {
   final session = IntegrationSession.instance;
 

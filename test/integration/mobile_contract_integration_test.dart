@@ -1,3 +1,6 @@
+@Tags(['integration', 'integration-full', 'mobile-contract'])
+library;
+
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -7,7 +10,6 @@ import 'integration_http_client.dart';
 import 'mobile_payloads.dart';
 
 /// Tests de contrat mobile ↔ API avec payloads et routes identiques à l'app.
-@Tags(['integration', 'integration-full', 'mobile-contract'])
 void main() {
   final configured = IntegrationConfig.isConfigured;
   final fullMode = IntegrationConfig.mode == IntegrationMode.full;

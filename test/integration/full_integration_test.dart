@@ -1,3 +1,6 @@
+@Tags(['integration', 'integration-full'])
+library;
+
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -6,7 +9,6 @@ import 'integration_config.dart';
 import 'integration_http_client.dart';
 
 /// Tests full — création + nettoyage. Local ou staging uniquement.
-@Tags(['integration', 'integration-full'])
 void main() {
   final configured = IntegrationConfig.isConfigured;
   final fullMode = IntegrationConfig.mode == IntegrationMode.full;

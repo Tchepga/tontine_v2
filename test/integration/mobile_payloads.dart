@@ -21,7 +21,7 @@ class MobilePayloads {
       'description': description,
       'startDate': start.toIso8601String(),
       'endDate': end.toIso8601String(),
-      if (participants != null) 'participants': participants,
+      'participants': ?participants,
     };
   }
 
@@ -42,8 +42,7 @@ class MobilePayloads {
       'status': status,
       'cashFlowId': cashFlowId,
       'reasons': reasons,
-      if (creationDate != null)
-        'creationDate': creationDate.toIso8601String(),
+      'creationDate': ?creationDate?.toIso8601String(),
     };
   }
 
@@ -59,14 +58,14 @@ class MobilePayloads {
     List<String>? roles,
   }) {
     return {
-      if (username != null) 'username': username,
-      if (password != null) 'password': password,
+      'username': ?username,
+      'password': ?password,
       'firstname': firstname,
       'lastname': lastname,
-      if (email != null) 'email': email,
+      'email': ?email,
       'phone': phone,
       'country': country,
-      if (roles != null) 'roles': roles,
+      'roles': ?roles,
     };
   }
 
