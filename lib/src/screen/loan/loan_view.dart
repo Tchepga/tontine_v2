@@ -22,6 +22,7 @@ import 'package:intl/intl.dart';
 
 import '../services/dto/loan_dto.dart';
 import '../../utils/dialog_utils.dart';
+import '../../widgets/tontine_closed_banner.dart';
 
 class LoanView extends StatefulWidget {
   static const routeName = '/loan';
@@ -60,6 +61,8 @@ class _LoanViewState extends State<LoanView> {
         final otherLoans =
             loans.where((loan) => loan.author.id != currentUser?.id).toList();
 
+        final canCreateLoan = tontineProvider.canWriteToCurrentTontine;
+
         return Scaffold(
           appBar: AppBar(
             title: const Text('Prêts'),
@@ -68,37 +71,58 @@ class _LoanViewState extends State<LoanView> {
             elevation: 0,
           ),
           drawer: const AppDrawer(),
-          body: ListView(
-            padding: ResponsiveHelper.getAdaptivePadding(context, all: 16.0),
+          body: Column(
             children: [
-              _buildRateCard(context, currentTontine),
-              ResponsiveSpacing(height: 16),
-              _buildLoanStatistics(context, loans),
-              ResponsiveSpacing(height: 16),
-              if (myLoans.isNotEmpty) ...[
-                _buildSectionTitle(context, 'Mes prêts', Icons.person),
-                ResponsiveSpacing(height: 16),
-                ...myLoans.map((loan) => _buildLoanCard(
-                    context, loan, true, currentTontine, currentUser)),
-                ResponsiveSpacing(height: 24),
-              ],
-              if (otherLoans.isNotEmpty) ...[
-                _buildSectionTitle(context, 'Autres prêts', Icons.people),
-                ResponsiveSpacing(height: 16),
-                ...otherLoans.map((loan) => _buildLoanCard(
-                    context, loan, false, currentTontine, currentUser)),
-              ],
+              if (tontineProvider.isCurrentTontineClosed)
+                const TontineClosedBanner(),
+              Expanded(
+                child: ListView(
+                  padding:
+                      ResponsiveHelper.getAdaptivePadding(context, all: 16.0),
+                  children: [
+                    _buildRateCard(context, currentTontine),
+                    ResponsiveSpacing(height: 16),
+                    _buildLoanStatistics(context, loans),
+                    ResponsiveSpacing(height: 16),
+                    if (myLoans.isNotEmpty) ...[
+                      _buildSectionTitle(context, 'Mes prêts', Icons.person),
+                      ResponsiveSpacing(height: 16),
+                      ...myLoans.map((loan) => _buildLoanCard(
+                          context,
+                          loan,
+                          true,
+                          currentTontine,
+                          currentUser,
+                          canWrite: canCreateLoan)),
+                      ResponsiveSpacing(height: 24),
+                    ],
+                    if (otherLoans.isNotEmpty) ...[
+                      _buildSectionTitle(context, 'Autres prêts', Icons.people),
+                      ResponsiveSpacing(height: 16),
+                      ...otherLoans.map((loan) => _buildLoanCard(
+                          context,
+                          loan,
+                          false,
+                          currentTontine,
+                          currentUser,
+                          canWrite: canCreateLoan)),
+                    ],
+                  ],
+                ),
+              ),
             ],
           ),
-          floatingActionButton: FloatingActionButton(
-            heroTag: 'loan_fab',
-            backgroundColor: AppColors.primary,
-            foregroundColor: Colors.white,
-            elevation: 4,
-            onPressed: () =>
-                _showCreateLoanDialog(context, tontineProvider, loanProvider),
-            child: const Icon(Icons.add),
-          ),
+          floatingActionButton: canCreateLoan
+              ? FloatingActionButton(
+                  heroTag: 'loan_fab',
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  elevation: 4,
+                  onPressed: () =>
+                      _showCreateLoanDialog(context, tontineProvider, loanProvider),
+                  child: const Icon(Icons.add),
+                )
+              : null,
           bottomNavigationBar: const MenuWidget(),
         );
       },
@@ -106,9 +130,10 @@ class _LoanViewState extends State<LoanView> {
   }
 
   Widget _buildLoanCard(BuildContext context, Loan loan, bool isMyLoan,
-      Tontine? currentTontine, Member? currentUser) {
+      Tontine? currentTontine, Member? currentUser,
+      {bool canWrite = true}) {
     final roles = _rolesInTontine(currentTontine, currentUser);
-    final canManageStatus = canManageLoans(roles);
+    final canManageStatus = canManageLoans(roles) && canWrite;
 
     return ModernCard(
       type: _getLoanCardType(loan.status),

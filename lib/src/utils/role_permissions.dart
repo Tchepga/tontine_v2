@@ -52,3 +52,8 @@ bool canManageReports(List<Role> roles) {
 bool memberHasRole(Member? member, Role role) {
   return member?.user?.roles?.contains(role) ?? false;
 }
+
+bool isPresidentInTontine(Tontine? tontine, int? memberId) {
+  return rolesForMemberInTontine(tontine, memberId)
+      .contains(Role.PRESIDENT);
+}

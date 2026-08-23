@@ -8,6 +8,7 @@ import 'package:sentry_flutter/sentry_flutter.dart';
 import 'src/services/local_notification_service.dart';
 import 'src/services/push_notification_service.dart';
 import 'src/services/realtime_notification_service.dart';
+import 'src/services/sentry_context_service.dart';
 import 'src/services/token_storage.dart';
 
 import 'src/app.dart';
@@ -52,6 +53,7 @@ Future<void> main() async {
   await settingsController.loadSettings();
 
   Future<void> startApp() async {
+    SentryContextService.syncFromStorage();
     await LocalNotificationService().init();
     await PushNotificationService.instance.init();
     RealtimeNotificationService().initialize();

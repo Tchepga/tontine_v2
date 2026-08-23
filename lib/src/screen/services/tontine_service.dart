@@ -24,8 +24,10 @@ import 'dto/pot_distribution_dto.dart';
 import 'package:logging/logging.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'dto/event_dto.dart';
+import 'dto/closure_dto.dart';
 import 'package:path_provider/path_provider.dart';
 import '../../services/websocket_service.dart';
+import '../../providers/models/closure_summary.dart';
 
 class TontineService {
   static final _logger = Logger('TontineService');
@@ -265,10 +267,10 @@ class TontineService {
     return [];
   }
 
-  Future<void> updateRapport(
-      int tontineId, CreateMeetingRapportDto rapportDto) async {
+  Future<void> updateRapport(int tontineId, int rapportId,
+      CreateMeetingRapportDto rapportDto) async {
     final response = await client.patch(
-      Uri.parse('$urlApi/tontine/$tontineId/rapport'),
+      Uri.parse('$urlApi/tontine/$tontineId/rapport/$rapportId'),
       body: jsonEncode(rapportDto.toJson()),
     );
     if (response.statusCode != 200) {
@@ -747,5 +749,67 @@ class TontineService {
     if (response.statusCode != 200) {
       throw Exception('Failed to delete tontine');
     }
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // Cycle de vie (clôture / redémarrage)
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  Future<Tontine> closeTontine(int tontineId) async {
+    final token = TokenStorage.instance.token;
+    final response = await client.post(
+      Uri.parse('$urlApi/tontine/$tontineId/close'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return Tontine.fromJson(jsonDecode(response.body));
+    }
+    throw Exception(_extractApiErrorMessage(
+      response.body,
+      fallback: response.statusCode == 403
+          ? 'Seul le président peut clôturer la tontine.'
+          : 'Erreur lors de la clôture de la tontine.',
+    ));
+  }
+
+  Future<ClosureSummary> getClosureSummary(int tontineId) async {
+    final token = TokenStorage.instance.token;
+    final response = await client.get(
+      Uri.parse('$urlApi/tontine/$tontineId/closure-summary'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    if (response.statusCode == 200) {
+      final decoded = jsonDecode(response.body);
+      if (decoded is Map<String, dynamic>) {
+        return ClosureSummary.fromJson(decoded);
+      }
+      throw Exception('Format de réponse inattendu pour le récapitulatif');
+    }
+    throw Exception(_extractApiErrorMessage(
+      response.body,
+      fallback: 'Impossible de charger le récapitulatif de clôture.',
+    ));
+  }
+
+  Future<Tontine> restartTontine(
+      int tontineId, RestartTontineDto dto) async {
+    final token = TokenStorage.instance.token;
+    final response = await client.post(
+      Uri.parse('$urlApi/tontine/$tontineId/restart'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode(dto.toJson()),
+    );
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return Tontine.fromJson(jsonDecode(response.body));
+    }
+    throw Exception(_extractApiErrorMessage(
+      response.body,
+      fallback: response.statusCode == 403
+          ? 'Seul le président peut redémarrer la tontine.'
+          : 'Erreur lors du redémarrage de la tontine.',
+    ));
   }
 }

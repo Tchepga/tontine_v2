@@ -14,6 +14,13 @@ class NotificationProvider extends ChangeNotifier {
 
   List<NotificationTontine> get notifications => _notifications;
 
+  /// Arrête le polling et vide le cache (changement de tontine).
+  void clearCache() {
+    stopChecking();
+    _notifications = [];
+    notifyListeners();
+  }
+
   void startChecking(int tontineId) {
     _timer?.cancel();
     _checkUpdates(tontineId);

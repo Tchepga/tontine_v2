@@ -16,6 +16,7 @@ import '../widgets/responsive_padding.dart';
 import '../utils/responsive_helper.dart';
 import '../theme/app_theme.dart';
 import 'tontine/select_tontine_view.dart';
+import '../widgets/tontine_closed_banner.dart';
 
 class DashboardView extends StatefulWidget {
   const DashboardView({super.key});
@@ -72,26 +73,34 @@ class _DashboardViewState extends State<DashboardView> {
           appBar: ActionMenu(title: 'Dashboard'),
           drawer: const AppDrawer(),
           backgroundColor: AppColors.background,
-          body: Center(
-            child: ConstrainedBox(
-              constraints: BoxConstraints(maxWidth: maxWidth),
-              child: ListView(
-                padding: ResponsiveHelper.getAdaptivePadding(
-                  context,
-                  horizontal: 16.0,
-                  vertical: 0.0,
+          body: Column(
+            children: [
+              if (tontineProvider.isCurrentTontineClosed)
+                const TontineClosedBanner(),
+              Expanded(
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(maxWidth: maxWidth),
+                    child: ListView(
+                      padding: ResponsiveHelper.getAdaptivePadding(
+                        context,
+                        horizontal: 16.0,
+                        vertical: 0.0,
+                      ),
+                      children: [
+                        ResponsiveSpacing(height: 16),
+                        _buildCurrentOrderSection(context, tontineProvider),
+                        ResponsiveSpacing(height: 16),
+                        _buildQuickAccessSection(context),
+                        ResponsiveSpacing(height: 20),
+                        AnnualMovementsChart(deposits: tontineProvider.deposits),
+                        ResponsiveSpacing(height: 24),
+                      ],
+                    ),
+                  ),
                 ),
-                children: [
-                  ResponsiveSpacing(height: 16),
-                  _buildCurrentOrderSection(context, tontineProvider),
-                  ResponsiveSpacing(height: 16),
-                  _buildQuickAccessSection(context),
-                  ResponsiveSpacing(height: 20),
-                  AnnualMovementsChart(deposits: tontineProvider.deposits),
-                  ResponsiveSpacing(height: 24),
-                ],
               ),
-            ),
+            ],
           ),
           bottomNavigationBar: const MenuWidget(),
         );

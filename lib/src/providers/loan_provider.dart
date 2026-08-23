@@ -20,6 +20,14 @@ class LoanProvider extends ChangeNotifier {
   List<LoanRepayment> get repayments => _repayments;
   bool get isLoading => _isLoading;
 
+  /// Réinitialise le cache (changement de tontine).
+  void clearCache() {
+    _loans = [];
+    _repayments = [];
+    _isLoading = false;
+    notifyListeners();
+  }
+
   Future<void> loadLoans(int tontineId) async {
     _isLoading = true;
     notifyListeners();

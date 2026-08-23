@@ -2,6 +2,7 @@ import 'enum/loop_period.dart';
 import 'enum/type_mouvement.dart';
 import 'enum/system_type.dart';
 import 'enum/currency.dart';
+import 'enum/tontine_status.dart';
 import 'member.dart';
 import 'cashflow.dart';
 import 'event.dart';
@@ -199,6 +200,9 @@ class Tontine {
   List<RapportMeeting> rapports;
   final List<Sanction> sanctions;
   final bool isSelected;
+  final TontineStatus status;
+  final int? parentTontineId;
+  final DateTime? closedAt;
 
   Tontine({
     required this.id,
@@ -211,7 +215,13 @@ class Tontine {
     this.rapports = const [],
     this.sanctions = const [],
     this.isSelected = false,
+    this.status = TontineStatus.ACTIVE,
+    this.parentTontineId,
+    this.closedAt,
   });
+
+  bool get isClosed => status == TontineStatus.CLOSED;
+  bool get isActive => status == TontineStatus.ACTIVE;
 
   factory Tontine.fromJson(Map<String, dynamic> json) {
     final cashFlowJson = json['cashFlow'] ?? json['cash_flow'];
@@ -255,8 +265,18 @@ class Tontine {
                   Map<String, dynamic>.from(sanction as Map)))
               .toList()
           : [],
+      status: tontineStatusFromString(json['status']),
+      parentTontineId: json['parentTontineId'] ?? json['parent_tontine_id'],
+      closedAt: _parseDateTime(json['closedAt'] ?? json['closed_at']),
     );
   }
+}
+
+DateTime? _parseDateTime(dynamic value) {
+  if (value == null) return null;
+  if (value is DateTime) return value;
+  if (value is String) return DateTime.tryParse(value);
+  return null;
 }
 
 LoopPeriod _parseLoopPeriod(dynamic value) {

@@ -9,6 +9,7 @@ import '../screen/services/dto/password_dto.dart';
 import '../screen/services/dto/register_president_result.dart';
 import '../screen/services/member_service.dart';
 import '../services/token_storage.dart';
+import '../services/sentry_context_service.dart';
 
 class AuthProvider extends ChangeNotifier {
   final _memberService = MemberService();
@@ -59,6 +60,7 @@ class AuthProvider extends ChangeNotifier {
     try {
       await _storage.write(KEY_PROFILE, jsonEncode(profile.toJson()));
       _currentUser = profile;
+      SentryContextService.sync(userId: profile.id);
     } catch (e) {
       logger.severe('Error saving profile: $e');
     }
@@ -123,6 +125,7 @@ class AuthProvider extends ChangeNotifier {
     _memberService.logout();
     _storage.remove(KEY_PROFILE);
     _currentUser = null;
+    SentryContextService.clear();
     notifyListeners();
   }
 

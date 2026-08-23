@@ -1,18 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/event_provider.dart';
+import '../../providers/loan_provider.dart';
+import '../../providers/notification_provider.dart';
+import '../../providers/tontine_provider.dart';
+import '../../providers/models/enum/currency.dart';
 import '../../providers/models/enum/loop_period.dart';
 import '../../providers/models/enum/type_mouvement.dart';
-import '../../providers/models/enum/role.dart';
 import '../../providers/models/tontine.dart';
-import '../../providers/tontine_provider.dart';
-import '../services/dto/tontine_dto.dart';
-import '../../widgets/circular_order_card.dart';
-import '../../theme/app_theme.dart';
-import '../../providers/models/enum/currency.dart';
-import 'package:intl/intl.dart';
-import 'select_tontine_view.dart';
 import '../../utils/dialog_utils.dart';
+import '../../utils/role_permissions.dart';
+import '../../widgets/circular_order_card.dart';
+import '../../widgets/tontine_closed_banner.dart';
+import '../../theme/app_theme.dart';
+import '../dashboard_view.dart';
+import '../services/dto/closure_dto.dart';
+import '../services/dto/tontine_dto.dart';
+import 'closure_summary_section.dart';
+import 'select_tontine_view.dart';
+import 'package:intl/intl.dart';
 
 class SettingTontineView extends StatefulWidget {
   static const routeName = '/setting-tontine';
@@ -929,19 +936,379 @@ class _SettingTontineViewState extends State<SettingTontineView> {
 
   void _handleChangeTontine(
       BuildContext context, TontineProvider tontineProvider) {
-    tontineProvider.clearCurrentTontineSelection();
+    tontineProvider.clearCurrentTontineSelection(
+      eventProvider: context.read<EventProvider>(),
+      loanProvider: context.read<LoanProvider>(),
+      notificationProvider: context.read<NotificationProvider>(),
+    );
     Navigator.of(context).pushNamedAndRemoveUntil(
       SelectTontineView.routeName,
       (route) => false,
     );
   }
 
+  Widget _buildCloseTontineSection(
+      TontineProvider tontineProvider, Tontine currentTontine) {
+    return Card(
+      elevation: 3,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Colors.orange.shade50, Colors.orange.shade100],
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.orange.withAlpha(30),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      Icons.archive_outlined,
+                      color: Colors.orange.shade800,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const Text(
+                    'Clôturer la tontine',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF2D3748),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'La clôture fige la tontine en lecture seule : plus de versements, '
+                'événements ou modifications. Vous pourrez consulter l’historique '
+                'et redémarrer une nouvelle tontine avec les mêmes membres.',
+                style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () => _showCloseConfirmation(
+                      context, tontineProvider, currentTontine),
+                  icon: Icon(Icons.lock_clock, color: Colors.orange.shade800),
+                  label: const Text('Clôturer la tontine'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.orange.shade800,
+                    side: BorderSide(color: Colors.orange.shade400),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showCloseConfirmation(
+    BuildContext context,
+    TontineProvider tontineProvider,
+    Tontine currentTontine,
+  ) {
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Icon(Icons.archive_outlined, color: Colors.orange.shade800),
+            const SizedBox(width: 8),
+            const Expanded(child: Text('Clôturer la tontine ?')),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '« ${currentTontine.title} » passera en consultation seule.',
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              '• Aucune modification ne sera possible\n'
+              '• L’historique reste accessible\n'
+              '• Vous pourrez redémarrer une nouvelle tontine depuis les paramètres',
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Annuler'),
+          ),
+          FilledButton(
+            onPressed: () =>
+                _handleCloseTontine(dialogContext, tontineProvider, currentTontine),
+            style: FilledButton.styleFrom(backgroundColor: Colors.orange.shade800),
+            child: const Text('Clôturer'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _handleCloseTontine(
+    BuildContext context,
+    TontineProvider tontineProvider,
+    Tontine currentTontine,
+  ) async {
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      Navigator.of(context).pop();
+      showAppDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => const AlertDialog(
+          content: Row(
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(width: 16),
+              Text('Clôture en cours...'),
+            ],
+          ),
+        ),
+      );
+
+      await tontineProvider.closeTontine(currentTontine.id);
+      await tontineProvider.loadTontines();
+
+      if (!context.mounted) return;
+      Navigator.of(context).pop();
+      setState(() {
+        final updated = tontineProvider.currentTontine;
+        if (updated != null) _initializeFields(updated);
+      });
+
+      messenger.showSnackBar(
+        SnackBar(
+          content: const Text('Tontine clôturée — consultation seule'),
+          backgroundColor: AppColors.success,
+        ),
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+      if (Navigator.of(context).canPop()) {
+        Navigator.of(context).pop();
+      }
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(e.toString().replaceFirst('Exception: ', '')),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    }
+  }
+
+  Widget _buildRestartTontineSection(
+      TontineProvider tontineProvider, Tontine currentTontine) {
+    return Card(
+      elevation: 3,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withAlpha(20),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(Icons.restart_alt, color: AppColors.primary, size: 20),
+                ),
+                const SizedBox(width: 12),
+                const Text(
+                  'Redémarrer la tontine',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF2D3748),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'Créez une nouvelle tontine à partir de celle-ci, avec les mêmes membres. '
+              'Optionnellement, reportez le reliquat en caisse.',
+              style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: () =>
+                    _showRestartDialog(context, tontineProvider, currentTontine),
+                icon: const Icon(Icons.restart_alt),
+                label: const Text('Redémarrer'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showRestartDialog(
+    BuildContext context,
+    TontineProvider tontineProvider,
+    Tontine closedTontine,
+  ) {
+    final nameController =
+        TextEditingController(text: '${closedTontine.title} (suite)');
+    var carryOverCash = false;
+
+    showAppDialog(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('Redémarrer la tontine'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameController,
+                decoration: const InputDecoration(
+                  labelText: 'Nom de la nouvelle tontine',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 12),
+              SwitchListTile.adaptive(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Reporter le reliquat en caisse'),
+                subtitle: const Text(
+                  'Le solde restant sera transféré vers la nouvelle tontine',
+                ),
+                value: carryOverCash,
+                onChanged: (v) => setDialogState(() => carryOverCash = v),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Annuler'),
+            ),
+            FilledButton(
+              onPressed: () => _handleRestart(
+                dialogContext,
+                tontineProvider,
+                closedTontine,
+                nameController.text.trim(),
+                carryOverCash,
+              ),
+              child: const Text('Créer'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _handleRestart(
+    BuildContext context,
+    TontineProvider tontineProvider,
+    Tontine closedTontine,
+    String name,
+    bool carryOverCash,
+  ) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final eventProvider = context.read<EventProvider>();
+    final loanProvider = context.read<LoanProvider>();
+    final notificationProvider = context.read<NotificationProvider>();
+    try {
+      Navigator.of(context).pop();
+      showAppDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => const AlertDialog(
+          content: Row(
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(width: 16),
+              Text('Création en cours...'),
+            ],
+          ),
+        ),
+      );
+
+      final newTontine = await tontineProvider.restartTontine(
+        closedTontine.id,
+        RestartTontineDto(
+          name: name.isNotEmpty ? name : null,
+          carryOverCash: carryOverCash,
+        ),
+      );
+      await tontineProvider.loadTontines();
+      await tontineProvider.setCurrentTontine(
+        newTontine,
+        refreshFromApi: true,
+        eventProvider: eventProvider,
+        loanProvider: loanProvider,
+        notificationProvider: notificationProvider,
+      );
+
+      if (!context.mounted) return;
+      Navigator.of(context).pop();
+      Navigator.of(context).pushNamedAndRemoveUntil(
+        DashboardView.routeName,
+        (route) => false,
+      );
+
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text('Nouvelle tontine « ${newTontine.title} » créée'),
+          backgroundColor: AppColors.success,
+        ),
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+      if (Navigator.of(context).canPop()) {
+        Navigator.of(context).pop();
+      }
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(e.toString().replaceFirst('Exception: ', '')),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    }
+  }
+
   Widget _buildDangerousActionsSection(TontineProvider tontineProvider,
       Tontine currentTontine, AuthProvider authProvider) {
-    final currentUser = authProvider.currentUser;
-    final isPresident =
-        currentUser?.user?.roles?.any((role) => role == Role.PRESIDENT) ??
-            false;
+    final isPresident = isPresidentInTontine(
+      currentTontine,
+      authProvider.currentUser?.id,
+    );
     return Card(
       elevation: 3,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -1224,6 +1591,12 @@ class _SettingTontineViewState extends State<SettingTontineView> {
         final currentTontine = tontineProvider.currentTontine;
         if (currentTontine == null) return const SizedBox();
 
+        final isClosed = currentTontine.isClosed;
+        final isPresident = isPresidentInTontine(
+          currentTontine,
+          authProvider.currentUser?.id,
+        );
+
         return Scaffold(
           backgroundColor: AppColors.background,
           appBar: AppBar(
@@ -1232,15 +1605,33 @@ class _SettingTontineViewState extends State<SettingTontineView> {
             elevation: 0,
             iconTheme: const IconThemeData(color: Colors.white),
           ),
-          body: Form(
-            key: _formKey,
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _buildPartOrderSection(tontineProvider),
+          body: Column(
+            children: [
+              if (isClosed) const TontineClosedBanner(),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      if (isClosed) ...[
+                        ClosureSummarySection(tontineId: currentTontine.id),
+                        const SizedBox(height: 16),
+                        if (isPresident)
+                          _buildRestartTontineSection(
+                              tontineProvider, currentTontine),
+                        if (isPresident) const SizedBox(height: 16),
+                      ],
+                      AbsorbPointer(
+                        absorbing: isClosed,
+                        child: Opacity(
+                          opacity: isClosed ? 0.65 : 1,
+                          child: Form(
+                            key: _formKey,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                _buildPartOrderSection(tontineProvider),
                   const SizedBox(height: 16),
                   _buildReminderMissingDepositsSection(),
                   const SizedBox(height: 16),
@@ -1558,16 +1949,32 @@ class _SettingTontineViewState extends State<SettingTontineView> {
                   ),
                   const SizedBox(height: 16),
                   _buildRateMapSection(),
-                  const SizedBox(height: 16),
-                  _buildChangeTontineSection(tontineProvider, currentTontine),
-                  const SizedBox(height: 16),
-                  _buildDangerousActionsSection(
-                      tontineProvider, currentTontine, authProvider),
-                ],
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      _buildChangeTontineSection(
+                          tontineProvider, currentTontine),
+                      const SizedBox(height: 16),
+                      if (!isClosed && isPresident) ...[
+                        _buildCloseTontineSection(
+                            tontineProvider, currentTontine),
+                        const SizedBox(height: 16),
+                      ],
+                      if (!isClosed)
+                        _buildDangerousActionsSection(
+                            tontineProvider, currentTontine, authProvider),
+                    ],
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
-          bottomNavigationBar: SafeArea(
+          bottomNavigationBar: isClosed
+              ? null
+              : SafeArea(
             child: Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(

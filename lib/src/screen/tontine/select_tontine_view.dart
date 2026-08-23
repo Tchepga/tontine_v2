@@ -3,10 +3,16 @@ import 'package:logging/logging.dart';
 import 'package:provider/provider.dart';
 
 import '../../providers/auth_provider.dart';
+import '../../providers/event_provider.dart';
+import '../../providers/loan_provider.dart';
+import '../../providers/notification_provider.dart';
 import '../../providers/models/enum/currency.dart';
 import '../../providers/models/enum/loop_period.dart';
 import '../../providers/models/enum/type_mouvement.dart';
+import '../../providers/models/enum/tontine_status.dart';
 import '../../providers/tontine_provider.dart';
+import '../../widgets/status_badge.dart';
+import '../../theme/app_theme.dart';
 import '../dashboard_view.dart';
 import '../login_view.dart';
 import '../services/dto/member_dto.dart';
@@ -482,12 +488,25 @@ class _SelectTontineViewState extends State<SelectTontineView> {
                 elevation: 2,
                 margin: const EdgeInsets.only(bottom: 16),
                 child: ListTile(
-                  title: Text(
-                    tontine.title,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
+                  title: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          tontine.title,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ),
+                      if (tontine.status == TontineStatus.CLOSED)
+                        const StatusBadge(
+                          text: 'Clôturée',
+                          color: AppColors.textSecondary,
+                          icon: Icons.archive_outlined,
+                          showIcon: true,
+                        ),
+                    ],
                   ),
                   subtitle: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -495,13 +514,29 @@ class _SelectTontineViewState extends State<SelectTontineView> {
                       Text('${tontine.members.length} membres'),
                       Text(
                           'Solde: ${tontine.cashFlow.amount} ${tontine.cashFlow.currency.displayName}'),
+                      if (tontine.isClosed)
+                        Text(
+                          'Consultation seule',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: AppColors.textSecondary,
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
                     ],
                   ),
                   trailing: tontine.isSelected
                       ? const Icon(Icons.check_circle, color: Colors.green)
                       : null,
                   onTap: () async {
-                    await tontineProvider.setCurrentTontine(tontine);
+                    await tontineProvider.setCurrentTontine(
+                      tontine,
+                      refreshFromApi: true,
+                      eventProvider: context.read<EventProvider>(),
+                      loanProvider: context.read<LoanProvider>(),
+                      notificationProvider:
+                          context.read<NotificationProvider>(),
+                    );
                     if (context.mounted) {
                       Navigator.of(context)
                           .pushReplacementNamed(DashboardView.routeName);

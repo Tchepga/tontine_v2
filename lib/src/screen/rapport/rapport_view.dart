@@ -20,6 +20,7 @@ import '../../providers/models/enum/type_sanction.dart';
 import '../../utils/role_permissions.dart';
 import '../services/dto/sanction_dto.dart';
 import '../../utils/dialog_utils.dart';
+import '../../widgets/tontine_closed_banner.dart';
 
 class RapportView extends StatefulWidget {
   static const routeName = '/rapport';
@@ -380,7 +381,8 @@ class _RapportViewState extends State<RapportView>
         final currentUser = authProvider.currentUser;
         final roles =
             tontineProvider.rolesInCurrentTontine(currentUser?.id);
-        final canEdit = canManageReports(roles);
+        final canEdit =
+            canManageReports(roles) && tontineProvider.canWriteToCurrentTontine;
 
         final rapports = tontineProvider.currentTontine?.rapports ?? [];
         final sanctions = tontineProvider.currentTontine?.sanctions ?? [];
@@ -408,9 +410,14 @@ class _RapportViewState extends State<RapportView>
               ],
             ),
           ),
-          body: TabBarView(
-            controller: _tabController,
+          body: Column(
             children: [
+              if (tontineProvider.isCurrentTontineClosed)
+                const TontineClosedBanner(),
+              Expanded(
+                child: TabBarView(
+                  controller: _tabController,
+                  children: [
               // Tab Rapports
               rapports.isEmpty
                   ? _buildEmptyState(
@@ -453,6 +460,9 @@ class _RapportViewState extends State<RapportView>
                         return _buildSanctionCard(sanction, tontineProvider);
                       },
                     ),
+                  ],
+                ),
+              ),
             ],
           ),
           floatingActionButton: canEdit

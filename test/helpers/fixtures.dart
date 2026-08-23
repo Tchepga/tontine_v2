@@ -153,6 +153,34 @@ Map<String, dynamic> loanJson({
   };
 }
 
+Map<String, dynamic> tontineJson({
+  int id = 1,
+  String title = 'Tontine Test',
+  String? status,
+  int? parentTontineId,
+  String? closedAt,
+}) {
+  return {
+    'id': id,
+    'title': title,
+    'members': [memberJson()],
+    'config': {
+      'id': 1,
+      'loopPeriod': 'MONTHLY',
+      'countMaxMember': 12,
+    },
+    'cashFlow': {
+      'id': 1,
+      'amount': 1000,
+      'currency': 'EUR',
+      'dividendes': 0,
+    },
+    if (status != null) 'status': status,
+    if (parentTontineId != null) 'parentTontineId': parentTontineId,
+    if (closedAt != null) 'closedAt': closedAt,
+  };
+}
+
 Map<String, dynamic> eventJson({
   int id = 1,
   String title = 'Assemblée',

@@ -14,6 +14,7 @@ import '../../widgets/menu_widget.dart';
 import 'create_auction_dialog.dart';
 import 'auction_details_dialog.dart';
 import '../../utils/dialog_utils.dart';
+import '../../widgets/tontine_closed_banner.dart';
 
 class AuctionView extends StatefulWidget {
   const AuctionView({super.key});
@@ -43,7 +44,8 @@ class _AuctionViewState extends State<AuctionView> {
       builder: (context, tontineProvider, authProvider, child) {
         final currentTontine = tontineProvider.currentTontine;
         final auctions = tontineProvider.auctions;
-        final canCreateAuction = authProvider.canValidateDeposits();
+        final canCreateAuction = authProvider.canValidateDeposits() &&
+            tontineProvider.canWriteToCurrentTontine;
         final isAuctionSystem =
             currentTontine?.config.systemType == SystemType.AUCTION;
 
@@ -110,9 +112,15 @@ class _AuctionViewState extends State<AuctionView> {
             foregroundColor: Colors.white,
             elevation: 0,
           ),
-          body: ListView(
-            padding: ResponsiveHelper.getAdaptivePadding(context, all: 16.0),
+          body: Column(
             children: [
+              if (tontineProvider.isCurrentTontineClosed)
+                const TontineClosedBanner(),
+              Expanded(
+                child: ListView(
+                  padding:
+                      ResponsiveHelper.getAdaptivePadding(context, all: 16.0),
+                  children: [
               // Enchères actives
               if (auctions.where((a) => a.isActive).isNotEmpty) ...[
                 _buildSectionTitle('Enchères en cours', Icons.gavel),
@@ -141,6 +149,9 @@ class _AuctionViewState extends State<AuctionView> {
 
               // État vide
               if (auctions.isEmpty) _buildEmptyState(),
+                  ],
+                ),
+              ),
             ],
           ),
           floatingActionButton: canCreateAuction

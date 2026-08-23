@@ -17,6 +17,7 @@ import '../../providers/models/enum/deposit_type.dart';
 import '../../providers/models/enum/status_deposit.dart';
 import '../../providers/auth_provider.dart';
 import '../../utils/role_permissions.dart';
+import '../../widgets/tontine_closed_banner.dart';
 
 class CashflowView extends StatefulWidget {
   const CashflowView({super.key});
@@ -52,7 +53,9 @@ class _CashflowViewState extends State<CashflowView> {
         // Droits trésorerie = rôles dans la tontine (MemberRole), pas User.roles global.
         final roles =
             tontineProvider.rolesInCurrentTontine(authProvider.currentUser?.id);
-        final canValidate = canValidateDeposits(roles);
+        final canValidate =
+            canValidateDeposits(roles) && tontineProvider.canWriteToCurrentTontine;
+        final canAddDeposit = tontineProvider.canWriteToCurrentTontine;
 
         // Filtrage + tri du plus récent au plus ancien
         final filteredDeposits = deposits.where((deposit) {
@@ -73,36 +76,47 @@ class _CashflowViewState extends State<CashflowView> {
         return Scaffold(
           appBar: ActionMenu(title: 'Trésorerie', showBackButton: true),
           drawer: const AppDrawer(),
-          body: ListView(
-            padding: ResponsiveHelper.getAdaptivePadding(context, all: 16.0),
+          body: Column(
             children: [
-              _buildBalanceCard(context, currentTontine),
-              ResponsiveSpacing(height: 16),
-              _buildFiltersSection(context),
-              ResponsiveSpacing(height: 16),
-              if (canValidate) ...[
-                _buildPendingDepositsSection(
-                    context, deposits, tontineProvider, currentTontine!.id),
-                ResponsiveSpacing(height: 16),
-              ],
-              _buildSectionTitle(context, 'Mouvements', Icons.list_alt),
-              ResponsiveSpacing(height: 16),
-              if (filteredDeposits.isEmpty)
-                _buildEmptyState(context)
-              else
-                ...filteredDeposits.map((deposit) => DepositListItem(
-                      deposit: deposit,
-                      tontineProvider: tontineProvider,
-                      tontineId: currentTontine!.id,
-                    )),
+              if (tontineProvider.isCurrentTontineClosed)
+                const TontineClosedBanner(),
+              Expanded(
+                child: ListView(
+                  padding:
+                      ResponsiveHelper.getAdaptivePadding(context, all: 16.0),
+                  children: [
+                    _buildBalanceCard(context, currentTontine),
+                    ResponsiveSpacing(height: 16),
+                    _buildFiltersSection(context),
+                    ResponsiveSpacing(height: 16),
+                    if (canValidate) ...[
+                      _buildPendingDepositsSection(context, deposits,
+                          tontineProvider, currentTontine!.id),
+                      ResponsiveSpacing(height: 16),
+                    ],
+                    _buildSectionTitle(context, 'Mouvements', Icons.list_alt),
+                    ResponsiveSpacing(height: 16),
+                    if (filteredDeposits.isEmpty)
+                      _buildEmptyState(context)
+                    else
+                      ...filteredDeposits.map((deposit) => DepositListItem(
+                            deposit: deposit,
+                            tontineProvider: tontineProvider,
+                            tontineId: currentTontine!.id,
+                          )),
+                  ],
+                ),
+              ),
             ],
           ),
-          floatingActionButton: FloatingActionButton(
-            heroTag: 'cashflow_fab',
-            onPressed: () =>
-                _showAddDeposit(context, tontineProvider, currentTontine!.id),
-            child: const Icon(Icons.add),
-          ),
+          floatingActionButton: canAddDeposit
+              ? FloatingActionButton(
+                  heroTag: 'cashflow_fab',
+                  onPressed: () => _showAddDeposit(
+                      context, tontineProvider, currentTontine!.id),
+                  child: const Icon(Icons.add),
+                )
+              : null,
           bottomNavigationBar: const MenuWidget(),
         );
       },

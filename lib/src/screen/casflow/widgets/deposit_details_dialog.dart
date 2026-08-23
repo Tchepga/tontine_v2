@@ -34,13 +34,15 @@ class DepositDetailsDialog extends StatelessWidget {
       builder: (context, authProvider, tontineProvider, child) {
         final roles =
             tontineProvider.rolesInCurrentTontine(authProvider.currentUser?.id);
-        final canValidate = canValidateDeposits(roles);
+        final canValidate = canValidateDeposits(roles) &&
+            tontineProvider.canWriteToCurrentTontine;
         final currentUser = authProvider.currentUser;
-        final canEdit = canValidate ||
-            (deposit.author != null &&
-                currentUser?.user?.username ==
-                    deposit.author!.user?.username &&
-                deposit.status == StatusDeposit.PENDING);
+        final canEdit = tontineProvider.canWriteToCurrentTontine &&
+            (canValidate ||
+                (deposit.author != null &&
+                    currentUser?.user?.username ==
+                        deposit.author!.user?.username &&
+                    deposit.status == StatusDeposit.PENDING));
 
         return Dialog(
           insetPadding:

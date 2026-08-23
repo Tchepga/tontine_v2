@@ -19,6 +19,7 @@ import '../../theme/app_theme.dart';
 import '../tontine/add_member_form.dart';
 import '../../services/local_notification_service.dart';
 import '../../utils/dialog_utils.dart';
+import '../../widgets/tontine_closed_banner.dart';
 
 class MemberView extends StatefulWidget {
   static const routeName = '/members';
@@ -166,6 +167,8 @@ class _MemberViewState extends State<MemberView>
             ) ??
             false;
         final isTontineFull = tontineProvider.isTontineFull();
+        final canAddMember =
+            tontineProvider.canWriteToCurrentTontine && isPresident;
 
         if (currentTontine == null) {
           return Scaffold(
@@ -191,7 +194,7 @@ class _MemberViewState extends State<MemberView>
             elevation: 0,
             iconTheme: const IconThemeData(color: Colors.white),
             actions: [
-              if (isPresident)
+              if (isPresident && tontineProvider.canWriteToCurrentTontine)
                 IconButton(
                   onPressed: () =>
                       _shareInvitationLink(context, currentTontine),
@@ -225,9 +228,14 @@ class _MemberViewState extends State<MemberView>
               ],
             ),
           ),
-          body: TabBarView(
-            controller: _tabController,
+          body: Column(
             children: [
+              if (tontineProvider.isCurrentTontineClosed)
+                const TontineClosedBanner(),
+              Expanded(
+                child: TabBarView(
+                  controller: _tabController,
+                  children: [
               // Onglet Bureau
               SingleChildScrollView(
                 child: Column(
@@ -266,10 +274,13 @@ class _MemberViewState extends State<MemberView>
                   ),
                 ],
               ),
+                  ],
+                ),
+              ),
             ],
           ),
           // Bouton d'ajout uniquement pour le président
-          floatingActionButton: isPresident || isTontineFull
+          floatingActionButton: canAddMember && !isTontineFull
               ? FloatingActionButton(
                   heroTag: 'member_fab',
                   backgroundColor: AppColors.primary,

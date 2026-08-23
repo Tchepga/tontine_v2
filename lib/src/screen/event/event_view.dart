@@ -14,6 +14,7 @@ import 'package:table_calendar/table_calendar.dart';
 import '../../services/local_notification_service.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/dialog_utils.dart';
+import '../../widgets/tontine_closed_banner.dart';
 
 class EventView extends StatefulWidget {
   static const routeName = '/event';
@@ -139,6 +140,8 @@ class _EventViewState extends State<EventView> {
         final availableTypes =
             eventProvider.events.map((event) => event.type).toSet().toList();
 
+        final canCreate = tontineProvider.canWriteToCurrentTontine;
+
         return Scaffold(
           backgroundColor: AppColors.background,
           appBar: AppBar(
@@ -149,7 +152,12 @@ class _EventViewState extends State<EventView> {
           ),
           body: Column(
             children: [
-              _buildCalendarSection(context, eventProvider),
+              if (tontineProvider.isCurrentTontineClosed)
+                const TontineClosedBanner(),
+              Expanded(
+                child: Column(
+                  children: [
+                    _buildCalendarSection(context, eventProvider),
               _buildDayHeader(context, filteredEvents.length),
               if (availableTypes.isNotEmpty) ...[
                 ResponsiveSpacing(height: 8),
@@ -182,27 +190,32 @@ class _EventViewState extends State<EventView> {
                               eventProvider,
                             ),
                           ),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
-          floatingActionButton: FloatingActionButton(
-            heroTag: 'event_fab',
-            backgroundColor: AppColors.primary,
-            onPressed: _isCreatingEvent
-                ? null
-                : () => _showCreateEventDialog(
-                    context, tontineProvider, eventProvider),
-            child: _isCreatingEvent
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      color: Colors.white,
-                      strokeWidth: 2,
-                    ),
-                  )
-                : const Icon(Icons.add, color: Colors.white),
-          ),
+          floatingActionButton: canCreate
+              ? FloatingActionButton(
+                  heroTag: 'event_fab',
+                  backgroundColor: AppColors.primary,
+                  onPressed: _isCreatingEvent
+                      ? null
+                      : () => _showCreateEventDialog(
+                          context, tontineProvider, eventProvider),
+                  child: _isCreatingEvent
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Icon(Icons.add, color: Colors.white),
+                )
+              : null,
           bottomNavigationBar: const MenuWidget(),
         );
       },

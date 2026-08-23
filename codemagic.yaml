@@ -89,6 +89,7 @@ workflows:
           BUILD_NO="${PROJECT_BUILD_NUMBER:-${BUILD_NUMBER:-1}}"
           flutter build appbundle --release \
             --dart-define=ENV=production \
+            --dart-define=SENTRY_DSN="${SENTRY_DSN:-}" \
             --build-number="$BUILD_NO"
           test -f build/app/outputs/bundle/release/app-release.aab
           rm -f build/app/outputs/bundle/debug/*.aab || true
@@ -188,6 +189,7 @@ workflows:
           BUILD_NO="${PROJECT_BUILD_NUMBER:-${BUILD_NUMBER:-1}}"
           flutter build ipa --release \
             --dart-define=ENV=production \
+            --dart-define=SENTRY_DSN="${SENTRY_DSN:-}" \
             --build-number="$BUILD_NO" \
             --export-options-plist="$EXPORT_PLIST"
 

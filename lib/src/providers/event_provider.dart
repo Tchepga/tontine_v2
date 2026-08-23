@@ -15,6 +15,13 @@ class EventProvider extends ChangeNotifier {
   List<Event> get events => _events;
   bool get isLoading => _isLoading;
 
+  /// Réinitialise le cache (changement de tontine).
+  void clearCache() {
+    _events = [];
+    _isLoading = false;
+    notifyListeners();
+  }
+
   Future<void> loadEvents(int tontineId) async {
     _isLoading = true;
     notifyListeners();

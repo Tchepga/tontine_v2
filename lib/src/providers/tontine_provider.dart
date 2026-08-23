@@ -14,6 +14,8 @@ import 'models/auction.dart';
 import 'models/enum/role.dart';
 import 'models/pot_distribution.dart';
 import 'models/member_contribution.dart';
+import 'models/closure_summary.dart';
+import 'models/enum/tontine_status.dart';
 import '../screen/services/dto/deposit_dto.dart';
 import '../screen/services/dto/member_dto.dart';
 import '../screen/services/dto/rapport_dto.dart';
@@ -21,6 +23,7 @@ import '../screen/services/dto/sanction_dto.dart';
 import '../screen/services/dto/tontine_dto.dart';
 import '../screen/services/dto/auction_dto.dart';
 import '../screen/services/dto/pot_distribution_dto.dart';
+import '../screen/services/dto/closure_dto.dart';
 import '../screen/services/tontine_service.dart';
 import '../screen/services/member_service.dart';
 import '../screen/services/auction_service.dart';
@@ -29,6 +32,10 @@ import 'package:get_storage/get_storage.dart';
 import 'models/part.dart';
 import '../utils/part_order_utils.dart';
 import '../utils/role_permissions.dart';
+import '../services/sentry_context_service.dart';
+import 'event_provider.dart';
+import 'loan_provider.dart';
+import 'notification_provider.dart';
 
 class TontineProvider extends ChangeNotifier {
   static const KEY_SELECTED_TONTINE_ID = 'selectedTontineId';
@@ -56,6 +63,11 @@ class TontineProvider extends ChangeNotifier {
   List<MemberContribution> get contributions => _contributions;
   bool get isLoading => _isLoading;
   List<Part> get parts => _parts;
+
+  bool get isCurrentTontineClosed =>
+      _currentTontine?.status == TontineStatus.CLOSED;
+
+  bool get canWriteToCurrentTontine => !isCurrentTontineClosed;
 
   Future<void> loadTontines() async {
     _isLoading = true;
@@ -94,17 +106,52 @@ class TontineProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> setCurrentTontine(Tontine tontine) async {
-    try {
-      // Mettre à jour la tonetine sélectionnée dans la liste
-      final index = _tontines.indexWhere((t) => t.id == tontine.id);
-      if (index != -1) {
-        _currentTontine = _tontines[index];
-        notifyListeners();
+  void _resetRelatedProviders({
+    EventProvider? eventProvider,
+    LoanProvider? loanProvider,
+    NotificationProvider? notificationProvider,
+  }) {
+    eventProvider?.clearCache();
+    loanProvider?.clearCache();
+    notificationProvider?.clearCache();
+  }
 
-        _logger.info('Saving selected tontine : $tontine');
-        await _storage.write(KEY_SELECTED_TONTINE_ID, tontine.id);
+  Future<void> setCurrentTontine(
+    Tontine tontine, {
+    bool refreshFromApi = false,
+    EventProvider? eventProvider,
+    LoanProvider? loanProvider,
+    NotificationProvider? notificationProvider,
+  }) async {
+    try {
+      if (_currentTontine?.id != tontine.id) {
+        _resetRelatedProviders(
+          eventProvider: eventProvider,
+          loanProvider: loanProvider,
+          notificationProvider: notificationProvider,
+        );
       }
+
+      var selected = tontine;
+      if (refreshFromApi) {
+        final fresh = await _tontineService.getTontine(tontine.id);
+        if (fresh != null) {
+          selected = fresh;
+        }
+      }
+
+      final index = _tontines.indexWhere((t) => t.id == selected.id);
+      if (index != -1) {
+        _tontines[index] = selected;
+        _currentTontine = selected;
+      } else {
+        _currentTontine = selected;
+      }
+      notifyListeners();
+
+      _logger.info('Saving selected tontine : $selected');
+      await _storage.write(KEY_SELECTED_TONTINE_ID, selected.id);
+      SentryContextService.syncFromStorage();
     } catch (e) {
       _logger.severe('Error setting current tontine: $e');
       rethrow;
@@ -112,7 +159,16 @@ class TontineProvider extends ChangeNotifier {
   }
 
   /// Efface la tontine active (stockage + caches) pour afficher l’écran de choix d’une autre tontine.
-  void clearCurrentTontineSelection() {
+  void clearCurrentTontineSelection({
+    EventProvider? eventProvider,
+    LoanProvider? loanProvider,
+    NotificationProvider? notificationProvider,
+  }) {
+    _resetRelatedProviders(
+      eventProvider: eventProvider,
+      loanProvider: loanProvider,
+      notificationProvider: notificationProvider,
+    );
     _currentTontine = null;
     _storage.remove(KEY_SELECTED_TONTINE_ID);
     _deposits = [];
@@ -120,6 +176,7 @@ class TontineProvider extends ChangeNotifier {
     _distributions = [];
     _contributions = [];
     _parts.clear();
+    SentryContextService.syncFromStorage();
     notifyListeners();
   }
 
@@ -221,7 +278,9 @@ class TontineProvider extends ChangeNotifier {
   Future<List<RapportMeeting>> getRapportsForTontine(int tontineId) async {
     try {
       final rapports = await _tontineService.getRapports(tontineId);
-      _logger.info('Rapports: ${rapports.first.attachmentFilename}');
+      if (rapports.isNotEmpty) {
+        _logger.info('Rapports: ${rapports.first.attachmentFilename}');
+      }
       if (_currentTontine != null) {
         _currentTontine!.rapports = rapports;
         notifyListeners();
@@ -233,10 +292,10 @@ class TontineProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> updateRapport(
-      int tontineId, CreateMeetingRapportDto rapportDto) async {
+  Future<void> updateRapport(int tontineId, int rapportId,
+      CreateMeetingRapportDto rapportDto) async {
     try {
-      await _tontineService.updateRapport(tontineId, rapportDto);
+      await _tontineService.updateRapport(tontineId, rapportId, rapportDto);
       final tontineIndex = _tontines.indexWhere((t) => t.id == tontineId);
       if (tontineIndex != -1) {
         final updatedTontine = await _tontineService.getTontine(tontineId);
@@ -564,6 +623,60 @@ class TontineProvider extends ChangeNotifier {
     } catch (e) {
       _logger.severe('Error deleting sanction: $e');
       rethrow;
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // Cycle de vie tontine (clôture / redémarrage)
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  Future<Tontine> closeTontine(int tontineId) async {
+    try {
+      final closed = await _tontineService.closeTontine(tontineId);
+      _updateTontineInLists(closed);
+      notifyListeners();
+      return closed;
+    } catch (e) {
+      _logger.severe('Error closing tontine: $e');
+      rethrow;
+    }
+  }
+
+  Future<ClosureSummary> getClosureSummary(int tontineId) async {
+    try {
+      return await _tontineService.getClosureSummary(tontineId);
+    } catch (e) {
+      _logger.severe('Error getting closure summary: $e');
+      rethrow;
+    }
+  }
+
+  Future<Tontine> restartTontine(
+      int tontineId, RestartTontineDto dto) async {
+    try {
+      final newTontine = await _tontineService.restartTontine(tontineId, dto);
+      final existingIndex =
+          _tontines.indexWhere((t) => t.id == newTontine.id);
+      if (existingIndex != -1) {
+        _tontines[existingIndex] = newTontine;
+      } else {
+        _tontines.add(newTontine);
+      }
+      notifyListeners();
+      return newTontine;
+    } catch (e) {
+      _logger.severe('Error restarting tontine: $e');
+      rethrow;
+    }
+  }
+
+  void _updateTontineInLists(Tontine tontine) {
+    final index = _tontines.indexWhere((t) => t.id == tontine.id);
+    if (index != -1) {
+      _tontines[index] = tontine;
+    }
+    if (_currentTontine?.id == tontine.id) {
+      _currentTontine = tontine;
     }
   }
 

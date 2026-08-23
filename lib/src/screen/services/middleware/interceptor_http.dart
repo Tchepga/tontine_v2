@@ -1,13 +1,16 @@
 import 'dart:async';
 
+import 'package:get_storage/get_storage.dart';
 import 'package:http_interceptor/http_interceptor.dart';
 import 'package:logging/logging.dart';
 
+import '../../../providers/tontine_provider.dart';
 import '../../../services/session_manager.dart';
 import '../../../services/token_storage.dart';
 
 class AuthInterceptor implements HttpInterceptor {
   final _logger = Logger('AuthInterceptor');
+  final _storage = GetStorage();
 
   static const List<String> publicPaths = [
     'login',
@@ -40,7 +43,16 @@ class AuthInterceptor implements HttpInterceptor {
           'aucun token, requête sans Authorization');
     }
     request.headers['Content-Type'] = 'application/json';
+    _attachTontineIdHeader(request);
     return request;
+  }
+
+  void _attachTontineIdHeader(BaseRequest request) {
+    final selectedTontineId =
+        _storage.read(TontineProvider.KEY_SELECTED_TONTINE_ID);
+    if (selectedTontineId != null) {
+      request.headers['tontine-id'] = selectedTontineId.toString();
+    }
   }
 
   @override
