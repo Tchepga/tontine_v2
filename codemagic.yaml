@@ -24,7 +24,7 @@ workflows:
         script: flutter analyze --no-fatal-infos
 
       - name: Tests unitaires & widgets
-        script: flutter test --coverage --reporter=expanded
+        script: flutter test --coverage --reporter=expanded --exclude-tags=integration
 
     artifacts:
       - coverage/**
@@ -71,7 +71,17 @@ workflows:
         script: flutter analyze --no-fatal-infos
 
       - name: Tests — arrêt si échec
-        script: flutter test --reporter=expanded
+        script: flutter test --reporter=expanded --exclude-tags=integration
+
+      - name: Integration smoke (API live, optionnel)
+        script: |
+          set -euo pipefail
+          if [ -z "${INTEGRATION_API_URL:-}" ]; then
+            echo "INTEGRATION_API_URL absent — skip integration smoke"
+            exit 0
+          fi
+          export INTEGRATION_MODE=smoke
+          flutter test test/integration/smoke_integration_test.dart --reporter=expanded
 
       - name: Build AAB release (signé via CM_KEYSTORE_*)
         script: |

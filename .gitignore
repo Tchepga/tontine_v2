@@ -73,6 +73,7 @@ test-results.html
 
 # Env files
 .env
+.integration.env
 .env.local
 .env.staging
 .env.production

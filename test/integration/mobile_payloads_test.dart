@@ -1,0 +1,57 @@
+import 'package:flutter_test/flutter_test.dart';
+
+import 'mobile_payloads.dart';
+
+/// Vérifie la forme des payloads sans appeler l'API (toujours exécuté en CI).
+void main() {
+  group('MobilePayloads — forme JSON', () {
+    test('createEvent contient les clés EventService', () {
+      final json = MobilePayloads.createEvent(
+        tontineId: 1,
+        title: 'Réunion mensuelle',
+        type: 'MEETING',
+      );
+      expect(json.keys, containsAll([
+        'tontineId',
+        'title',
+        'type',
+        'description',
+        'startDate',
+        'endDate',
+      ]));
+      expect(json['type'], 'MEETING');
+      expect(json['tontineId'], 1);
+    });
+
+    test('createDeposit contient memberId et status PENDING comme edit_mouvement', () {
+      final json = MobilePayloads.createDeposit(
+        amount: 250,
+        memberId: 42,
+        cashFlowId: 7,
+        status: 'PENDING',
+        reasons: 'VERSEMENT',
+      );
+      expect(json['memberId'], 42);
+      expect(json['status'], 'PENDING');
+      expect(json['reasons'], 'VERSEMENT');
+      expect(json['cashFlowId'], 7);
+    });
+
+    test('createMember contient champs obligatoires member_view', () {
+      final json = MobilePayloads.createMember(
+        firstname: 'Alice',
+        lastname: 'Martin',
+        phone: '+33600000000',
+        country: 'FR',
+      );
+      expect(json.keys, containsAll(['firstname', 'lastname', 'phone', 'country']));
+    });
+
+    test('MobileRoutes pointe vers les endpoints EventService / TontineService', () {
+      expect(MobileRoutes.createEvent(), '/event');
+      expect(MobileRoutes.listEvents(5), '/event/tontine/5');
+      expect(MobileRoutes.createDeposit(3), '/tontine/3/deposit');
+      expect(MobileRoutes.attachMember(3), '/tontine/3/member');
+    });
+  });
+}

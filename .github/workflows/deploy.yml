@@ -35,7 +35,7 @@ jobs:
         run: flutter analyze --no-fatal-infos
 
       - name: Tests unitaires & widgets
-        run: flutter test --coverage --reporter=expanded
+        run: flutter test --coverage --reporter=expanded --exclude-tags=integration
 
       # Même formule que l’ancien python (Σ compteurs DA / nb entrées DA). Ne bloque jamais le job.
       - name: Rapport couverture (lcov)
@@ -63,6 +63,32 @@ jobs:
           exit 0
         env:
           COVERAGE_GOAL_PERCENT: "70"
+
+  integration-smoke:
+    name: 🔗 Integration smoke (API live)
+    runs-on: ubuntu-latest
+    needs: test
+    if: vars.INTEGRATION_API_URL != ''
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Integration smoke tests
+        env:
+          INTEGRATION_API_URL: ${{ vars.INTEGRATION_API_URL }}
+          INTEGRATION_USERNAME: ${{ vars.INTEGRATION_USERNAME }}
+          INTEGRATION_PASSWORD: ${{ secrets.INTEGRATION_PASSWORD }}
+          INTEGRATION_MODE: smoke
+        run: flutter test test/integration/smoke_integration_test.dart --reporter=expanded
 
 # ══════════════════════════════════════════════════════════════════════════════
 # JOB 2 — Android (Codemagic, pas GitHub Actions)
