@@ -32,6 +32,10 @@ migrate_working_dir/
 .pub-cache/
 .pub/
 /build/
+/coverage/
+
+# Android/iOS build markers
+**/build/.last_build_id
 
 # Symbolication related
 app.*.symbols
@@ -84,4 +88,4 @@ ios/GoogleService-Info.plist
 
 # node modules
 node_modules/
-package-lock.json.env.local
+package-lock.json
