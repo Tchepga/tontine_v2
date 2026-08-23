@@ -81,7 +81,10 @@ workflows:
             exit 0
           fi
           export INTEGRATION_MODE=smoke
-          flutter test test/integration/smoke_integration_test.dart --reporter=expanded
+          flutter test \
+            test/integration/smoke_integration_test.dart \
+            test/integration/auth_integration_test.dart \
+            --reporter=expanded
 
       - name: Build AAB release (signé via CM_KEYSTORE_*)
         script: |

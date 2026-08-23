@@ -135,6 +135,11 @@ class IntegrationHttpClient {
     _tontineId = other._tontineId;
   }
 
+  void setSession({String? token, int? tontineId}) {
+    if (token != null) _token = token;
+    if (tontineId != null) _tontineId = tontineId;
+  }
+
   void dispose() => _client.close();
 }
 

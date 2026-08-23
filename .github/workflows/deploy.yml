@@ -88,7 +88,7 @@ jobs:
           INTEGRATION_USERNAME: ${{ vars.INTEGRATION_USERNAME }}
           INTEGRATION_PASSWORD: ${{ secrets.INTEGRATION_PASSWORD }}
           INTEGRATION_MODE: smoke
-        run: flutter test test/integration/smoke_integration_test.dart --reporter=expanded
+        run: flutter test test/integration/smoke_integration_test.dart test/integration/auth_integration_test.dart --reporter=expanded
 
 # ══════════════════════════════════════════════════════════════════════════════
 # JOB 2 — Android (Codemagic, pas GitHub Actions)

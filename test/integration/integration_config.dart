@@ -97,6 +97,14 @@ class IntegrationConfig {
     return '';
   }
 
+  /// Endpoints publics (inscription, forgot/reset password) : URL seule.
+  static String get publicSkipReason {
+    if (!isConfigured) {
+      return 'INTEGRATION_API_URL non défini — voir docs/INTEGRATION_TESTS.md';
+    }
+    return '';
+  }
+
   static String get credentialsHint =>
       'export INTEGRATION_API_URL=https://api.tontine.devcoorp.net\n'
       'export INTEGRATION_USERNAME=votre_user\n'

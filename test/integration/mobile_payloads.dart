@@ -73,9 +73,49 @@ class MobilePayloads {
   static Map<String, dynamic> attachMemberToTontine(int memberId) => {
         'memberId': memberId,
       };
+
+  /// CreateMemberDto — register_view → POST /api/member/register-president
+  /// (pas de username : l'API le génère à partir du prénom/nom).
+  static Map<String, dynamic> registerPresident({
+    required String firstname,
+    required String lastname,
+    required String phone,
+    required String password,
+    String country = 'FR',
+    String? email,
+  }) {
+    return createMember(
+      firstname: firstname,
+      lastname: lastname,
+      phone: phone,
+      password: password,
+      country: country,
+      email: email,
+    );
+  }
+
+  /// ForgotPasswordDto — forgot_password_view → POST /api/auth/forgot-password
+  static Map<String, dynamic> forgotPassword({
+    required String usernameOrEmail,
+  }) {
+    return {'usernameOrEmail': usernameOrEmail};
+  }
+
+  /// ResetPasswordDto — reset_password_view → POST /api/auth/reset-password
+  static Map<String, dynamic> resetPassword({
+    required String token,
+    required String newPassword,
+    required String confirmPassword,
+  }) {
+    return {
+      'token': token,
+      'newPassword': newPassword,
+      'confirmPassword': confirmPassword,
+    };
+  }
 }
 
-/// Routes exactes utilisées par le mobile (EventService, TontineService).
+/// Routes exactes utilisées par le mobile (EventService, TontineService, MemberService).
 class MobileRoutes {
   static String createEvent() => '/event';
   static String listEvents(int tontineId) => '/event/tontine/$tontineId';
@@ -87,4 +127,10 @@ class MobileRoutes {
   static String attachMember(int tontineId) => '/tontine/$tontineId/member';
   static String detachMember(int tontineId, int memberId) =>
       '/tontine/$tontineId/member/$memberId';
+  static String registerPresident() => '/member/register-president';
+  static String login() => '/auth/login';
+  static String forgotPassword() => '/auth/forgot-password';
+  static String resetPassword() => '/auth/reset-password';
+  static String listTontines(String username) => '/tontine/member/$username';
+  static String deleteTontine(int tontineId) => '/tontine/$tontineId';
 }

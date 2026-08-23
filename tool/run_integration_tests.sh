@@ -55,5 +55,6 @@ if [[ "$MODE" == "full" ]]; then
 else
   flutter test test/integration/smoke_integration_test.dart \
     test/integration/mobile_contract_integration_test.dart \
+    test/integration/auth_integration_test.dart \
     --reporter=expanded
 fi

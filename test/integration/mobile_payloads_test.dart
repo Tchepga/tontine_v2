@@ -53,5 +53,44 @@ void main() {
       expect(MobileRoutes.createDeposit(3), '/tontine/3/deposit');
       expect(MobileRoutes.attachMember(3), '/tontine/3/member');
     });
+
+    test('registerPresident reflète CreateMemberDto de register_view', () {
+      final json = MobilePayloads.registerPresident(
+        firstname: 'Alice',
+        lastname: 'Martin',
+        phone: '+33600000000',
+        password: 'TestPass123!',
+        email: 'alice@example.test',
+      );
+      expect(
+        json.keys,
+        containsAll(['firstname', 'lastname', 'phone', 'country', 'password', 'email']),
+      );
+      expect(json.containsKey('username'), isFalse);
+      expect(json['country'], 'FR');
+      expect(json['password'], 'TestPass123!');
+    });
+
+    test('forgotPassword envoie usernameOrEmail comme ForgotPasswordDto', () {
+      final json = MobilePayloads.forgotPassword(usernameOrEmail: 'alice@example.test');
+      expect(json, {'usernameOrEmail': 'alice@example.test'});
+    });
+
+    test('resetPassword contient token + newPassword + confirmPassword', () {
+      final json = MobilePayloads.resetPassword(
+        token: 'reset-token',
+        newPassword: 'NewPass123!',
+        confirmPassword: 'NewPass123!',
+      );
+      expect(json.keys, containsAll(['token', 'newPassword', 'confirmPassword']));
+      expect(json['token'], 'reset-token');
+    });
+
+    test('MobileRoutes pointe vers les endpoints auth publics', () {
+      expect(MobileRoutes.registerPresident(), '/member/register-president');
+      expect(MobileRoutes.login(), '/auth/login');
+      expect(MobileRoutes.forgotPassword(), '/auth/forgot-password');
+      expect(MobileRoutes.resetPassword(), '/auth/reset-password');
+    });
   });
 }

@@ -2,7 +2,7 @@
 
 Suite HTTP qui vérifie que **les fonctionnalités critiques** répondent correctement sur une API **réelle** (local, staging ou prod).
 
-> Ce ne sont **pas** des tests UI Flutter (pas d’émulateur). Ils reproduisent exactement ce que font `tontine_service.dart` et `event_service.dart`.
+> Ce ne sont **pas** des tests UI Flutter (pas d’émulateur). Ils reproduisent exactement ce que font `tontine_service.dart`, `event_service.dart` et `member_service.dart`.
 
 ---
 
@@ -11,7 +11,7 @@ Suite HTTP qui vérifie que **les fonctionnalités critiques** répondent correc
 | Mode | Variable | Comportement | Environnement |
 |---|---|---|---|
 | **smoke** (défaut) | `INTEGRATION_MODE=smoke` | Lecture seule : login, listes, pagination | OK **prod** |
-| **full** | `INTEGRATION_MODE=full` | Crée puis supprime event, dépôt, membre | **Staging** uniquement |
+| **full** | `INTEGRATION_MODE=full` | Crée puis supprime event, dépôt, membre ; inscription président | **Staging** uniquement |
 
 ---
 
@@ -30,6 +30,9 @@ Suite HTTP qui vérifie que **les fonctionnalités critiques** répondent correc
 | Prêts | `GET /api/loan` |
 | Notifications | `GET /api/notification/tontine/:id` |
 | Rapports | `GET /api/tontine/:id/rapport` |
+| Inscription (validation) | `POST /api/member/register-president` incomplet → 400 |
+| Mot de passe oublié (inconnu) | `POST /api/auth/forgot-password` → 404 |
+| Reset token invalide | `POST /api/auth/reset-password` → 4xx |
 
 ### Full (écriture + cleanup)
 
@@ -39,6 +42,8 @@ Suite HTTP qui vérifie que **les fonctionnalités critiques** répondent correc
 | **Header manquant** | POST /event sans `tontine-id` → 403 | `mobile_contract_integration_test.dart` |
 | **Créer un versement** | Payload `CreateDepositDto` (memberId, PENDING, VERSEMENT) | `mobile_contract_integration_test.dart` |
 | **Ajouter un membre** | POST /member + PATCH attach (comme `addMemberToTontine`) | `mobile_contract_integration_test.dart` |
+| **Inscription président** | Payload `CreateMemberDto` de `register_view` → 201 + login + doublon 409 | `auth_integration_test.dart` |
+| **Mot de passe oublié** | Compte créé → `POST /auth/forgot-password` 200/201 (skip si mail KO) | `auth_integration_test.dart` |
 
 Les payloads sont centralisés dans `test/integration/mobile_payloads.dart` (miroir des DTO mobile).
 
@@ -90,7 +95,7 @@ Sans toucher à la prod — Docker Desktop requis. Lance **toute** la suite (smo
 /Users/patricktchepga/projet/tontine_v2/tool/run_local_integration.sh
 ```
 
-Démarre MySQL, l’API en mode dev (`:8080`), seed `ronaldo`, `INTEGRATION_MODE=full`, puis les 19 tests d’intégration.
+Démarre MySQL, l’API en mode dev (`:8080`), seed `ronaldo`, `INTEGRATION_MODE=full`, puis toute la suite d’intégration (y compris inscription et mot de passe oublié).
 
 ### Alternative manuelle
 
@@ -99,7 +104,9 @@ cd /Users/patricktchepga/projet/tontine_v2
 export INTEGRATION_API_URL=...
 export INTEGRATION_USERNAME=...
 export INTEGRATION_PASSWORD=...
-flutter test test/integration/smoke_integration_test.dart --reporter=expanded
+flutter test test/integration/smoke_integration_test.dart \
+  test/integration/auth_integration_test.dart \
+  --reporter=expanded
 ```
 
 ### Full sur staging (recommandé)
