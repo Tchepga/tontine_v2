@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/models/tontine.dart';
@@ -11,6 +13,7 @@ import '../../utils/responsive_helper.dart';
 import '../../theme/app_theme.dart';
 import 'edit_mouvement.dart';
 import 'widgets/deposit_list_item.dart';
+import 'widgets/member_contributions_section.dart';
 import 'package:tontine_v2/src/providers/models/enum/currency.dart';
 import '../../utils/currency_utils.dart';
 import '../../providers/models/enum/deposit_type.dart';
@@ -29,19 +32,60 @@ class CashflowView extends StatefulWidget {
 
 class _CashflowViewState extends State<CashflowView> {
   DepositType? _selectedType;
-  String _searchName = '';
+  final ScrollController _scrollController = ScrollController();
+  Timer? _searchDebounce;
+  int? _loadedTontineId;
 
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_onScroll);
     Future.microtask(() {
       if (!mounted) return;
       final tontineProvider =
           Provider.of<TontineProvider>(context, listen: false);
       if (tontineProvider.currentTontine != null) {
-        tontineProvider.loadDeposits(tontineProvider.currentTontine!.id);
+        final tontineId = tontineProvider.currentTontine!.id;
+        _loadedTontineId = tontineId;
+        tontineProvider.loadDeposits(tontineId);
+        tontineProvider.loadPendingDeposits(tontineId);
+        tontineProvider.loadContributions(tontineId);
       }
     });
+  }
+
+  @override
+  void dispose() {
+    _searchDebounce?.cancel();
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (!_scrollController.hasClients) return;
+    final position = _scrollController.position;
+    if (position.pixels >= position.maxScrollExtent - 200) {
+      final tontineId = _loadedTontineId;
+      if (tontineId == null) return;
+      Provider.of<TontineProvider>(context, listen: false)
+          .loadMoreDeposits(tontineId);
+    }
+  }
+
+  void _onSearchChanged(String value) {
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 350), () {
+      final tontineId = _loadedTontineId;
+      if (tontineId == null || !mounted) return;
+      Provider.of<TontineProvider>(context, listen: false)
+          .loadDeposits(tontineId, reset: true, search: value);
+    });
+  }
+
+  List<Deposit> _filterDepositsByType(List<Deposit> deposits) {
+    if (_selectedType == null) return deposits;
+    return deposits.where((d) => d.type == _selectedType).toList();
   }
 
   @override
@@ -50,28 +94,17 @@ class _CashflowViewState extends State<CashflowView> {
       builder: (context, tontineProvider, authProvider, child) {
         final currentTontine = tontineProvider.currentTontine;
         final deposits = tontineProvider.deposits;
-        // Droits trésorerie = rôles dans la tontine (MemberRole), pas User.roles global.
         final roles =
             tontineProvider.rolesInCurrentTontine(authProvider.currentUser?.id);
         final canValidate =
             canValidateDeposits(roles) && tontineProvider.canWriteToCurrentTontine;
+        final canViewContributions = canManageTreasury(roles);
         final canAddDeposit = tontineProvider.canWriteToCurrentTontine;
 
-        // Filtrage + tri du plus récent au plus ancien
-        final filteredDeposits = deposits.where((deposit) {
-          final matchType = _selectedType == null || deposit.type == _selectedType;
-          final matchName = _searchName.isEmpty ||
-              (deposit.author?.firstname
-                      ?.toLowerCase()
-                      .contains(_searchName.toLowerCase()) ??
-                  false) ||
-              (deposit.author?.lastname
-                      ?.toLowerCase()
-                      .contains(_searchName.toLowerCase()) ??
-                  false);
-          return matchType && matchName;
-        }).toList()
-          ..sort((a, b) => b.creationDate.compareTo(a.creationDate));
+        final filteredDeposits = _filterDepositsByType(deposits);
+        final showInitialLoading =
+            tontineProvider.loadingDeposits && deposits.isEmpty;
+        final showBottomLoader = tontineProvider.loadingMoreDeposits;
 
         return Scaffold(
           appBar: ActionMenu(title: 'Trésorerie', showBackButton: true),
@@ -81,31 +114,99 @@ class _CashflowViewState extends State<CashflowView> {
               if (tontineProvider.isCurrentTontineClosed)
                 const TontineClosedBanner(),
               Expanded(
-                child: ListView(
-                  padding:
-                      ResponsiveHelper.getAdaptivePadding(context, all: 16.0),
-                  children: [
-                    _buildBalanceCard(context, currentTontine),
-                    ResponsiveSpacing(height: 16),
-                    _buildFiltersSection(context),
-                    ResponsiveSpacing(height: 16),
-                    if (canValidate) ...[
-                      _buildPendingDepositsSection(context, deposits,
-                          tontineProvider, currentTontine!.id),
-                      ResponsiveSpacing(height: 16),
-                    ],
-                    _buildSectionTitle(context, 'Mouvements', Icons.list_alt),
-                    ResponsiveSpacing(height: 16),
-                    if (filteredDeposits.isEmpty)
-                      _buildEmptyState(context)
-                    else
-                      ...filteredDeposits.map((deposit) => DepositListItem(
-                            deposit: deposit,
-                            tontineProvider: tontineProvider,
-                            tontineId: currentTontine!.id,
-                          )),
-                  ],
-                ),
+                child: showInitialLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : CustomScrollView(
+                        controller: _scrollController,
+                        slivers: [
+                          SliverPadding(
+                            padding: ResponsiveHelper.getAdaptivePadding(
+                              context,
+                              all: 16.0,
+                            ),
+                            sliver: SliverList(
+                              delegate: SliverChildListDelegate([
+                                _buildBalanceCard(context, currentTontine),
+                                if (canViewContributions &&
+                                    currentTontine != null) ...[
+                                  ResponsiveSpacing(height: 16),
+                                  MemberContributionsSection(
+                                    currency: currentTontine.cashFlow.currency,
+                                  ),
+                                ],
+                                ResponsiveSpacing(height: 16),
+                                _buildFiltersSection(context),
+                                ResponsiveSpacing(height: 16),
+                                if (canValidate) ...[
+                                  _buildPendingDepositsSection(
+                                    context,
+                                    tontineProvider.pendingDeposits,
+                                    tontineProvider,
+                                    currentTontine!.id,
+                                  ),
+                                  ResponsiveSpacing(height: 16),
+                                ],
+                                _buildSectionTitle(
+                                  context,
+                                  'Mouvements',
+                                  Icons.list_alt,
+                                  total: tontineProvider.totalDeposits,
+                                ),
+                                ResponsiveSpacing(height: 16),
+                              ]),
+                            ),
+                          ),
+                          if (filteredDeposits.isEmpty)
+                            SliverPadding(
+                              padding: ResponsiveHelper.getAdaptivePadding(
+                                context,
+                                horizontal: 16.0,
+                              ),
+                              sliver: SliverToBoxAdapter(
+                                child: _buildEmptyState(context),
+                              ),
+                            )
+                          else
+                            SliverPadding(
+                              padding: ResponsiveHelper.getAdaptivePadding(
+                                context,
+                                horizontal: 16.0,
+                              ),
+                              sliver: SliverList(
+                                delegate: SliverChildBuilderDelegate(
+                                  (context, index) {
+                                    if (index >= filteredDeposits.length) {
+                                      return Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                          vertical: 16,
+                                        ),
+                                        child: Center(
+                                          child: SizedBox(
+                                            width: 24,
+                                            height: 24,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              color: AppColors.primary,
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    }
+                                    final deposit = filteredDeposits[index];
+                                    return DepositListItem(
+                                      deposit: deposit,
+                                      tontineProvider: tontineProvider,
+                                      tontineId: currentTontine!.id,
+                                    );
+                                  },
+                                  childCount: filteredDeposits.length +
+                                      (showBottomLoader ? 1 : 0),
+                                ),
+                              ),
+                            ),
+                          const SliverPadding(padding: EdgeInsets.only(bottom: 80)),
+                        ],
+                      ),
               ),
             ],
           ),
@@ -248,18 +349,19 @@ class _CashflowViewState extends State<CashflowView> {
               ),
               contentPadding: contentPadding,
             ),
-            onChanged: (value) {
-              setState(() {
-                _searchName = value;
-              });
-            },
+            onChanged: _onSearchChanged,
           ),
         ],
       ),
     );
   }
 
-  Widget _buildSectionTitle(BuildContext context, String title, IconData icon) {
+  Widget _buildSectionTitle(
+    BuildContext context,
+    String title,
+    IconData icon, {
+    int? total,
+  }) {
     final iconPadding = ResponsiveHelper.getAdaptivePadding(context, all: 8.0);
     final iconSize = ResponsiveHelper.getAdaptiveIconSize(context, base: 20.0);
     final spacing = ResponsiveHelper.getAdaptiveSpacing(context, base: 12.0);
@@ -269,6 +371,8 @@ class _CashflowViewState extends State<CashflowView> {
       medium: 17.0,
       large: 18.0,
     );
+
+    final label = total != null && total > 0 ? '$title ($total)' : title;
 
     return Row(
       children: [
@@ -286,7 +390,7 @@ class _CashflowViewState extends State<CashflowView> {
         ),
         SizedBox(width: spacing),
         Text(
-          title,
+          label,
           style: TextStyle(
             fontSize: fontSize,
             fontWeight: FontWeight.bold,
@@ -297,12 +401,12 @@ class _CashflowViewState extends State<CashflowView> {
     );
   }
 
-  Widget _buildPendingDepositsSection(BuildContext context,
-      List<Deposit> deposits, TontineProvider tontineProvider, int tontineId) {
-    final pendingDeposits = deposits
-        .where((deposit) => deposit.status == StatusDeposit.PENDING)
-        .toList();
-
+  Widget _buildPendingDepositsSection(
+    BuildContext context,
+    List<Deposit> pendingDeposits,
+    TontineProvider tontineProvider,
+    int tontineId,
+  ) {
     if (pendingDeposits.isEmpty) return const SizedBox.shrink();
 
     return ModernCard(
@@ -539,7 +643,9 @@ class _CashflowViewState extends State<CashflowView> {
       )
           .then((_) {
         tontineProvider.loadTontines();
-        tontineProvider.loadDeposits(tontineId);
+        tontineProvider.loadDeposits(tontineId, reset: true);
+        tontineProvider.loadPendingDeposits(tontineId);
+        tontineProvider.loadContributions(tontineId);
       });
     } else {
       ScaffoldMessenger.of(context).showSnackBar(

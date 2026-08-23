@@ -36,7 +36,10 @@ class _DashboardViewState extends State<DashboardView> {
       if (tontineProvider.currentTontine == null) {
         Navigator.of(context).pushReplacementNamed(SelectTontineView.routeName);
       } else {
-        tontineProvider.loadDeposits(tontineProvider.currentTontine!.id);
+        tontineProvider.loadDepositsForYear(
+          tontineProvider.currentTontine!.id,
+          DateTime.now().year,
+        );
       }
     });
   }
@@ -93,7 +96,9 @@ class _DashboardViewState extends State<DashboardView> {
                         ResponsiveSpacing(height: 16),
                         _buildQuickAccessSection(context),
                         ResponsiveSpacing(height: 20),
-                        AnnualMovementsChart(deposits: tontineProvider.deposits),
+                        AnnualMovementsChart(
+                          deposits: tontineProvider.chartDeposits,
+                        ),
                         ResponsiveSpacing(height: 24),
                       ],
                     ),

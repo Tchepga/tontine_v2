@@ -343,7 +343,8 @@ class DepositDetailsDialog extends StatelessWidget {
         )
             .then((_) {
           tontineProvider.loadTontines();
-          tontineProvider.loadDeposits(tontineId);
+          tontineProvider.loadDeposits(tontineId, reset: true);
+          tontineProvider.loadPendingDeposits(tontineId);
         });
       },
       icon: const Icon(Icons.edit_outlined, size: 16),

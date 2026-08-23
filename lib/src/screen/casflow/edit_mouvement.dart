@@ -41,6 +41,7 @@ class _EditMouvementState extends State<EditMouvement> {
   String _memberQuery = '';
   bool _initialized = false;
   late DateTime _selectedDate;
+  List<Deposit> _suggestionDeposits = [];
 
   bool get _isEditing => widget.deposit != null;
 
@@ -52,6 +53,24 @@ class _EditMouvementState extends State<EditMouvement> {
         DateTime(now.year, now.month, now.day);
     if (widget.deposit != null) {
       _amountController.text = _formatAmountForInput(widget.deposit!.amount);
+    }
+    Future.microtask(_loadSuggestionDeposits);
+  }
+
+  Future<void> _loadSuggestionDeposits() async {
+    if (!mounted) return;
+    final tontineProvider =
+        Provider.of<TontineProvider>(context, listen: false);
+    final tontineId = tontineProvider.currentTontine?.id;
+    if (tontineId == null) return;
+
+    try {
+      final deposits =
+          await tontineProvider.getDepositsForSuggestions(tontineId);
+      if (!mounted) return;
+      setState(() => _suggestionDeposits = deposits);
+    } catch (_) {
+      // Les suggestions restent optionnelles.
     }
   }
 
@@ -165,7 +184,7 @@ class _EditMouvementState extends State<EditMouvement> {
         _selectedAuthor = me;
         _targetMode = _DepositTargetMode.myself;
 
-        final suggested = _suggestedAmountFor(me, tontineProvider.deposits);
+        final suggested = _suggestedAmountFor(me, _suggestionDeposits);
         if (suggested != null && _amountController.text.isEmpty) {
           _amountController.text = _formatAmountForInput(suggested);
         }
@@ -202,7 +221,7 @@ class _EditMouvementState extends State<EditMouvement> {
             : _selectedAuthor;
         final suggested = _suggestedAmountFor(
           focusMember,
-          tontineProvider.deposits,
+          _suggestionDeposits,
         );
 
         return Scaffold(
@@ -260,7 +279,7 @@ class _EditMouvementState extends State<EditMouvement> {
                                 _selectedMemberIds.clear();
                                 final s = _suggestedAmountFor(
                                   authProvider.currentUser,
-                                  tontineProvider.deposits,
+                                  _suggestionDeposits,
                                 );
                                 if (s != null) {
                                   _amountController.text =
@@ -284,7 +303,7 @@ class _EditMouvementState extends State<EditMouvement> {
                             selected: true,
                             paidThisMonth: _hasPaidThisMonth(
                               authProvider.currentUser!,
-                              tontineProvider.deposits,
+                              _suggestionDeposits,
                             ),
                             onTap: null,
                           ),
@@ -330,7 +349,7 @@ class _EditMouvementState extends State<EditMouvement> {
                                 final id = member.id;
                                 final paid = _hasPaidThisMonth(
                                   member,
-                                  tontineProvider.deposits,
+                                  _suggestionDeposits,
                                 );
                                 final selected =
                                     _targetMode == _DepositTargetMode.oneMember
@@ -352,7 +371,7 @@ class _EditMouvementState extends State<EditMouvement> {
                                         _selectedAuthor = member;
                                         final s = _suggestedAmountFor(
                                           member,
-                                          tontineProvider.deposits,
+                                          _suggestionDeposits,
                                         );
                                         if (s != null) {
                                           _amountController.text =
@@ -398,7 +417,7 @@ class _EditMouvementState extends State<EditMouvement> {
                                 ? _selectedAuthor
                                 : authProvider.currentUser) ??
                             authProvider.currentUser!,
-                        tontineProvider.deposits,
+                        _suggestionDeposits,
                       ),
                       onTap: null,
                     ),

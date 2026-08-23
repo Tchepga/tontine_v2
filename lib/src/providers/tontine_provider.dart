@@ -47,6 +47,15 @@ class TontineProvider extends ChangeNotifier {
   final _storage = GetStorage();
   List<Tontine> _tontines = [];
   List<Deposit> _deposits = [];
+  List<Deposit> _pendingDeposits = [];
+  List<Deposit> _chartDeposits = [];
+  int _depositsPage = 0;
+  bool _hasMoreDeposits = false;
+  bool _loadingDeposits = false;
+  bool _loadingMoreDeposits = false;
+  int _totalDeposits = 0;
+  String _depositsSearch = '';
+  static const _depositsPageSize = 20;
   List<Auction> _auctions = [];
   List<PotDistribution> _distributions = [];
   List<MemberContribution> _contributions = [];
@@ -58,6 +67,12 @@ class TontineProvider extends ChangeNotifier {
   List<Tontine> get tontines => _tontines;
   Tontine? get currentTontine => _currentTontine;
   List<Deposit> get deposits => _deposits;
+  List<Deposit> get pendingDeposits => _pendingDeposits;
+  List<Deposit> get chartDeposits => _chartDeposits;
+  bool get hasMoreDeposits => _hasMoreDeposits;
+  bool get loadingDeposits => _loadingDeposits;
+  bool get loadingMoreDeposits => _loadingMoreDeposits;
+  int get totalDeposits => _totalDeposits;
   List<Auction> get auctions => _auctions;
   List<PotDistribution> get distributions => _distributions;
   List<MemberContribution> get contributions => _contributions;
@@ -96,9 +111,138 @@ class TontineProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> loadDeposits(int tontineId) async {
-    _deposits = await _tontineService.getDeposits(tontineId);
+  Future<void> loadDeposits(
+    int tontineId, {
+    bool reset = true,
+    String? search,
+  }) async {
+    if (_loadingDeposits) return;
+
+    if (reset) {
+      _depositsPage = 0;
+      _hasMoreDeposits = true;
+      if (search != null) {
+        _depositsSearch = search;
+      }
+    }
+
+    _loadingDeposits = true;
     notifyListeners();
+
+    try {
+      final result = await _tontineService.getDeposits(
+        tontineId,
+        page: 1,
+        limit: _depositsPageSize,
+        search: _depositsSearch.isEmpty ? null : _depositsSearch,
+      );
+      _deposits = result.items;
+      _depositsPage = result.page;
+      _hasMoreDeposits = result.hasMore;
+      _totalDeposits = result.total;
+    } catch (e) {
+      _logger.severe('Error loading deposits: $e');
+    } finally {
+      _loadingDeposits = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> loadMoreDeposits(int tontineId) async {
+    if (_loadingMoreDeposits || _loadingDeposits || !_hasMoreDeposits) {
+      return;
+    }
+
+    _loadingMoreDeposits = true;
+    notifyListeners();
+
+    try {
+      final result = await _tontineService.getDeposits(
+        tontineId,
+        page: _depositsPage + 1,
+        limit: _depositsPageSize,
+        search: _depositsSearch.isEmpty ? null : _depositsSearch,
+      );
+      _deposits = [..._deposits, ...result.items];
+      _depositsPage = result.page;
+      _hasMoreDeposits = result.hasMore;
+      _totalDeposits = result.total;
+    } catch (e) {
+      _logger.severe('Error loading more deposits: $e');
+    } finally {
+      _loadingMoreDeposits = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> loadPendingDeposits(int tontineId) async {
+    try {
+      final result = await _tontineService.getDeposits(
+        tontineId,
+        page: 1,
+        limit: 50,
+        status: statusDepositToString(StatusDeposit.PENDING),
+      );
+      _pendingDeposits = result.items;
+      notifyListeners();
+    } catch (e) {
+      _logger.severe('Error loading pending deposits: $e');
+    }
+  }
+
+  /// Charge tous les dépôts de l'année pour le graphique dashboard.
+  /// Parcourt les pages API (limit=100) jusqu'à épuisement ou 10 pages max.
+  Future<void> loadDepositsForYear(int tontineId, int year) async {
+    try {
+      final yearDeposits = <Deposit>[];
+      var page = 1;
+      var hasMore = true;
+
+      while (hasMore && page <= 10) {
+        final result = await _tontineService.getDeposits(
+          tontineId,
+          page: page,
+          limit: 100,
+        );
+        yearDeposits.addAll(
+          result.items.where((d) => d.creationDate.year == year),
+        );
+        hasMore = result.hasMore;
+        page++;
+      }
+
+      _chartDeposits = yearDeposits;
+      notifyListeners();
+    } catch (e) {
+      _logger.severe('Error loading deposits for year: $e');
+    }
+  }
+
+  Future<List<Deposit>> getDepositsForSuggestions(int tontineId) async {
+    if (_deposits.length >= 50) {
+      return _deposits.take(50).toList();
+    }
+    final result = await _tontineService.getDeposits(tontineId, limit: 50);
+    return result.items;
+  }
+
+  Future<void> _reloadDepositsAfterMutation(int tontineId) async {
+    await Future.wait([
+      loadDeposits(tontineId, reset: true),
+      loadPendingDeposits(tontineId),
+    ]);
+  }
+
+  void _resetDepositsState() {
+    _deposits = [];
+    _pendingDeposits = [];
+    _chartDeposits = [];
+    _depositsPage = 0;
+    _hasMoreDeposits = false;
+    _loadingDeposits = false;
+    _loadingMoreDeposits = false;
+    _totalDeposits = 0;
+    _depositsSearch = '';
   }
 
   Future<void> getCurrentTontine() async {
@@ -171,7 +315,7 @@ class TontineProvider extends ChangeNotifier {
     );
     _currentTontine = null;
     _storage.remove(KEY_SELECTED_TONTINE_ID);
-    _deposits = [];
+    _resetDepositsState();
     _auctions = [];
     _distributions = [];
     _contributions = [];
@@ -378,25 +522,26 @@ class TontineProvider extends ChangeNotifier {
 
   Future<void> createDeposit(int tontineId, CreateDepositDto depositDto) async {
     await _tontineService.createDeposit(tontineId, depositDto);
+    await _reloadDepositsAfterMutation(tontineId);
   }
 
   Future<void> deleteDeposit(int tontineId, int depositId) async {
     await _tontineService.deleteDeposit(tontineId, depositId);
-    await loadDeposits(tontineId);
+    await _reloadDepositsAfterMutation(tontineId);
   }
 
   Future<void> updateDeposit(
       int tontineId, int depositId, CreateDepositDto depositDto) async {
     await _tontineService.updateDeposit(tontineId, depositId, depositDto);
-    await loadDeposits(tontineId);
+    await _reloadDepositsAfterMutation(tontineId);
   }
 
   Future<void> validateDeposit(
       int tontineId, int depositId, StatusDeposit status) async {
     try {
       await _tontineService.validateDeposit(tontineId, depositId, status);
-      await loadDeposits(tontineId);
-      await getCurrentTontine(); // Recharger les données de la tontine
+      await _reloadDepositsAfterMutation(tontineId);
+      await getCurrentTontine();
     } catch (e) {
       _logger.severe('Error validating deposit: $e');
       rethrow;

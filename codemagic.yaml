@@ -155,7 +155,6 @@ workflows:
         - app_store_connect
       flutter: 3.44.8
       xcode: latest
-      cocoapods: default
       ios_signing:
         distribution_type: app_store
         bundle_identifier: fr.devcoorp.thoua
@@ -163,9 +162,6 @@ workflows:
     scripts:
       - name: Récupération des dépendances
         script: flutter pub get
-
-      - name: Install pods
-        script: find . -name "Podfile" -execdir pod install \;
 
       - name: Set up code signing (génère export_options.plist)
         script: xcode-project use-profiles
@@ -228,7 +224,6 @@ workflows:
       flutter: 3.44.8
       java: 17
       xcode: latest
-      cocoapods: default
       android_signing:
         - tontine
       ios_signing:
@@ -241,9 +236,6 @@ workflows:
 
       - name: Récupération des dépendances
         script: flutter pub get
-
-      - name: Install pods
-        script: find . -name "Podfile" -execdir pod install \;
 
       - name: Set up code signing iOS (ad hoc)
         script: xcode-project use-profiles

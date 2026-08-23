@@ -29,6 +29,55 @@ import 'package:path_provider/path_provider.dart';
 import '../../services/websocket_service.dart';
 import '../../providers/models/closure_summary.dart';
 
+class PaginatedDeposits {
+  final List<Deposit> items;
+  final int total;
+  final int page;
+  final int limit;
+  final bool hasMore;
+
+  const PaginatedDeposits({
+    required this.items,
+    required this.total,
+    required this.page,
+    required this.limit,
+    required this.hasMore,
+  });
+
+  factory PaginatedDeposits.fromResponse(dynamic decoded) {
+    if (decoded is List) {
+      final items = decoded
+          .map((json) => Deposit.fromJson(json as Map<String, dynamic>))
+          .toList();
+      return PaginatedDeposits(
+        items: items,
+        total: items.length,
+        page: 1,
+        limit: items.length,
+        hasMore: false,
+      );
+    }
+    if (decoded is Map<String, dynamic>) {
+      final rawItems = decoded['items'];
+      final items = rawItems is List
+          ? rawItems
+              .map((json) => Deposit.fromJson(json as Map<String, dynamic>))
+              .toList()
+          : <Deposit>[];
+      return PaginatedDeposits(
+        items: items,
+        total: (decoded['total'] as num?)?.toInt() ?? items.length,
+        page: (decoded['page'] as num?)?.toInt() ?? 1,
+        limit: (decoded['limit'] as num?)?.toInt() ?? items.length,
+        hasMore: decoded['hasMore'] as bool? ?? false,
+      );
+    }
+    throw FormatException(
+      'Réponse deposits inattendue: ${decoded.runtimeType}',
+    );
+  }
+}
+
 class TontineService {
   static final _logger = Logger('TontineService');
   final client = ApiClient.client;
@@ -393,17 +442,35 @@ class TontineService {
     return [];
   }
 
-  Future<List<Deposit>> getDeposits(int tontineId) async {
+  Future<PaginatedDeposits> getDeposits(
+    int tontineId, {
+    int page = 1,
+    int limit = 20,
+    String? status,
+    String? search,
+  }) async {
     final token = TokenStorage.instance.token;
-    final response = await client
-        .get(Uri.parse('$urlApi/tontine/$tontineId/deposit'), headers: {
+    final queryParams = <String, String>{
+      'page': page.toString(),
+      'limit': limit.toString(),
+      if (status != null && status.isNotEmpty) 'status': status,
+      if (search != null && search.isNotEmpty) 'search': search,
+    };
+    final uri = Uri.parse('$urlApi/tontine/$tontineId/deposit')
+        .replace(queryParameters: queryParams);
+    final response = await client.get(uri, headers: {
       'Authorization': 'Bearer $token',
     });
     if (response.statusCode == 200) {
-      final List<dynamic> data = jsonDecode(response.body);
-      return data.map((json) => Deposit.fromJson(json)).toList();
+      return PaginatedDeposits.fromResponse(jsonDecode(response.body));
     }
-    return [];
+    return const PaginatedDeposits(
+      items: [],
+      total: 0,
+      page: 1,
+      limit: 20,
+      hasMore: false,
+    );
   }
 
   // Deposits

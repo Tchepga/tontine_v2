@@ -9,6 +9,8 @@ class MemberContribution {
   final double totalRejected;
   final int depositCount;
   final DateTime? lastDeposit;
+  final double sharePercent;
+  final double shareAmount;
 
   MemberContribution({
     required this.memberId,
@@ -20,6 +22,8 @@ class MemberContribution {
     required this.totalRejected,
     required this.depositCount,
     this.lastDeposit,
+    this.sharePercent = 0,
+    this.shareAmount = 0,
   });
 
   factory MemberContribution.fromJson(Map<String, dynamic> json) {
@@ -35,8 +39,17 @@ class MemberContribution {
       lastDeposit: json['lastDeposit'] != null
           ? DateTime.parse(json['lastDeposit'])
           : null,
+      sharePercent: (json['sharePercent'] as num?)?.toDouble() ?? 0,
+      shareAmount: (json['shareAmount'] as num?)?.toDouble() ?? 0,
     );
   }
 
   String get fullName => '$firstname $lastname'.trim();
+
+  String get displayName {
+    final name = fullName;
+    if (name.isNotEmpty) return name;
+    if (username.isNotEmpty) return username;
+    return 'Membre #$memberId';
+  }
 }

@@ -45,10 +45,7 @@ echo -e "${YELLOW}Suppression des builds iOS...${NC}"
 rm -rf build/ios
 rm -rf ios/build
 rm -rf ios/DerivedData
-rm -rf ios/Pods
-rm -rf ios/.symlinks
-rm -rf ios/Flutter/Flutter.framework
-rm -rf ios/Flutter/Flutter.podspec
+rm -rf ios/Flutter/ephemeral
 
 # Nettoyer Xcode
 if [ "$CLEAN_ALL" = true ]; then
@@ -58,22 +55,9 @@ if [ "$CLEAN_ALL" = true ]; then
     echo -e "${GREEN}Cache Xcode nettoyé${NC}"
 fi
 
-# Nettoyer CocoaPods
-if [ -f "ios/Podfile.lock" ]; then
-    echo -e "${YELLOW}Suppression du lock CocoaPods...${NC}"
-    rm -f ios/Podfile.lock
-fi
-
-# Réinstaller les pods si CocoaPods est disponible
-if command -v pod &> /dev/null && [ "$CLEAN_ALL" = false ]; then
-    echo -e "${YELLOW}Réinstallation des dépendances CocoaPods...${NC}"
-    cd ios
-    pod install
-    cd ..
-fi
-
 echo ""
 echo -e "${GREEN}=== Nettoyage terminé ===${NC}"
+echo -e "${YELLOW}Relancez: flutter pub get puis flutter run${NC}"
 if [ "$CLEAN_ALL" = false ]; then
     echo -e "${YELLOW}Pour un nettoyage complet (incluant le cache Xcode), utilisez: $0 --all${NC}"
 fi

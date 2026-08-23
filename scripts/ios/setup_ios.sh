@@ -66,35 +66,11 @@ fi
 echo -e "${YELLOW}Exécution du premier lancement de Xcode...${NC}"
 sudo xcodebuild -runFirstLaunch 2>/dev/null || echo -e "${YELLOW}Premier lancement déjà effectué${NC}"
 
-# 2. Vérifier et installer CocoaPods
+# 2. Dépendances iOS (Swift Package Manager — plus de CocoaPods)
 echo ""
-echo -e "${BLUE}2. Vérification de CocoaPods...${NC}"
-
-if command -v pod &> /dev/null; then
-    POD_VERSION=$(pod --version)
-    echo -e "${GREEN}CocoaPods est installé (version $POD_VERSION)${NC}"
-else
-    echo -e "${YELLOW}CocoaPods n'est pas installé${NC}"
-    echo -e "${YELLOW}Installation de CocoaPods...${NC}"
-    
-    # Vérifier si Ruby est disponible
-    if ! command -v gem &> /dev/null; then
-        echo -e "${RED}Ruby n'est pas installé. CocoaPods nécessite Ruby.${NC}"
-        echo -e "${YELLOW}Ruby devrait être installé avec macOS. Vérifiez votre installation.${NC}"
-        exit 1
-    fi
-    
-    # Installer CocoaPods
-    sudo gem install cocoapods
-    
-    if [ $? -eq 0 ]; then
-        echo -e "${GREEN}CocoaPods installé avec succès${NC}"
-    else
-        echo -e "${RED}Erreur lors de l'installation de CocoaPods${NC}"
-        echo -e "${YELLOW}Essayez manuellement: sudo gem install cocoapods${NC}"
-        exit 1
-    fi
-fi
+echo -e "${BLUE}2. Dépendances iOS (SPM)...${NC}"
+echo -e "${GREEN}Les plugins Flutter iOS utilisent Swift Package Manager (Flutter 3.44+).${NC}"
+echo -e "${GREEN}Aucun 'pod install' requis.${NC}"
 
 # 3. Vérifier Flutter
 echo ""
@@ -122,7 +98,7 @@ echo -e "${GREEN}=== Configuration terminée ===${NC}"
 echo ""
 echo -e "${YELLOW}Prochaines étapes:${NC}"
 echo "1. Si des problèmes persistent, suivez les instructions de 'flutter doctor'"
-echo "2. Installez les dépendances du projet:"
-echo "   cd ios && pod install && cd .."
+echo "2. Installez les dépendances Flutter:"
+echo "   flutter pub get"
 echo "3. Testez avec: ./scripts/ios/run_simulator.sh --list"
 echo ""

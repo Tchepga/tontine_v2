@@ -61,22 +61,9 @@ if [ "$CLEAN_BUILD" = true ]; then
     flutter clean
 fi
 
-# Installer les dépendances
-echo -e "${YELLOW}Installation des dépendances...${NC}"
+# Installer les dépendances Flutter (plugins iOS via Swift Package Manager)
+echo -e "${YELLOW}Installation des dépendances Flutter...${NC}"
 flutter pub get
-
-# Aller dans le répertoire iOS et installer les pods
-echo -e "${YELLOW}Installation des dépendances CocoaPods...${NC}"
-cd ios
-if command -v pod &> /dev/null; then
-    pod install
-else
-    echo -e "${YELLOW}Pod n'est pas installé, utilisation de pod via bundle si disponible...${NC}"
-    if [ -f "Podfile" ]; then
-        bundle exec pod install 2>/dev/null || echo -e "${YELLOW}Bundle pod non disponible, continuons...${NC}"
-    fi
-fi
-cd ..
 
 # Préparer le projet Flutter (générer les fichiers nécessaires)
 # Cette étape peut échouer mais ce n'est pas critique si on utilise directement xcodebuild
@@ -97,7 +84,7 @@ if [ "$BUILD_SIMULATOR" = true ]; then
     # Vérifier que le workspace existe
     if [ ! -d "ios/Runner.xcworkspace" ]; then
         echo -e "${RED}Erreur: ios/Runner.xcworkspace n'existe pas${NC}"
-        echo -e "${YELLOW}Assurez-vous d'avoir exécuté 'pod install' dans le répertoire ios${NC}"
+        echo -e "${YELLOW}Assurez-vous d'avoir exécuté 'flutter pub get'${NC}"
         exit 1
     fi
     
@@ -163,7 +150,7 @@ else
     # Vérifier que le workspace existe
     if [ ! -d "ios/Runner.xcworkspace" ]; then
         echo -e "${RED}Erreur: ios/Runner.xcworkspace n'existe pas${NC}"
-        echo -e "${YELLOW}Assurez-vous d'avoir exécuté 'pod install' dans le répertoire ios${NC}"
+        echo -e "${YELLOW}Assurez-vous d'avoir exécuté 'flutter pub get'${NC}"
         exit 1
     fi
     
