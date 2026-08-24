@@ -226,7 +226,7 @@ class MemberService {
   Future<RegisterPresidentResult> registerPresident(
       CreateMemberDto memberDto) async {
     try {
-      final response = await ApiClient.fastClient.post(
+      final response = await ApiClient.longClient.post(
         Uri.parse('$urlApi/member/register-president'),
         body: jsonEncode(memberDto.toJson()),
         headers: {
@@ -244,6 +244,10 @@ class MemberService {
           if (body is Map) {
             if (body['message'] is String) {
               errorCode = body['message'] as String;
+            } else if (body['message'] is List) {
+              final joined =
+                  (body['message'] as List).whereType<String>().join(' ');
+              errorCode = joined.isEmpty ? null : joined;
             }
             if (body['username'] is String) {
               username = body['username'] as String;
@@ -335,7 +339,7 @@ class MemberService {
 
   Future<void> forgotPassword(ForgotPasswordDto forgotPasswordDto) async {
     try {
-      final response = await client.post(
+      final response = await ApiClient.longClient.post(
         Uri.parse('$urlApi/auth/forgot-password'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(forgotPasswordDto.toJson()),
@@ -364,7 +368,7 @@ class MemberService {
         body: jsonEncode(resetPasswordDto.toJson()),
       );
 
-      if (response.statusCode != 200) {
+      if (response.statusCode != 200 && response.statusCode != 201) {
         final errorBody = response.body;
         throw Exception('Erreur lors de la réinitialisation: $errorBody');
       }

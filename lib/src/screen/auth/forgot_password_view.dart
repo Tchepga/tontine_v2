@@ -268,7 +268,7 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
 
       try {
         final forgotPasswordDto = ForgotPasswordDto(
-          email: _emailController.text,
+          email: _emailController.text.trim(),
         );
 
         await Provider.of<AuthProvider>(context, listen: false)
@@ -280,7 +280,7 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
-              'Un email de réinitialisation a été envoyé à votre adresse',
+              'Si un compte existe pour cet identifiant, un email de réinitialisation a été envoyé.',
             ),
             backgroundColor: AppColors.success,
             duration: Duration(seconds: 5),

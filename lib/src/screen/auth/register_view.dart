@@ -693,10 +693,13 @@ class _RegisterViewState extends State<RegisterView> {
               ),
             );
           } else if (result.statusCode == 400) {
+            final detail = result.errorCode;
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
+              SnackBar(
                 content: Text(
-                  'Informations invalides. Vérifiez les champs du formulaire.',
+                  (detail != null && detail.isNotEmpty)
+                      ? detail
+                      : 'Informations invalides. Vérifiez les champs du formulaire.',
                 ),
                 backgroundColor: AppColors.error,
               ),

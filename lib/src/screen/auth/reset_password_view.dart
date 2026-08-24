@@ -1,16 +1,20 @@
 import 'package:flutter/material.dart';
-import '../../services/token_storage.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/responsive_helper.dart';
+import '../login_view.dart';
 import '../services/dto/password_dto.dart';
+import 'forgot_password_view.dart';
 
 class ResetPasswordView extends StatefulWidget {
   static const routeName = '/reset-password';
 
+  final String? token;
+
   const ResetPasswordView({
     super.key,
+    this.token,
   });
 
   @override
@@ -34,14 +38,13 @@ class _ResetPasswordViewState extends State<ResetPasswordView> {
 
   @override
   Widget build(BuildContext context) {
-    // Vérifier si un token existe dans le storage
-    final token = TokenStorage.instance.token;
-    if (token == null) {
-      // Pas de token, rediriger vers la connexion
+    final token = widget.token;
+    if (token == null || token.isEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
         Navigator.pushNamedAndRemoveUntil(
           context,
-          '/login',
+          ForgotPasswordView.routeName,
           (route) => false,
         );
       });
@@ -160,8 +163,8 @@ class _ResetPasswordViewState extends State<ResetPasswordView> {
                               if (value == null || value.isEmpty) {
                                 return 'Le nouveau mot de passe est requis';
                               }
-                              if (value.length < 6) {
-                                return 'Le mot de passe doit contenir au moins 6 caractères';
+                              if (value.length < 8) {
+                                return 'Le mot de passe doit contenir au moins 8 caractères';
                               }
                               return null;
                             },
@@ -393,10 +396,8 @@ class _ResetPasswordViewState extends State<ResetPasswordView> {
       });
 
       try {
-        // Récupérer le token depuis le storage
-        final token = TokenStorage.instance.token;
-
-        if (token == null) {
+        final token = widget.token;
+        if (token == null || token.isEmpty) {
           throw Exception('Token de réinitialisation non trouvé');
         }
 
@@ -425,7 +426,7 @@ class _ResetPasswordViewState extends State<ResetPasswordView> {
         // Rediriger vers l'écran de connexion
         Navigator.pushNamedAndRemoveUntil(
           context,
-          '/login',
+          LoginView.routeName,
           (route) => false,
         );
       } catch (e) {

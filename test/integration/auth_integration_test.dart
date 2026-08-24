@@ -132,6 +132,47 @@ void main() {
       expect(response.statusCode, isNot(200));
       expect(response.statusCode, isNot(201));
     });
+
+    test('reset-password refuse confirmPassword (contrat mobile corrigé)', () async {
+      if (!ensurePublicApi()) return;
+      final client = IntegrationHttpClient();
+      addTearDown(client.dispose);
+
+      final response = await client.post(
+        MobileRoutes.resetPassword(),
+        {
+          'token': 'invalid-it-token',
+          'newPassword': 'NewPass123!',
+          'confirmPassword': 'NewPass123!',
+        },
+      );
+
+      expect(
+        response.statusCode,
+        400,
+        reason:
+            'L\'API refuse confirmPassword (forbidNonWhitelisted) : '
+            '${response.body}',
+      );
+    });
+
+    test('forgot-password refuse usernameOrEmail (contrat mobile corrigé)', () async {
+      if (!ensurePublicApi()) return;
+      final client = IntegrationHttpClient();
+      addTearDown(client.dispose);
+
+      final response = await client.post(
+        MobileRoutes.forgotPassword(),
+        {'usernameOrEmail': 'nobody@example.test'},
+      );
+
+      expect(
+        response.statusCode,
+        400,
+        reason:
+            'L\'API attend username, pas usernameOrEmail : ${response.body}',
+      );
+    });
   });
 
   group('Full — Inscription président', () {

@@ -114,13 +114,15 @@ class ApiClient {
 
   static InterceptedClient getClientForUrl(String url) {
     if (url.contains('/auth/login') ||
-        url.contains('/auth/verify') ||
-        url.contains('/auth/register') ||
-        url.contains('/member/register-president')) {
+        url.contains('/auth/verify')) {
       return fastClient;
     }
 
-    if (url.contains('/rapport') ||
+    if (url.contains('/auth/register') ||
+        url.contains('/member/register-president') ||
+        url.contains('/auth/forgot-password') ||
+        url.contains('/auth/reset-password') ||
+        url.contains('/rapport') ||
         url.contains('/download') ||
         url.contains('/upload') ||
         url.contains('/export') ||

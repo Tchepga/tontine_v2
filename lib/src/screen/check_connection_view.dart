@@ -3,6 +3,8 @@ import 'package:logging/logging.dart';
 import 'services/app_service.dart';
 import 'selected_language_view.dart';
 import '../utils/responsive_helper.dart';
+import '../utils/auth_deep_link.dart';
+import 'auth/reset_password_view.dart';
 
 class CheckConnectionView extends StatefulWidget {
   static const routeName = '/check-connection';
@@ -29,7 +31,18 @@ class _CheckConnectionViewState extends State<CheckConnectionView> {
       final isAvailable = await _appService.checkServerAvailability();
       if (mounted) {
         if (isAvailable) {
-          Navigator.of(context).pushReplacementNamed(SelectedLanguageView.routeName);
+          final resetToken = AuthDeepLink.resetTokenFromLocation(
+            WidgetsBinding.instance.platformDispatcher.defaultRouteName,
+          );
+          if (resetToken != null) {
+            Navigator.of(context).pushReplacementNamed(
+              ResetPasswordView.routeName,
+              arguments: resetToken,
+            );
+          } else {
+            Navigator.of(context)
+                .pushReplacementNamed(SelectedLanguageView.routeName);
+          }
         } else {
           setState(() {
             _hasError = true;

@@ -33,6 +33,7 @@ Suite HTTP qui vérifie que **les fonctionnalités critiques** répondent correc
 | Inscription (validation) | `POST /api/member/register-president` incomplet → 400 |
 | Mot de passe oublié (inconnu) | `POST /api/auth/forgot-password` `{username}` → 200/201 (message générique) |
 | Reset token invalide | `POST /api/auth/reset-password` `{token,newPassword}` → 400 |
+| Champs interdits | `usernameOrEmail` / `confirmPassword` → 400 |
 
 ### Full (écriture + cleanup)
 
@@ -50,6 +51,8 @@ Les payloads sont centralisés dans `test/integration/mobile_payloads.dart` (mir
 ### Tests unitaires contrat (sans API)
 
 `test/integration/mobile_payloads_test.dart` — vérifie la forme JSON en CI à chaque run.
+
+Lien de reset attendu par l’app : `thoua://reset-password?token=…` (le JWT de session n’est **pas** le token de reset).
 
 ---
 

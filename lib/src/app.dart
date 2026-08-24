@@ -28,6 +28,7 @@ import 'package:tontine_v2/src/services/local_notification_service.dart';
 import 'screen/member/member_view.dart';
 import 'localization/app_localizations.dart';
 import 'theme/app_theme.dart';
+import 'utils/auth_deep_link.dart';
 
 /// The Widget that configures your application.
 class MyApp extends StatefulWidget {
@@ -105,8 +106,17 @@ class _MyAppState extends State<MyApp> {
             return MaterialPageRoute<void>(
               settings: routeSettings,
               builder: (BuildContext context) {
+                final resetToken = AuthDeepLink.resetTokenFromRouteSettings(
+                  RouteArgs(
+                    name: routeSettings.name,
+                    arguments: routeSettings.arguments,
+                  ),
+                );
+                final routeName = resetToken != null
+                    ? ResetPasswordView.routeName
+                    : routeSettings.name;
                 final Widget page;
-                switch (routeSettings.name) {
+                switch (routeName) {
                   case SettingsView.routeName:
                     page = SettingsView(controller: widget.settingsController);
                     break;
@@ -159,7 +169,7 @@ class _MyAppState extends State<MyApp> {
                     page = const ForgotPasswordView();
                     break;
                   case ResetPasswordView.routeName:
-                    page = const ResetPasswordView();
+                    page = ResetPasswordView(token: resetToken);
                     break;
                   case FeaturesExplanationView.routeName:
                     page = const FeaturesExplanationView();
@@ -167,7 +177,7 @@ class _MyAppState extends State<MyApp> {
                   default:
                     page = const SplashView();
                 }
-                return _maybeProtect(routeSettings.name, page);
+                return _maybeProtect(routeName, page);
               },
             );
           },
