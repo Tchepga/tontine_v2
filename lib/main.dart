@@ -83,6 +83,16 @@ Future<void> main() async {
         options.environment = _env;
         options.tracesSampleRate = kReleaseMode ? 0.2 : 1.0;
         options.sendDefaultPii = false;
+        options.enableLogs = true;
+        if (kReleaseMode) {
+          options.beforeSendLog = (log) {
+            if (log.level == SentryLogLevel.trace ||
+                log.level == SentryLogLevel.debug) {
+              return null;
+            }
+            return log;
+          };
+        }
       },
       appRunner: startApp,
     );

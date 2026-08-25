@@ -3,6 +3,7 @@ import 'dart:convert';
 import '../../providers/models/member.dart';
 import '../../providers/models/enum/role.dart';
 import '../../services/token_storage.dart';
+import '../../services/auth_email_telemetry.dart';
 import 'dto/member_dto.dart';
 import 'dto/password_dto.dart';
 import 'dto/register_president_result.dart';
@@ -225,6 +226,12 @@ class MemberService {
 
   Future<RegisterPresidentResult> registerPresident(
       CreateMemberDto memberDto) async {
+    final started = DateTime.now();
+    int httpStatus = 0;
+    String? errorCode;
+    String? username;
+    bool? emailSentFlag;
+    String? errorType;
     try {
       final response = await ApiClient.longClient.post(
         Uri.parse('$urlApi/member/register-president'),
@@ -234,35 +241,18 @@ class MemberService {
         },
       );
 
-      String? errorCode;
-      String? username;
-      var emailSent = false;
-
-      if (response.body.isNotEmpty) {
-        try {
-          final body = jsonDecode(response.body);
-          if (body is Map) {
-            if (body['message'] is String) {
-              errorCode = body['message'] as String;
-            } else if (body['message'] is List) {
-              final joined =
-                  (body['message'] as List).whereType<String>().join(' ');
-              errorCode = joined.isEmpty ? null : joined;
-            }
-            if (body['username'] is String) {
-              username = body['username'] as String;
-            } else {
-              final user = body['user'];
-              if (user is Map && user['username'] is String) {
-                username = user['username'] as String;
-              }
-            }
-            if (body['emailSent'] == true) {
-              emailSent = true;
-            }
+      httpStatus = response.statusCode;
+      final body = AuthEmailTelemetry.parseBody(response.body);
+      errorCode = AuthEmailTelemetry.apiMessageOf(body);
+      emailSentFlag = AuthEmailTelemetry.emailSentOf(body);
+      if (body != null) {
+        if (body['username'] is String) {
+          username = body['username'] as String;
+        } else {
+          final user = body['user'];
+          if (user is Map && user['username'] is String) {
+            username = user['username'] as String;
           }
-        } catch (_) {
-          // Corps non JSON, ignorer
         }
       }
 
@@ -276,11 +266,23 @@ class MemberService {
         statusCode: response.statusCode,
         errorCode: errorCode,
         username: username,
-        emailSent: emailSent,
+        emailSent: emailSentFlag == true,
       );
     } catch (e) {
+      errorType = e.runtimeType.toString();
       _logger.severe('Error during registration: $e');
       return const RegisterPresidentResult(statusCode: 500);
+    } finally {
+      await AuthEmailTelemetry.record(
+        flow: AuthEmailTelemetry.registerPresidentFlow,
+        identifier: memberDto.email ??
+            '${memberDto.firstname}.${memberDto.lastname}',
+        httpStatus: httpStatus == 0 && errorType != null ? 500 : httpStatus,
+        apiMessage: errorCode,
+        emailSent: emailSentFlag,
+        durationMs: DateTime.now().difference(started).inMilliseconds,
+        errorType: errorType,
+      );
     }
   }
 
@@ -338,12 +340,22 @@ class MemberService {
   }
 
   Future<void> forgotPassword(ForgotPasswordDto forgotPasswordDto) async {
+    final started = DateTime.now();
+    int httpStatus = 0;
+    String? apiMessage;
+    bool? emailSentFlag;
+    String? errorType;
     try {
       final response = await ApiClient.longClient.post(
         Uri.parse('$urlApi/auth/forgot-password'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(forgotPasswordDto.toJson()),
       );
+
+      httpStatus = response.statusCode;
+      final body = AuthEmailTelemetry.parseBody(response.body);
+      apiMessage = AuthEmailTelemetry.apiMessageOf(body);
+      emailSentFlag = AuthEmailTelemetry.emailSentOf(body);
 
       if (response.statusCode == 404) {
         throw Exception('Aucun compte trouvé avec cet email ou username.');
@@ -355,8 +367,19 @@ class MemberService {
             'Erreur lors de la demande de réinitialisation: $errorBody');
       }
     } catch (e) {
+      errorType = e.runtimeType.toString();
       _logger.severe('Error requesting password reset: $e');
       rethrow;
+    } finally {
+      await AuthEmailTelemetry.record(
+        flow: AuthEmailTelemetry.forgotPasswordFlow,
+        identifier: forgotPasswordDto.email,
+        httpStatus: httpStatus,
+        apiMessage: apiMessage,
+        emailSent: emailSentFlag,
+        durationMs: DateTime.now().difference(started).inMilliseconds,
+        errorType: errorType,
+      );
     }
   }
 
