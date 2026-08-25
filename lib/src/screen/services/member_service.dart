@@ -333,7 +333,10 @@ class MemberService {
     }
   }
 
-  Future<void> forgotPassword(ForgotPasswordDto forgotPasswordDto) async {
+  static const String _forgotPasswordGenericMessage =
+      'Si un compte existe pour cet identifiant, un email de réinitialisation a été envoyé.';
+
+  Future<String> forgotPassword(ForgotPasswordDto forgotPasswordDto) async {
     try {
       final response = await client.post(
         Uri.parse('$urlApi/auth/forgot-password'),
@@ -341,14 +344,23 @@ class MemberService {
         body: jsonEncode(forgotPasswordDto.toJson()),
       );
 
-      if (response.statusCode == 404) {
-        throw Exception('Aucun compte trouvé avec cet email ou username.');
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        if (response.body.isNotEmpty) {
+          try {
+            final data = jsonDecode(response.body);
+            if (data is Map && data['message'] is String) {
+              return data['message'] as String;
+            }
+          } catch (_) {
+            // Corps non JSON, message générique
+          }
+        }
+        return _forgotPasswordGenericMessage;
       }
-      if (response.statusCode != 200 && response.statusCode != 201) {
-        final errorBody = response.body;
-        throw Exception(
-            'Erreur lors de la demande de réinitialisation: $errorBody');
-      }
+
+      final errorBody = response.body;
+      throw Exception(
+          'Erreur lors de la demande de réinitialisation: $errorBody');
     } catch (e) {
       _logger.severe('Error requesting password reset: $e');
       rethrow;

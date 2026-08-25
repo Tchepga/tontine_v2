@@ -211,12 +211,12 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> forgotPassword(ForgotPasswordDto forgotPasswordDto) async {
+  Future<String> forgotPassword(ForgotPasswordDto forgotPasswordDto) async {
     _isLoading = true;
     notifyListeners();
 
     try {
-      await _memberService.forgotPassword(forgotPasswordDto);
+      return await _memberService.forgotPassword(forgotPasswordDto);
     } catch (e) {
       logger.severe('Error requesting password reset: $e');
       rethrow;

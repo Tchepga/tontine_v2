@@ -19,15 +19,15 @@ class ChangePasswordDto {
 }
 
 class ForgotPasswordDto {
-  final String email;
+  final String usernameOrEmail;
 
   ForgotPasswordDto({
-    required this.email,
+    required this.usernameOrEmail,
   });
 
   Map<String, dynamic> toJson() {
     return {
-      'usernameOrEmail': email,
+      'usernameOrEmail': usernameOrEmail,
     };
   }
 }
@@ -47,7 +47,6 @@ class ResetPasswordDto {
     return {
       'token': token,
       'newPassword': newPassword,
-      'confirmPassword': confirmPassword,
     };
   }
 }

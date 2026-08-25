@@ -272,49 +272,32 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
 
       try {
         final forgotPasswordDto = ForgotPasswordDto(
-          email: _emailController.text,
+          usernameOrEmail: _emailController.text.trim(),
         );
 
-        await Provider.of<AuthProvider>(context, listen: false)
+        final message = await Provider.of<AuthProvider>(context, listen: false)
             .forgotPassword(forgotPasswordDto);
 
         if (!mounted) return;
 
-        // Afficher un message de succès
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Un email de réinitialisation a été envoyé à votre adresse',
-            ),
+          SnackBar(
+            content: Text(message),
             backgroundColor: AppColors.success,
-            duration: Duration(seconds: 5),
+            duration: const Duration(seconds: 5),
           ),
         );
 
-        // Retourner à l'écran de connexion
         Navigator.pop(context);
       } catch (e) {
         if (!mounted) return;
 
-        // Détecter l'erreur 404 (compte non trouvé)
-        final errorMessage = e.toString();
-        if (errorMessage
-            .contains('Aucun compte trouvé avec cet email ou username.')) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Aucun compte trouvé avec cet email ou username.'),
-              backgroundColor: AppColors.error,
-              duration: Duration(seconds: 4),
-            ),
-          );
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Erreur: ${e.toString()}'),
-              backgroundColor: AppColors.error,
-            ),
-          );
-        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erreur: ${e.toString()}'),
+            backgroundColor: AppColors.error,
+          ),
+        );
       } finally {
         if (mounted) {
           setState(() {
