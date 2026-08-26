@@ -47,7 +47,17 @@ class AuthInterceptor implements HttpInterceptor {
     return request;
   }
 
+  /// POST /api/tontine (création) ne doit pas envoyer un tontine-id stale.
+  static bool isCreateTontineRequest(String method, Uri url) {
+    if (method.toUpperCase() != 'POST') return false;
+    final segments = url.pathSegments.where((s) => s.isNotEmpty).toList();
+    return segments.isNotEmpty && segments.last == 'tontine';
+  }
+
   void _attachTontineIdHeader(BaseRequest request) {
+    if (isCreateTontineRequest(request.method, request.url)) {
+      return;
+    }
     final selectedTontineId =
         _storage.read(TontineProvider.KEY_SELECTED_TONTINE_ID);
     if (selectedTontineId != null) {

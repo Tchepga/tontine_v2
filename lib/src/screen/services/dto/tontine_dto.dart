@@ -57,7 +57,8 @@ class CreateConfigTontineDto {
       'minLoanAmount': minLoanAmount,
       'countPersonPerMovement': countPersonPerMovement,
       'movementType': movementType.toString().split('.').last,
-      'rateMaps': rateMaps.map((rateMap) => rateMap.toJson()).toList(),
+      if (rateMaps.isNotEmpty)
+        'rateMaps': rateMaps.map((rateMap) => rateMap.toJson()).toList(),
       'countMaxMember': countMaxMember,
       'systemType': systemType.value,
       if (parts != null) 'parts': parts!.map((part) => part.toJson()).toList(),
@@ -76,16 +77,19 @@ class CreateTontineDto {
   CreateTontineDto({
     required this.title,
     this.legacy,
-    required this.memberDtos,
+    this.memberDtos = const [],
     required this.config,
     required this.currency,
   });
 
   Map<String, dynamic> toJson() {
+    final trimmedLegacy = legacy?.trim();
     return {
-      'title': title,
-      if (legacy != null) 'legacy': legacy,
-      'members': memberDtos.map((memberDto) => memberDto.toJson()).toList(),
+      'title': title.trim(),
+      if (trimmedLegacy != null && trimmedLegacy.isNotEmpty)
+        'legacy': trimmedLegacy,
+      if (memberDtos.isNotEmpty)
+        'members': memberDtos.map((memberDto) => memberDto.toJson()).toList(),
       'config': config.toJson(),
       'currency': currency.toString().split('.').last,
     };

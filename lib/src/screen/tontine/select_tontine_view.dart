@@ -6,18 +6,14 @@ import '../../providers/auth_provider.dart';
 import '../../providers/event_provider.dart';
 import '../../providers/loan_provider.dart';
 import '../../providers/notification_provider.dart';
-import '../../providers/models/enum/currency.dart';
-import '../../providers/models/enum/loop_period.dart';
-import '../../providers/models/enum/type_mouvement.dart';
 import '../../providers/models/enum/tontine_status.dart';
 import '../../providers/tontine_provider.dart';
 import '../../widgets/status_badge.dart';
 import '../../theme/app_theme.dart';
 import '../dashboard_view.dart';
 import '../login_view.dart';
-import '../services/dto/member_dto.dart';
-import '../services/dto/tontine_dto.dart';
 import '../services/member_service.dart';
+import 'create_tontine_view.dart';
 
 class SelectTontineView extends StatefulWidget {
   static const routeName = '/select-tontine';
@@ -73,327 +69,14 @@ class _SelectTontineViewState extends State<SelectTontineView> {
     }
   }
 
-  void _showCreateTontineDialog(BuildContext context) {
-    final formKey = GlobalKey<FormState>();
-    final titleController = TextEditingController();
-    final legacyController = TextEditingController();
-    final loanRateController = TextEditingController(text: '2');
-    final loanDurationController = TextEditingController(text: '30');
-    final minLoanAmountController = TextEditingController(text: '100');
-    final maxMembersController = TextEditingController(text: '12');
-    final countPersonPerMovementController = TextEditingController(text: '1');
-
-    LoopPeriod selectedPeriod = LoopPeriod.MONTHLY;
-    MovementType selectedMovementType = MovementType.ROTATIVE;
-    Currency selectedCurrency = Currency.EUR;
-
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => Scaffold(
-          appBar: AppBar(
-            title: const Text('Nouvelle tontine'),
-            leading: IconButton(
-              icon: const Icon(Icons.close),
-              onPressed: () => Navigator.pop(context),
-            ),
-          ),
-          body: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Form(
-                key: formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Informations générales',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            TextFormField(
-                              controller: titleController,
-                              decoration: const InputDecoration(
-                                labelText: 'Nom de la tontine*',
-                                border: OutlineInputBorder(),
-                              ),
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Le nom est requis';
-                                }
-                                return null;
-                              },
-                            ),
-                            const SizedBox(height: 16),
-                            TextFormField(
-                              controller: legacyController,
-                              decoration: const InputDecoration(
-                                labelText: 'Description',
-                                border: OutlineInputBorder(),
-                              ),
-                              maxLines: 2,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Configuration des prêts',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            TextFormField(
-                              controller: loanRateController,
-                              decoration: const InputDecoration(
-                                labelText: 'Taux de prêt (%)*',
-                                border: OutlineInputBorder(),
-                              ),
-                              keyboardType: TextInputType.number,
-                              validator: (value) => _validateNumber(value),
-                            ),
-                            const SizedBox(height: 16),
-                            TextFormField(
-                              controller: loanDurationController,
-                              decoration: const InputDecoration(
-                                labelText: 'Durée de prêt (jours)*',
-                                border: OutlineInputBorder(),
-                              ),
-                              keyboardType: TextInputType.number,
-                              validator: (value) => _validateInteger(value),
-                            ),
-                            const SizedBox(height: 16),
-                            TextFormField(
-                              controller: minLoanAmountController,
-                              decoration: const InputDecoration(
-                                labelText: 'Montant minimum de prêt*',
-                                border: OutlineInputBorder(),
-                              ),
-                              keyboardType: TextInputType.number,
-                              validator: (value) => _validateNumber(value),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Configuration générale',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            TextFormField(
-                              controller: maxMembersController,
-                              decoration: const InputDecoration(
-                                labelText: 'Nombre maximum de membres*',
-                                border: OutlineInputBorder(),
-                              ),
-                              keyboardType: TextInputType.number,
-                              validator: (value) => _validateInteger(value),
-                            ),
-                            const SizedBox(height: 16),
-                            TextFormField(
-                              controller: countPersonPerMovementController,
-                              decoration: const InputDecoration(
-                                labelText: 'Nombre de personnes par mouvement*',
-                                border: OutlineInputBorder(),
-                              ),
-                              keyboardType: TextInputType.number,
-                              validator: (value) => _validateInteger(value),
-                            ),
-                            const SizedBox(height: 16),
-                            DropdownButtonFormField<LoopPeriod>(
-                              initialValue: selectedPeriod,
-                              decoration: const InputDecoration(
-                                labelText: 'Période*',
-                                border: OutlineInputBorder(),
-                              ),
-                              items: LoopPeriod.values.map((period) {
-                                return DropdownMenuItem(
-                                  value: period,
-                                  child: Text(period.displayName),
-                                );
-                              }).toList(),
-                              onChanged: (value) {
-                                selectedPeriod = value!;
-                              },
-                            ),
-                            const SizedBox(height: 16),
-                            DropdownButtonFormField<MovementType>(
-                              initialValue: selectedMovementType,
-                              decoration: const InputDecoration(
-                                labelText: 'Type de mouvement*',
-                                border: OutlineInputBorder(),
-                              ),
-                              items: MovementType.values.map((type) {
-                                return DropdownMenuItem(
-                                  value: type,
-                                  child: Text(type.displayName),
-                                );
-                              }).toList(),
-                              onChanged: (value) {
-                                selectedMovementType = value!;
-                              },
-                            ),
-                            const SizedBox(height: 16),
-                            DropdownButtonFormField<Currency>(
-                              initialValue: selectedCurrency,
-                              decoration: const InputDecoration(
-                                labelText: 'Devise*',
-                                border: OutlineInputBorder(),
-                              ),
-                              items: Currency.values.map((currency) {
-                                return DropdownMenuItem(
-                                  value: currency,
-                                  child: Text(
-                                      '${currency.toString().split('.').last} (${currency.displayName})'),
-                                );
-                              }).toList(),
-                              onChanged: (value) {
-                                selectedCurrency = value!;
-                              },
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          bottomNavigationBar: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: FilledButton(
-              style: FilledButton.styleFrom(
-                backgroundColor: Colors.orange,
-                foregroundColor: Colors.white,
-              ),
-              onPressed: () => _handleCreateTontine(
-                context,
-                formKey,
-                titleController,
-                legacyController,
-                loanRateController,
-                loanDurationController,
-                minLoanAmountController,
-                maxMembersController,
-                countPersonPerMovementController,
-                selectedPeriod,
-                selectedMovementType,
-                selectedCurrency,
-              ),
-              child: const Text(
-                'Créer la tontine',
-              ),
-            ),
-          ),
-        ),
-      ),
+  Future<void> _openCreateTontine() async {
+    final created = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(builder: (_) => const CreateTontineView()),
     );
-  }
-
-  String? _validateNumber(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Ce champ est requis';
-    }
-    if (double.tryParse(value) == null) {
-      return 'Veuillez entrer un nombre valide';
-    }
-    return null;
-  }
-
-  String? _validateInteger(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Ce champ est requis';
-    }
-    if (int.tryParse(value) == null) {
-      return 'Veuillez entrer un nombre entier';
-    }
-    return null;
-  }
-
-  Future<void> _handleCreateTontine(
-    BuildContext context,
-    GlobalKey<FormState> formKey,
-    TextEditingController titleController,
-    TextEditingController legacyController,
-    TextEditingController loanRateController,
-    TextEditingController loanDurationController,
-    TextEditingController minLoanAmountController,
-    TextEditingController maxMembersController,
-    TextEditingController countPersonPerMovementController,
-    LoopPeriod selectedPeriod,
-    MovementType selectedMovementType,
-    Currency selectedCurrency,
-  ) async {
-    final currentUser =
-        Provider.of<AuthProvider>(context, listen: false).currentUser;
-    if (formKey.currentState!.validate() && currentUser != null) {
-      try {
-        final memberDto = CreateMemberDto(
-          username: currentUser.user!.username,
-          firstname: currentUser.firstname ?? '',
-          lastname: currentUser.lastname ?? '',
-          phone: currentUser.phone ?? '',
-          country: currentUser.country ?? '',
-        );
-
-        final tontineDto = CreateTontineDto(
-          title: titleController.text,
-          legacy: legacyController.text,
-          memberDtos: [memberDto],
-          config: CreateConfigTontineDto(
-            defaultLoanRate: double.parse(loanRateController.text),
-            defaultLoanDuration: int.parse(loanDurationController.text),
-            loopPeriod: selectedPeriod,
-            minLoanAmount: double.parse(minLoanAmountController.text),
-            countPersonPerMovement:
-                int.parse(countPersonPerMovementController.text),
-            movementType: selectedMovementType,
-            countMaxMember: int.parse(maxMembersController.text),
-          ),
-          currency: selectedCurrency,
-        );
-
-        await Provider.of<TontineProvider>(context, listen: false)
-            .createTontine(tontineDto);
-        if (!context.mounted) return;
-        Navigator.pop(context);
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Erreur lors de la création'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+    if (created == true && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Tontine créée')),
+      );
     }
   }
 
@@ -463,7 +146,7 @@ class _SelectTontineViewState extends State<SelectTontineView> {
                           ),
                           const SizedBox(height: 16),
                           FilledButton(
-                            onPressed: () => _showCreateTontineDialog(context),
+                            onPressed: _openCreateTontine,
                             style: FilledButton.styleFrom(
                               backgroundColor: Colors.white,
                               foregroundColor: Colors.orange,
@@ -556,7 +239,7 @@ class _SelectTontineViewState extends State<SelectTontineView> {
       ),
       floatingActionButton: FloatingActionButton(
         heroTag: 'select_tontine_fab',
-        onPressed: () => _showCreateTontineDialog(context),
+        onPressed: _openCreateTontine,
         child: const Icon(Icons.add),
       ),
     );

@@ -14,8 +14,8 @@ import '../../providers/models/enum/role.dart';
 import '../../providers/models/pot_distribution.dart';
 import '../../providers/models/member_contribution.dart';
 import '../../services/error_catchable.dart';
+import '../../services/api_error_message.dart';
 import 'dto/member_dto.dart';
-import 'middleware/interceptor_http.dart';
 import 'dto/tontine_dto.dart';
 import 'dto/deposit_dto.dart';
 import 'dto/rapport_dto.dart';
@@ -180,10 +180,17 @@ class TontineService {
         'Content-Type': 'application/json',
       },
     );
-    if (response.statusCode == 201) {
+    if (response.statusCode == 201 || response.statusCode == 200) {
       return Tontine.fromJson(jsonDecode(response.body));
     }
-    throw Exception('Failed to create tontine');
+    final message = parseApiErrorMessage(
+      response.body,
+      statusCode: response.statusCode,
+    );
+    _logger.severe(
+      'createTontine failed (${response.statusCode}): ${response.body}',
+    );
+    throw Exception(message);
   }
 
   Future<void> addMemberToTontine(
