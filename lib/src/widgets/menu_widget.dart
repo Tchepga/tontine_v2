@@ -14,11 +14,11 @@ import '../theme/app_theme.dart';
 
 /// Routes de la barre de navigation principale (5 onglets).
 const _routes = [
-  CashflowView.routeName,  // 0 - Banque
-  MemberView.routeName,    // 1 - Membres
+  CashflowView.routeName, // 0 - Banque
+  MemberView.routeName, // 1 - Membres
   DashboardView.routeName, // 2 - Dashboard (centre)
-  LoanView.routeName,      // 3 - Emprunts
-  AccountView.routeName,   // 4 - Compte
+  LoanView.routeName, // 3 - Emprunts
+  AccountView.routeName, // 4 - Compte
 ];
 
 int _routeToIndex(String? route) {
@@ -34,13 +34,17 @@ class MenuWidget extends StatelessWidget {
     final currentRoute = ModalRoute.of(context)?.settings.name;
     final selectedIndex = _routeToIndex(currentRoute);
 
+    final isNarrow = MediaQuery.sizeOf(context).width < 360;
+
     return NavigationBar(
       selectedIndex: selectedIndex,
       backgroundColor: AppColors.surface,
       indicatorColor: AppColors.primary.withValues(alpha: 0.12),
       shadowColor: Colors.black12,
       elevation: 8,
-      labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+      labelBehavior: isNarrow
+          ? NavigationDestinationLabelBehavior.onlyShowSelected
+          : NavigationDestinationLabelBehavior.alwaysShow,
       animationDuration: const Duration(milliseconds: 300),
       onDestinationSelected: (index) {
         final targetRoute = _routes[index];
@@ -54,7 +58,10 @@ class MenuWidget extends StatelessWidget {
       destinations: [
         NavigationDestination(
           icon: const Icon(Icons.account_balance_wallet_outlined),
-          selectedIcon: Icon(Icons.account_balance_wallet, color: AppColors.primary),
+          selectedIcon: Icon(
+            Icons.account_balance_wallet,
+            color: AppColors.primary,
+          ),
           label: 'Banque',
         ),
         NavigationDestination(
@@ -91,7 +98,8 @@ class AppDrawer extends StatelessWidget {
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final isPresident =
-        authProvider.currentUser?.user?.roles?.contains(Role.PRESIDENT) ?? false;
+        authProvider.currentUser?.user?.roles?.contains(Role.PRESIDENT) ??
+        false;
     final currentRoute = ModalRoute.of(context)?.settings.name;
 
     return Drawer(
@@ -106,7 +114,11 @@ class AppDrawer extends StatelessWidget {
                 CircleAvatar(
                   radius: 28,
                   backgroundColor: Colors.white.withValues(alpha: 0.2),
-                  child: const Icon(Icons.savings, size: 28, color: Colors.white),
+                  child: const Icon(
+                    Icons.savings,
+                    size: 28,
+                    color: Colors.white,
+                  ),
                 ),
                 const SizedBox(height: 12),
                 const Text(
@@ -147,7 +159,9 @@ class AppDrawer extends StatelessWidget {
                       Navigator.pop(context);
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text('Utilisez le menu de la tontine pour exporter'),
+                          content: Text(
+                            'Utilisez le menu de la tontine pour exporter',
+                          ),
                         ),
                       );
                     },
@@ -198,7 +212,8 @@ class _DrawerItem extends StatelessWidget {
         selected: isSelected,
         selectedTileColor: AppColors.primary.withValues(alpha: 0.08),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        onTap: onTap ??
+        onTap:
+            onTap ??
             () {
               Navigator.pop(context);
               if (route != null && route != currentRoute) {

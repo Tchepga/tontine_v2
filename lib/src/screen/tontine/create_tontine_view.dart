@@ -8,6 +8,7 @@ import '../../providers/models/enum/system_type.dart';
 import '../../providers/models/enum/type_mouvement.dart';
 import '../../providers/tontine_provider.dart';
 import '../../theme/app_theme.dart';
+import '../../utils/responsive_helper.dart';
 import '../services/dto/tontine_dto.dart';
 
 class CreateTontineView extends StatefulWidget {
@@ -72,8 +73,10 @@ class _CreateTontineViewState extends State<CreateTontineView> {
 
   Future<void> _submit() async {
     if (_isSubmitting) return;
-    final currentUser =
-        Provider.of<AuthProvider>(context, listen: false).currentUser;
+    final currentUser = Provider.of<AuthProvider>(
+      context,
+      listen: false,
+    ).currentUser;
     if (currentUser == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -86,8 +89,9 @@ class _CreateTontineViewState extends State<CreateTontineView> {
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
     final maxMembers = int.parse(_maxMembersController.text.trim());
-    final perMovement =
-        int.parse(_countPersonPerMovementController.text.trim());
+    final perMovement = int.parse(
+      _countPersonPerMovementController.text.trim(),
+    );
     if (perMovement > maxMembers) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -124,8 +128,10 @@ class _CreateTontineViewState extends State<CreateTontineView> {
         currency: _currency,
       );
 
-      await Provider.of<TontineProvider>(context, listen: false)
-          .createTontine(tontineDto);
+      await Provider.of<TontineProvider>(
+        context,
+        listen: false,
+      ).createTontine(tontineDto);
       if (!mounted) return;
       Navigator.pop(context, true);
     } catch (e) {
@@ -133,9 +139,7 @@ class _CreateTontineViewState extends State<CreateTontineView> {
       final raw = e.toString().replaceFirst('Exception: ', '');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            raw.isEmpty ? 'Erreur lors de la création' : raw,
-          ),
+          content: Text(raw.isEmpty ? 'Erreur lors de la création' : raw),
           backgroundColor: AppColors.error,
         ),
       );
@@ -147,6 +151,7 @@ class _CreateTontineViewState extends State<CreateTontineView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         title: const Text('Nouvelle tontine'),
         leading: IconButton(
@@ -154,240 +159,248 @@ class _CreateTontineViewState extends State<CreateTontineView> {
           onPressed: _isSubmitting ? null : () => Navigator.pop(context),
         ),
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _sectionCard(
-                  title: 'Informations générales',
+      body: Column(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+              padding: const EdgeInsets.all(16),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    TextFormField(
-                      controller: _titleController,
-                      enabled: !_isSubmitting,
-                      textInputAction: TextInputAction.next,
-                      decoration: const InputDecoration(
-                        labelText: 'Nom de la tontine*',
-                        border: OutlineInputBorder(),
-                      ),
-                      validator: _validateRequired,
+                    _sectionCard(
+                      title: 'Informations générales',
+                      children: [
+                        TextFormField(
+                          controller: _titleController,
+                          enabled: !_isSubmitting,
+                          textInputAction: TextInputAction.next,
+                          decoration: const InputDecoration(
+                            labelText: 'Nom de la tontine*',
+                            border: OutlineInputBorder(),
+                          ),
+                          validator: _validateRequired,
+                        ),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: _legacyController,
+                          enabled: !_isSubmitting,
+                          decoration: const InputDecoration(
+                            labelText: 'Description (optionnel)',
+                            border: OutlineInputBorder(),
+                          ),
+                          maxLines: 2,
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _legacyController,
-                      enabled: !_isSubmitting,
-                      decoration: const InputDecoration(
-                        labelText: 'Description (optionnel)',
-                        border: OutlineInputBorder(),
-                      ),
-                      maxLines: 2,
+                    _sectionCard(
+                      title: 'Configuration des prêts',
+                      children: [
+                        TextFormField(
+                          controller: _loanRateController,
+                          enabled: !_isSubmitting,
+                          decoration: const InputDecoration(
+                            labelText: 'Taux de prêt (%)*',
+                            border: OutlineInputBorder(),
+                          ),
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          validator: (v) => _validateNumber(v, min: 0),
+                        ),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: _loanDurationController,
+                          enabled: !_isSubmitting,
+                          decoration: const InputDecoration(
+                            labelText: 'Durée de prêt (jours)*',
+                            border: OutlineInputBorder(),
+                          ),
+                          keyboardType: TextInputType.number,
+                          validator: (v) => _validateInteger(v, min: 1),
+                        ),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: _minLoanAmountController,
+                          enabled: !_isSubmitting,
+                          decoration: const InputDecoration(
+                            labelText: 'Montant minimum de prêt*',
+                            border: OutlineInputBorder(),
+                          ),
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          validator: (v) => _validateNumber(v, min: 0),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    _sectionCard(
+                      title: 'Fonctionnement',
+                      children: [
+                        TextFormField(
+                          controller: _maxMembersController,
+                          enabled: !_isSubmitting,
+                          decoration: const InputDecoration(
+                            labelText: 'Nombre maximum de membres*',
+                            border: OutlineInputBorder(),
+                          ),
+                          keyboardType: TextInputType.number,
+                          validator: (v) => _validateInteger(v, min: 2),
+                        ),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: _countPersonPerMovementController,
+                          enabled: !_isSubmitting,
+                          decoration: const InputDecoration(
+                            labelText: 'Personnes par tour*',
+                            helperText:
+                                'Combien de membres reçoivent la cagnotte à chaque période',
+                            border: OutlineInputBorder(),
+                          ),
+                          keyboardType: TextInputType.number,
+                          validator: (v) => _validateInteger(v, min: 1),
+                        ),
+                        const SizedBox(height: 16),
+                        DropdownButtonFormField<LoopPeriod>(
+                          initialValue: _period,
+                          decoration: const InputDecoration(
+                            labelText: 'Période*',
+                            border: OutlineInputBorder(),
+                          ),
+                          items: LoopPeriod.values
+                              .map(
+                                (period) => DropdownMenuItem(
+                                  value: period,
+                                  child: Text(period.displayName),
+                                ),
+                              )
+                              .toList(),
+                          onChanged: _isSubmitting
+                              ? null
+                              : (value) {
+                                  if (value != null) {
+                                    setState(() => _period = value);
+                                  }
+                                },
+                        ),
+                        const SizedBox(height: 16),
+                        DropdownButtonFormField<MovementType>(
+                          initialValue: _movementType,
+                          decoration: const InputDecoration(
+                            labelText: 'Type de mouvement*',
+                            border: OutlineInputBorder(),
+                          ),
+                          items: MovementType.values
+                              .map(
+                                (type) => DropdownMenuItem(
+                                  value: type,
+                                  child: Text(type.displayName),
+                                ),
+                              )
+                              .toList(),
+                          onChanged: _isSubmitting
+                              ? null
+                              : (value) {
+                                  if (value != null) {
+                                    setState(() => _movementType = value);
+                                  }
+                                },
+                        ),
+                        const SizedBox(height: 16),
+                        DropdownButtonFormField<SystemType>(
+                          initialValue: _systemType,
+                          decoration: const InputDecoration(
+                            labelText: 'Système*',
+                            border: OutlineInputBorder(),
+                          ),
+                          items: SystemType.values
+                              .map(
+                                (type) => DropdownMenuItem(
+                                  value: type,
+                                  child: Text(type.displayName),
+                                ),
+                              )
+                              .toList(),
+                          onChanged: _isSubmitting
+                              ? null
+                              : (value) {
+                                  if (value != null) {
+                                    setState(() => _systemType = value);
+                                  }
+                                },
+                        ),
+                        const SizedBox(height: 16),
+                        DropdownButtonFormField<Currency>(
+                          initialValue: _currency,
+                          decoration: const InputDecoration(
+                            labelText: 'Devise*',
+                            border: OutlineInputBorder(),
+                          ),
+                          items: Currency.values
+                              .map(
+                                (currency) => DropdownMenuItem(
+                                  value: currency,
+                                  child: Text(
+                                    '${currency.toString().split('.').last} (${currency.displayName})',
+                                  ),
+                                ),
+                              )
+                              .toList(),
+                          onChanged: _isSubmitting
+                              ? null
+                              : (value) {
+                                  if (value != null) {
+                                    setState(() => _currency = value);
+                                  }
+                                },
+                        ),
+                      ],
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
-                _sectionCard(
-                  title: 'Configuration des prêts',
-                  children: [
-                    TextFormField(
-                      controller: _loanRateController,
-                      enabled: !_isSubmitting,
-                      decoration: const InputDecoration(
-                        labelText: 'Taux de prêt (%)*',
-                        border: OutlineInputBorder(),
-                      ),
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
-                      validator: (v) => _validateNumber(v, min: 0),
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _loanDurationController,
-                      enabled: !_isSubmitting,
-                      decoration: const InputDecoration(
-                        labelText: 'Durée de prêt (jours)*',
-                        border: OutlineInputBorder(),
-                      ),
-                      keyboardType: TextInputType.number,
-                      validator: (v) => _validateInteger(v, min: 1),
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _minLoanAmountController,
-                      enabled: !_isSubmitting,
-                      decoration: const InputDecoration(
-                        labelText: 'Montant minimum de prêt*',
-                        border: OutlineInputBorder(),
-                      ),
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
-                      validator: (v) => _validateNumber(v, min: 0),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                _sectionCard(
-                  title: 'Fonctionnement',
-                  children: [
-                    TextFormField(
-                      controller: _maxMembersController,
-                      enabled: !_isSubmitting,
-                      decoration: const InputDecoration(
-                        labelText: 'Nombre maximum de membres*',
-                        border: OutlineInputBorder(),
-                      ),
-                      keyboardType: TextInputType.number,
-                      validator: (v) => _validateInteger(v, min: 2),
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _countPersonPerMovementController,
-                      enabled: !_isSubmitting,
-                      decoration: const InputDecoration(
-                        labelText: 'Personnes par tour*',
-                        helperText:
-                            'Combien de membres reçoivent la cagnotte à chaque période',
-                        border: OutlineInputBorder(),
-                      ),
-                      keyboardType: TextInputType.number,
-                      validator: (v) => _validateInteger(v, min: 1),
-                    ),
-                    const SizedBox(height: 16),
-                    DropdownButtonFormField<LoopPeriod>(
-                      initialValue: _period,
-                      decoration: const InputDecoration(
-                        labelText: 'Période*',
-                        border: OutlineInputBorder(),
-                      ),
-                      items: LoopPeriod.values
-                          .map(
-                            (period) => DropdownMenuItem(
-                              value: period,
-                              child: Text(period.displayName),
-                            ),
-                          )
-                          .toList(),
-                      onChanged: _isSubmitting
-                          ? null
-                          : (value) {
-                              if (value != null) {
-                                setState(() => _period = value);
-                              }
-                            },
-                    ),
-                    const SizedBox(height: 16),
-                    DropdownButtonFormField<MovementType>(
-                      initialValue: _movementType,
-                      decoration: const InputDecoration(
-                        labelText: 'Type de mouvement*',
-                        border: OutlineInputBorder(),
-                      ),
-                      items: MovementType.values
-                          .map(
-                            (type) => DropdownMenuItem(
-                              value: type,
-                              child: Text(type.displayName),
-                            ),
-                          )
-                          .toList(),
-                      onChanged: _isSubmitting
-                          ? null
-                          : (value) {
-                              if (value != null) {
-                                setState(() => _movementType = value);
-                              }
-                            },
-                    ),
-                    const SizedBox(height: 16),
-                    DropdownButtonFormField<SystemType>(
-                      initialValue: _systemType,
-                      decoration: const InputDecoration(
-                        labelText: 'Système*',
-                        border: OutlineInputBorder(),
-                      ),
-                      items: SystemType.values
-                          .map(
-                            (type) => DropdownMenuItem(
-                              value: type,
-                              child: Text(type.displayName),
-                            ),
-                          )
-                          .toList(),
-                      onChanged: _isSubmitting
-                          ? null
-                          : (value) {
-                              if (value != null) {
-                                setState(() => _systemType = value);
-                              }
-                            },
-                    ),
-                    const SizedBox(height: 16),
-                    DropdownButtonFormField<Currency>(
-                      initialValue: _currency,
-                      decoration: const InputDecoration(
-                        labelText: 'Devise*',
-                        border: OutlineInputBorder(),
-                      ),
-                      items: Currency.values
-                          .map(
-                            (currency) => DropdownMenuItem(
-                              value: currency,
-                              child: Text(
-                                '${currency.toString().split('.').last} (${currency.displayName})',
-                              ),
-                            ),
-                          )
-                          .toList(),
-                      onChanged: _isSubmitting
-                          ? null
-                          : (value) {
-                              if (value != null) {
-                                setState(() => _currency = value);
-                              }
-                            },
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 88),
-              ],
+              ),
             ),
           ),
-        ),
-      ),
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
-              minimumSize: const Size.fromHeight(48),
+          Material(
+            elevation: 8,
+            color: Theme.of(context).colorScheme.surface,
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(
+                16,
+                12,
+                16,
+                ResponsiveHelper.viewSafeBottom(context),
+              ),
+              child: FilledButton(
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size.fromHeight(48),
+                ),
+                onPressed: _isSubmitting ? null : _submit,
+                child: _isSubmitting
+                    ? const SizedBox(
+                        height: 22,
+                        width: 22,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Text('Créer la tontine'),
+              ),
             ),
-            onPressed: _isSubmitting ? null : _submit,
-            child: _isSubmitting
-                ? const SizedBox(
-                    height: 22,
-                    width: 22,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
-                    ),
-                  )
-                : const Text('Créer la tontine'),
           ),
-        ),
+        ],
       ),
     );
   }
 
-  Widget _sectionCard({
-    required String title,
-    required List<Widget> children,
-  }) {
+  Widget _sectionCard({required String title, required List<Widget> children}) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -396,10 +409,7 @@ class _CreateTontineViewState extends State<CreateTontineView> {
           children: [
             Text(
               title,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
             ...children,

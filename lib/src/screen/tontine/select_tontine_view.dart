@@ -34,8 +34,10 @@ class _SelectTontineViewState extends State<SelectTontineView> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      final currentTontine =
-          Provider.of<TontineProvider>(context, listen: false).currentTontine;
+      final currentTontine = Provider.of<TontineProvider>(
+        context,
+        listen: false,
+      ).currentTontine;
       if (currentTontine != null) {
         Navigator.of(context).pushReplacementNamed(DashboardView.routeName);
       } else {
@@ -72,12 +74,15 @@ class _SelectTontineViewState extends State<SelectTontineView> {
 
   Future<void> _openCreateTontine() async {
     final created = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(builder: (_) => const CreateTontineView()),
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (_) => const CreateTontineView(),
+      ),
     );
     if (created == true && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Tontine créée')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Tontine créée')));
     }
   }
 
@@ -96,69 +101,71 @@ class _SelectTontineViewState extends State<SelectTontineView> {
           }
 
           if (tontineProvider.tontines.isEmpty) {
-            return Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Card(
-                    elevation: 4,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                    child: Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            Colors.orange.shade300,
-                            Colors.orange.shade500
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
+            return SafeArea(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Card(
+                      elevation: 4,
+                      shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(15),
                       ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(
-                            Icons.group_add,
-                            size: 50,
-                            color: Colors.white,
+                      child: Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              Colors.orange.shade300,
+                              Colors.orange.shade500,
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
                           ),
-                          const SizedBox(height: 16),
-                          const Text(
-                            'Bienvenue !',
-                            style: TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.group_add,
+                              size: 50,
                               color: Colors.white,
                             ),
-                          ),
-                          const SizedBox(height: 8),
-                          const Text(
-                            'Vous n\'avez pas encore de tontine. Créez votre première tontine en cliquant sur le bouton + ci-dessous.',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.white,
+                            const SizedBox(height: 16),
+                            const Text(
+                              'Bienvenue !',
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 16),
-                          FilledButton(
-                            onPressed: _openCreateTontine,
-                            style: FilledButton.styleFrom(
-                              backgroundColor: Colors.white,
-                              foregroundColor: Colors.orange,
+                            const SizedBox(height: 8),
+                            const Text(
+                              'Vous n\'avez pas encore de tontine. Créez-en une avec le bouton ci-dessous.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.white,
+                              ),
                             ),
-                            child: const Text('Créer une tontine'),
-                          ),
-                        ],
+                            const SizedBox(height: 16),
+                            FilledButton(
+                              onPressed: _openCreateTontine,
+                              style: FilledButton.styleFrom(
+                                backgroundColor: Colors.white,
+                                foregroundColor: Colors.orange,
+                              ),
+                              child: const Text('Créer une tontine'),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             );
           }
@@ -197,7 +204,8 @@ class _SelectTontineViewState extends State<SelectTontineView> {
                     children: [
                       Text('${tontine.members.length} membres'),
                       Text(
-                          'Solde: ${tontine.cashFlow.amount} ${tontine.cashFlow.currency.displayName}'),
+                        'Solde: ${tontine.cashFlow.amount} ${tontine.cashFlow.currency.displayName}',
+                      ),
                       if (tontine.isClosed)
                         Text(
                           'Consultation seule',
@@ -218,12 +226,13 @@ class _SelectTontineViewState extends State<SelectTontineView> {
                       refreshFromApi: true,
                       eventProvider: context.read<EventProvider>(),
                       loanProvider: context.read<LoanProvider>(),
-                      notificationProvider:
-                          context.read<NotificationProvider>(),
+                      notificationProvider: context
+                          .read<NotificationProvider>(),
                     );
                     if (context.mounted) {
-                      Navigator.of(context)
-                          .pushReplacementNamed(DashboardView.routeName);
+                      Navigator.of(
+                        context,
+                      ).pushReplacementNamed(DashboardView.routeName);
                       // TODO: review after adding part order
                       // if (tontine.members.length < tontine.config.countMaxMember) {
                       //   Navigator.of(context).pushReplacementNamed(AddMembersView.routeName);
@@ -238,10 +247,22 @@ class _SelectTontineViewState extends State<SelectTontineView> {
           );
         },
       ),
-      floatingActionButton: FloatingActionButton(
-        heroTag: 'select_tontine_fab',
-        onPressed: _openCreateTontine,
-        child: const Icon(Icons.add),
+      floatingActionButton: Consumer<TontineProvider>(
+        builder: (context, tontineProvider, _) {
+          if (tontineProvider.tontines.isEmpty) {
+            return const SizedBox.shrink();
+          }
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.viewPaddingOf(context).bottom,
+            ),
+            child: FloatingActionButton(
+              heroTag: 'select_tontine_fab',
+              onPressed: _openCreateTontine,
+              child: const Icon(Icons.add),
+            ),
+          );
+        },
       ),
     );
   }

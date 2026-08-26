@@ -153,6 +153,11 @@ class ResponsiveHelper {
     return EdgeInsets.symmetric(horizontal: hPadding, vertical: vPadding);
   }
 
+  /// Padding bas pour un bouton collé (barre système / geste, pas le padding déjà consommé).
+  static double viewSafeBottom(BuildContext context, {double minimum = 16}) {
+    return minimum + MediaQuery.viewPaddingOf(context).bottom;
+  }
+
   /// Retourne un espacement adaptatif (SizedBox height)
   static double getAdaptiveSpacing(
     BuildContext context, {
