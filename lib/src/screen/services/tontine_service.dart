@@ -16,6 +16,7 @@ import '../../providers/models/member_contribution.dart';
 import '../../services/error_catchable.dart';
 import '../../services/api_error_message.dart';
 import 'dto/member_dto.dart';
+import 'middleware/interceptor_http.dart';
 import 'dto/tontine_dto.dart';
 import 'dto/deposit_dto.dart';
 import 'dto/rapport_dto.dart';

@@ -7,6 +7,7 @@ import '../../providers/event_provider.dart';
 import '../../providers/loan_provider.dart';
 import '../../providers/notification_provider.dart';
 import '../../providers/models/enum/tontine_status.dart';
+import '../../providers/models/enum/currency.dart';
 import '../../providers/tontine_provider.dart';
 import '../../widgets/status_badge.dart';
 import '../../theme/app_theme.dart';
