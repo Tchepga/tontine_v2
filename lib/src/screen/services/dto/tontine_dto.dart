@@ -61,21 +61,18 @@ class CreateConfigTontineDto {
       'countMaxMember': countMaxMember,
       'systemType': systemType.value,
       if (parts != null) 'parts': parts!.map((part) => part.toJson()).toList(),
-      'reminderMissingDepositsEnabled': reminderMissingDepositsEnabled,
     };
   }
 }
 
 class CreateTontineDto {
   final String title;
-  final String? legacy;
   final List<CreateMemberDto> memberDtos;
   final CreateConfigTontineDto config;
   final Currency currency;
 
   CreateTontineDto({
     required this.title,
-    this.legacy,
     required this.memberDtos,
     required this.config,
     required this.currency,
@@ -83,8 +80,7 @@ class CreateTontineDto {
 
   Map<String, dynamic> toJson() {
     return {
-      'title': title,
-      if (legacy != null) 'legacy': legacy,
+      'title': title.trim(),
       'members': memberDtos.map((memberDto) => memberDto.toJson()).toList(),
       'config': config.toJson(),
       'currency': currency.toString().split('.').last,

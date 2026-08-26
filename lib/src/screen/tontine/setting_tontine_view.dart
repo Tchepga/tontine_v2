@@ -11,6 +11,7 @@ import '../../providers/models/enum/type_mouvement.dart';
 import '../../providers/models/tontine.dart';
 import '../../utils/dialog_utils.dart';
 import '../../utils/role_permissions.dart';
+import '../../services/error_catchable.dart';
 import '../../widgets/circular_order_card.dart';
 import '../../widgets/tontine_closed_banner.dart';
 import '../../theme/app_theme.dart';
@@ -1181,8 +1182,11 @@ class _SettingTontineViewState extends State<SettingTontineView> {
     TontineProvider tontineProvider,
     Tontine closedTontine,
   ) {
-    final nameController =
-        TextEditingController(text: '${closedTontine.title} (suite)');
+    final nameController = TextEditingController(
+      text: tontineProvider.suggestUniqueTitle(
+        '${closedTontine.title} (suite)',
+      ),
+    );
     var carryOverCash = false;
 
     showAppDialog(
@@ -1199,6 +1203,7 @@ class _SettingTontineViewState extends State<SettingTontineView> {
                   labelText: 'Nom de la nouvelle tontine',
                   border: OutlineInputBorder(),
                 ),
+                textCapitalization: TextCapitalization.sentences,
               ),
               const SizedBox(height: 12),
               SwitchListTile.adaptive(
@@ -1241,6 +1246,19 @@ class _SettingTontineViewState extends State<SettingTontineView> {
     bool carryOverCash,
   ) async {
     final messenger = ScaffoldMessenger.of(context);
+    final resolvedName = name.isNotEmpty
+        ? name
+        : tontineProvider.suggestUniqueTitle('${closedTontine.title} (suite)');
+    if (tontineProvider.hasDuplicateTitle(resolvedName)) {
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('Une tontine avec ce nom existe déjà'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     final eventProvider = context.read<EventProvider>();
     final loanProvider = context.read<LoanProvider>();
     final notificationProvider = context.read<NotificationProvider>();
@@ -1263,7 +1281,7 @@ class _SettingTontineViewState extends State<SettingTontineView> {
       final newTontine = await tontineProvider.restartTontine(
         closedTontine.id,
         RestartTontineDto(
-          name: name.isNotEmpty ? name : null,
+          name: resolvedName,
           carryOverCash: carryOverCash,
         ),
       );
@@ -1294,9 +1312,12 @@ class _SettingTontineViewState extends State<SettingTontineView> {
       if (Navigator.of(context).canPop()) {
         Navigator.of(context).pop();
       }
+      final message = e == ErrorCatchable.TONTINE_TITLE_ALREADY_EXISTS
+          ? 'Une tontine avec ce nom existe déjà'
+          : e.toString().replaceFirst('Exception: ', '');
       messenger.showSnackBar(
         SnackBar(
-          content: Text(e.toString().replaceFirst('Exception: ', '')),
+          content: Text(message),
           backgroundColor: AppColors.error,
         ),
       );

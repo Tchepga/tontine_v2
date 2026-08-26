@@ -18,6 +18,7 @@ import '../login_view.dart';
 import '../services/dto/member_dto.dart';
 import '../services/dto/tontine_dto.dart';
 import '../services/member_service.dart';
+import '../../services/error_catchable.dart';
 
 class SelectTontineView extends StatefulWidget {
   static const routeName = '/select-tontine';
@@ -76,7 +77,6 @@ class _SelectTontineViewState extends State<SelectTontineView> {
   void _showCreateTontineDialog(BuildContext context) {
     final formKey = GlobalKey<FormState>();
     final titleController = TextEditingController();
-    final legacyController = TextEditingController();
     final loanRateController = TextEditingController(text: '2');
     final loanDurationController = TextEditingController(text: '30');
     final minLoanAmountController = TextEditingController(text: '100');
@@ -87,20 +87,46 @@ class _SelectTontineViewState extends State<SelectTontineView> {
     MovementType selectedMovementType = MovementType.ROTATIVE;
     Currency selectedCurrency = Currency.EUR;
 
-    Navigator.of(context).push(
+    Navigator.of(context, rootNavigator: true).push(
       MaterialPageRoute(
-        builder: (context) => Scaffold(
-          appBar: AppBar(
-            title: const Text('Nouvelle tontine'),
-            leading: IconButton(
-              icon: const Icon(Icons.close),
-              onPressed: () => Navigator.pop(context),
+        fullscreenDialog: true,
+        builder: (dialogContext) {
+          void submit() => _handleCreateTontine(
+                dialogContext,
+                formKey,
+                titleController,
+                loanRateController,
+                loanDurationController,
+                minLoanAmountController,
+                maxMembersController,
+                countPersonPerMovementController,
+                selectedPeriod,
+                selectedMovementType,
+                selectedCurrency,
+              );
+
+          return Scaffold(
+            resizeToAvoidBottomInset: true,
+            appBar: AppBar(
+              title: const Text('Nouvelle tontine'),
+              leading: IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: () => Navigator.pop(dialogContext),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: submit,
+                  child: const Text('Créer'),
+                ),
+              ],
             ),
-          ),
-          body: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Form(
+            body: SafeArea(
+              child: Column(
+                children: [
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                      child: Form(
                 key: formKey,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -125,21 +151,24 @@ class _SelectTontineViewState extends State<SelectTontineView> {
                                 labelText: 'Nom de la tontine*',
                                 border: OutlineInputBorder(),
                               ),
+                              autovalidateMode:
+                                  AutovalidateMode.onUserInteraction,
+                              textCapitalization: TextCapitalization.sentences,
                               validator: (value) {
-                                if (value == null || value.isEmpty) {
+                                if (value == null || value.trim().isEmpty) {
                                   return 'Le nom est requis';
+                                }
+                                final tontineProvider =
+                                    Provider.of<TontineProvider>(
+                                  dialogContext,
+                                  listen: false,
+                                );
+                                if (tontineProvider
+                                    .hasDuplicateTitle(value)) {
+                                  return 'Une tontine avec ce nom existe déjà';
                                 }
                                 return null;
                               },
-                            ),
-                            const SizedBox(height: 16),
-                            TextFormField(
-                              controller: legacyController,
-                              decoration: const InputDecoration(
-                                labelText: 'Description',
-                                border: OutlineInputBorder(),
-                              ),
-                              maxLines: 2,
                             ),
                           ],
                         ),
@@ -288,33 +317,35 @@ class _SelectTontineViewState extends State<SelectTontineView> {
               ),
             ),
           ),
-          bottomNavigationBar: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: FilledButton(
-              style: FilledButton.styleFrom(
-                backgroundColor: Colors.orange,
-                foregroundColor: Colors.white,
-              ),
-              onPressed: () => _handleCreateTontine(
-                context,
-                formKey,
-                titleController,
-                legacyController,
-                loanRateController,
-                loanDurationController,
-                minLoanAmountController,
-                maxMembersController,
-                countPersonPerMovementController,
-                selectedPeriod,
-                selectedMovementType,
-                selectedCurrency,
-              ),
-              child: const Text(
-                'Créer la tontine',
+                  Material(
+                    elevation: 8,
+                    shadowColor: Colors.black26,
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                      decoration: BoxDecoration(
+                        color:
+                            Theme.of(dialogContext).scaffoldBackgroundColor,
+                        border: Border(
+                          top: BorderSide(color: Colors.grey.shade300),
+                        ),
+                      ),
+                      child: FilledButton(
+                        style: FilledButton.styleFrom(
+                          backgroundColor: Colors.orange,
+                          foregroundColor: Colors.white,
+                          minimumSize: const Size.fromHeight(48),
+                        ),
+                        onPressed: submit,
+                        child: const Text('Créer la tontine'),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-          ),
-        ),
+          );
+        },
       ),
     );
   }
@@ -343,7 +374,6 @@ class _SelectTontineViewState extends State<SelectTontineView> {
     BuildContext context,
     GlobalKey<FormState> formKey,
     TextEditingController titleController,
-    TextEditingController legacyController,
     TextEditingController loanRateController,
     TextEditingController loanDurationController,
     TextEditingController minLoanAmountController,
@@ -356,6 +386,18 @@ class _SelectTontineViewState extends State<SelectTontineView> {
     final currentUser =
         Provider.of<AuthProvider>(context, listen: false).currentUser;
     if (formKey.currentState!.validate() && currentUser != null) {
+      final tontineProvider =
+          Provider.of<TontineProvider>(context, listen: false);
+      if (tontineProvider.hasDuplicateTitle(titleController.text)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Une tontine avec ce nom existe déjà'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
       try {
         final memberDto = CreateMemberDto(
           username: currentUser.user!.username,
@@ -366,8 +408,7 @@ class _SelectTontineViewState extends State<SelectTontineView> {
         );
 
         final tontineDto = CreateTontineDto(
-          title: titleController.text,
-          legacy: legacyController.text,
+          title: titleController.text.trim(),
           memberDtos: [memberDto],
           config: CreateConfigTontineDto(
             defaultLoanRate: double.parse(loanRateController.text),
@@ -382,14 +423,17 @@ class _SelectTontineViewState extends State<SelectTontineView> {
           currency: selectedCurrency,
         );
 
-        await Provider.of<TontineProvider>(context, listen: false)
-            .createTontine(tontineDto);
+        await tontineProvider.createTontine(tontineDto);
         if (!context.mounted) return;
         Navigator.pop(context);
       } catch (e) {
+        if (!context.mounted) return;
+        final message = e == ErrorCatchable.TONTINE_TITLE_ALREADY_EXISTS
+            ? 'Une tontine avec ce nom existe déjà'
+            : 'Erreur lors de la création';
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Erreur lors de la création'),
+          SnackBar(
+            content: Text(message),
             backgroundColor: Colors.red,
           ),
         );

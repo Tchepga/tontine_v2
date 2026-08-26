@@ -32,6 +32,8 @@ import 'package:get_storage/get_storage.dart';
 import 'models/part.dart';
 import '../utils/part_order_utils.dart';
 import '../utils/role_permissions.dart';
+import '../utils/tontine_title.dart';
+import '../services/error_catchable.dart';
 import '../services/sentry_context_service.dart';
 import 'event_provider.dart';
 import 'loan_provider.dart';
@@ -83,6 +85,18 @@ class TontineProvider extends ChangeNotifier {
       _currentTontine?.status == TontineStatus.CLOSED;
 
   bool get canWriteToCurrentTontine => !isCurrentTontineClosed;
+
+  bool hasDuplicateTitle(String title, {int? excludeTontineId}) {
+    return hasDuplicateTontineTitle(
+      _tontines,
+      title,
+      excludeTontineId: excludeTontineId,
+    );
+  }
+
+  String suggestUniqueTitle(String desiredTitle) {
+    return suggestUniqueTontineTitle(_tontines, desiredTitle);
+  }
 
   Future<void> loadTontines() async {
     _isLoading = true;
@@ -325,6 +339,9 @@ class TontineProvider extends ChangeNotifier {
   }
 
   Future<void> createTontine(CreateTontineDto tontine) async {
+    if (hasDuplicateTitle(tontine.title)) {
+      throw ErrorCatchable.TONTINE_TITLE_ALREADY_EXISTS;
+    }
     try {
       final newTontine = await _tontineService.createTontine(tontine);
       _tontines.add(newTontine);
@@ -348,6 +365,9 @@ class TontineProvider extends ChangeNotifier {
   }
 
   Future<void> updateTontine(int tontineId, CreateTontineDto tontineDto) async {
+    if (hasDuplicateTitle(tontineDto.title, excludeTontineId: tontineId)) {
+      throw ErrorCatchable.TONTINE_TITLE_ALREADY_EXISTS;
+    }
     try {
       final tontine =
           await _tontineService.updateTontine(tontineId, tontineDto);
@@ -798,6 +818,9 @@ class TontineProvider extends ChangeNotifier {
 
   Future<Tontine> restartTontine(
       int tontineId, RestartTontineDto dto) async {
+    if (dto.name != null && hasDuplicateTitle(dto.name!)) {
+      throw ErrorCatchable.TONTINE_TITLE_ALREADY_EXISTS;
+    }
     try {
       final newTontine = await _tontineService.restartTontine(tontineId, dto);
       final existingIndex =

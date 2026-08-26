@@ -3,6 +3,8 @@ import 'package:tontine_v2/src/providers/models/closure_summary.dart';
 import 'package:tontine_v2/src/providers/models/enum/tontine_status.dart';
 import 'package:tontine_v2/src/providers/models/tontine.dart';
 
+import 'package:tontine_v2/src/utils/tontine_title.dart';
+
 import 'helpers/fixtures.dart';
 
 void main() {
@@ -49,6 +51,48 @@ void main() {
       expect(summary.memberShares.length, 2);
       expect(summary.memberShares.first.displayName, 'Alice Dupont');
       expect(summary.memberShares.last.displayName, contains('Bob'));
+    });
+  });
+
+  group('Titre de tontine unique', () {
+    test('détecte un doublon insensible à la casse et aux espaces', () {
+      final tontines = [
+        makeTontine(id: 1, title: 'Familiale'),
+        makeTontine(id: 2, title: 'Épargne'),
+      ];
+
+      expect(hasDuplicateTontineTitle(tontines, 'familiale'), isTrue);
+      expect(hasDuplicateTontineTitle(tontines, '  FAMILIALE  '), isTrue);
+      expect(hasDuplicateTontineTitle(tontines, 'Nouvelle'), isFalse);
+    });
+
+    test('ignore la tontine en cours de modification', () {
+      final tontines = [makeTontine(id: 1, title: 'Familiale')];
+
+      expect(
+        hasDuplicateTontineTitle(tontines, 'Familiale', excludeTontineId: 1),
+        isFalse,
+      );
+      expect(
+        hasDuplicateTontineTitle(tontines, 'Familiale', excludeTontineId: 2),
+        isTrue,
+      );
+    });
+
+    test('propose un nom unique si le titre existe déjà', () {
+      final tontines = [
+        makeTontine(id: 1, title: 'Familiale (suite)'),
+        makeTontine(id: 2, title: 'Familiale (suite) 2'),
+      ];
+
+      expect(
+        suggestUniqueTontineTitle(tontines, 'Familiale (suite)'),
+        'Familiale (suite) 3',
+      );
+      expect(
+        suggestUniqueTontineTitle(tontines, 'Épargne'),
+        'Épargne',
+      );
     });
   });
 }

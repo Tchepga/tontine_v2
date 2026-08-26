@@ -1,5 +1,6 @@
 enum ErrorCatchable {
   USER_ALREADY_EXISTS,
   USER_NOT_FOUND,
+  TONTINE_TITLE_ALREADY_EXISTS,
 }
 

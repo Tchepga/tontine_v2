@@ -183,7 +183,14 @@ class TontineService {
     if (response.statusCode == 201) {
       return Tontine.fromJson(jsonDecode(response.body));
     }
-    throw Exception('Failed to create tontine');
+    if (response.statusCode == 409) {
+      throw ErrorCatchable.TONTINE_TITLE_ALREADY_EXISTS;
+    }
+    _logger.severe('Failed to create tontine: ${response.body}');
+    throw Exception(_extractApiErrorMessage(
+      response.body,
+      fallback: 'Erreur lors de la création de la tontine.',
+    ));
   }
 
   Future<void> addMemberToTontine(
@@ -244,10 +251,16 @@ class TontineService {
       Uri.parse('$urlApi/tontine/$id'),
       body: jsonEncode(tontineDto.toJson()),
     );
-    if (response.statusCode != 200) {
-      throw Exception('Failed to update tontine');
+    if (response.statusCode == 200) {
+      return Tontine.fromJson(jsonDecode(response.body));
     }
-    return Tontine.fromJson(jsonDecode(response.body));
+    if (response.statusCode == 409) {
+      throw ErrorCatchable.TONTINE_TITLE_ALREADY_EXISTS;
+    }
+    throw Exception(_extractApiErrorMessage(
+      response.body,
+      fallback: 'Erreur lors de la mise à jour de la tontine.',
+    ));
   }
 
   // Rapports
@@ -871,6 +884,9 @@ class TontineService {
     );
     if (response.statusCode == 200 || response.statusCode == 201) {
       return Tontine.fromJson(jsonDecode(response.body));
+    }
+    if (response.statusCode == 409) {
+      throw ErrorCatchable.TONTINE_TITLE_ALREADY_EXISTS;
     }
     throw Exception(_extractApiErrorMessage(
       response.body,
