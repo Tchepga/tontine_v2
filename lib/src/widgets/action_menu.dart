@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../providers/event_provider.dart';
+import '../providers/loan_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/notification_provider.dart';
 import '../providers/tontine_provider.dart';
@@ -126,6 +128,12 @@ class ActionMenu extends StatelessWidget implements PreferredSizeWidget {
                           icon: const Icon(Icons.power_settings_new),
                           color: Colors.white,
                           onPressed: () {
+                            tontineProvider.clearCurrentTontineSelection(
+                              eventProvider:
+                                  context.read<EventProvider>(),
+                              loanProvider: context.read<LoanProvider>(),
+                              notificationProvider: notificationProvider,
+                            );
                             authProvider.logout();
                             Navigator.of(context)
                                 .pushReplacementNamed(LoginView.routeName);

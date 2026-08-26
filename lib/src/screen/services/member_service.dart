@@ -86,6 +86,7 @@ class MemberService {
           final mustChange = data['mustChangePassword'] == true ||
               data['must_change_password'] == true;
           await TokenStorage.instance.setMustChangePassword(mustChange);
+          storage.write('login_username', username.trim());
           _logger.info('Token saved successfully');
           return true;
         } else {
@@ -116,7 +117,9 @@ class MemberService {
       );
       if (response.statusCode == 200 && response.body.isNotEmpty) {
         final member = Member.fromJson(jsonDecode(response.body));
+        final profileJson = jsonEncode(member.toJson());
         storage.write(KEY_USER_INFO, member.toJson());
+        storage.write(KEY_PROFILE, profileJson);
         return member;
       }
       return null;

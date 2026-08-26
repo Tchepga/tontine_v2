@@ -10,6 +10,7 @@ import '../screen/services/dto/register_president_result.dart';
 import '../screen/services/member_service.dart';
 import '../services/token_storage.dart';
 import '../services/sentry_context_service.dart';
+import 'tontine_provider.dart';
 
 class AuthProvider extends ChangeNotifier {
   final _memberService = MemberService();
@@ -22,20 +23,30 @@ class AuthProvider extends ChangeNotifier {
 
   Member? get currentUser {
     if (_currentUser != null) return _currentUser;
+    _currentUser = _readStoredMember();
+    return _currentUser;
+  }
 
-    // Vérifier d'abord dans le storage
+  Member? _readStoredMember() {
     try {
       final storedProfile = _storage.read(KEY_PROFILE);
       if (storedProfile != null) {
-        _currentUser = Member.fromJson(jsonDecode(storedProfile));
-        return _currentUser;
+        if (storedProfile is String) {
+          return Member.fromJson(jsonDecode(storedProfile));
+        }
+        if (storedProfile is Map) {
+          return Member.fromJson(Map<String, dynamic>.from(storedProfile));
+        }
+      }
+
+      final userInfo = _storage.read(MemberService.KEY_USER_INFO);
+      if (userInfo is Map) {
+        return Member.fromJson(Map<String, dynamic>.from(userInfo));
       }
     } catch (e) {
       logger.warning('Error reading stored profile: $e');
     }
-
-    // Ne pas faire d'appel API dans le getter
-    return _currentUser;
+    return null;
   }
 
   bool get isLoading => _isLoading;
@@ -46,9 +57,8 @@ class AuthProvider extends ChangeNotifier {
 
   void _loadStoredProfile() {
     try {
-      final storedProfile = _storage.read(KEY_PROFILE);
-      if (storedProfile != null) {
-        _currentUser = Member.fromJson(jsonDecode(storedProfile));
+      _currentUser = _readStoredMember();
+      if (_currentUser != null) {
         notifyListeners();
       }
     } catch (e) {
@@ -124,6 +134,7 @@ class AuthProvider extends ChangeNotifier {
     await TokenStorage.instance.clear();
     _memberService.logout();
     _storage.remove(KEY_PROFILE);
+    _storage.remove(TontineProvider.KEY_SELECTED_TONTINE_ID);
     _currentUser = null;
     SentryContextService.clear();
     notifyListeners();
@@ -170,16 +181,10 @@ class AuthProvider extends ChangeNotifier {
   Future<Member?> getCurrentUser() async {
     if (_currentUser != null) return _currentUser;
 
-    // Vérifier d'abord dans le storage
-    try {
-      final storedProfile = _storage.read(KEY_PROFILE);
-      if (storedProfile != null) {
-        _currentUser = Member.fromJson(jsonDecode(storedProfile));
-        notifyListeners();
-        return _currentUser;
-      }
-    } catch (e) {
-      logger.warning('Error reading stored profile: $e');
+    _currentUser = _readStoredMember();
+    if (_currentUser != null) {
+      notifyListeners();
+      return _currentUser;
     }
 
     // Si pas dans le storage et token valide, charger depuis l'API

@@ -53,12 +53,18 @@ class _SelectTontineViewState extends State<SelectTontineView> {
       final isValidToken = await memberService.hasValidToken();
       if (!isValidToken) {
         if (mounted) {
+          Provider.of<TontineProvider>(context, listen: false)
+              .clearCurrentTontineSelection(
+            eventProvider: context.read<EventProvider>(),
+            loanProvider: context.read<LoanProvider>(),
+            notificationProvider: context.read<NotificationProvider>(),
+          );
           Provider.of<AuthProvider>(context, listen: false).logout();
           Navigator.of(context).pushReplacementNamed(LoginView.routeName);
         }
         return;
       }
-      await memberService.getProfile();
+      await Provider.of<AuthProvider>(context, listen: false).getCurrentUser();
       if (!mounted) return;
       await Provider.of<TontineProvider>(context, listen: false).loadTontines();
     } catch (e) {
@@ -72,6 +78,44 @@ class _SelectTontineViewState extends State<SelectTontineView> {
         );
       }
     }
+  }
+
+  void _showLogoutConfirmation(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Confirmation de déconnexion'),
+        content: const Text('Êtes-vous sûr de vouloir vous déconnecter ?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Annuler'),
+          ),
+          FilledButton(
+            onPressed: () {
+              Navigator.of(dialogContext).pop();
+              _handleLogout(context);
+            },
+            style: FilledButton.styleFrom(backgroundColor: AppColors.error),
+            child: const Text('Déconnexion'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _handleLogout(BuildContext context) {
+    Provider.of<TontineProvider>(context, listen: false)
+        .clearCurrentTontineSelection(
+      eventProvider: context.read<EventProvider>(),
+      loanProvider: context.read<LoanProvider>(),
+      notificationProvider: context.read<NotificationProvider>(),
+    );
+    Provider.of<AuthProvider>(context, listen: false).logout();
+    Navigator.of(context).pushNamedAndRemoveUntil(
+      LoginView.routeName,
+      (route) => false,
+    );
   }
 
   void _showCreateTontineDialog(BuildContext context) {
@@ -114,6 +158,11 @@ class _SelectTontineViewState extends State<SelectTontineView> {
                 onPressed: () => Navigator.pop(dialogContext),
               ),
               actions: [
+                IconButton(
+                  icon: const Icon(Icons.logout),
+                  tooltip: 'Se déconnecter',
+                  onPressed: () => _showLogoutConfirmation(context),
+                ),
                 TextButton(
                   onPressed: submit,
                   child: const Text('Créer'),
@@ -383,61 +432,75 @@ class _SelectTontineViewState extends State<SelectTontineView> {
     MovementType selectedMovementType,
     Currency selectedCurrency,
   ) async {
-    final currentUser =
-        Provider.of<AuthProvider>(context, listen: false).currentUser;
-    if (formKey.currentState!.validate() && currentUser != null) {
-      final tontineProvider =
-          Provider.of<TontineProvider>(context, listen: false);
-      if (tontineProvider.hasDuplicateTitle(titleController.text)) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Une tontine avec ce nom existe déjà'),
-            backgroundColor: Colors.red,
-          ),
-        );
-        return;
-      }
+    if (!formKey.currentState!.validate()) return;
 
-      try {
-        final memberDto = CreateMemberDto(
-          username: currentUser.user!.username,
-          firstname: currentUser.firstname ?? '',
-          lastname: currentUser.lastname ?? '',
-          phone: currentUser.phone ?? '',
-          country: currentUser.country ?? '',
-        );
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final currentUser = await authProvider.getCurrentUser();
+    if (!context.mounted) return;
 
-        final tontineDto = CreateTontineDto(
-          title: titleController.text.trim(),
-          memberDtos: [memberDto],
-          config: CreateConfigTontineDto(
-            defaultLoanRate: double.parse(loanRateController.text),
-            defaultLoanDuration: int.parse(loanDurationController.text),
-            loopPeriod: selectedPeriod,
-            minLoanAmount: double.parse(minLoanAmountController.text),
-            countPersonPerMovement:
-                int.parse(countPersonPerMovementController.text),
-            movementType: selectedMovementType,
-            countMaxMember: int.parse(maxMembersController.text),
+    if (currentUser?.user?.username == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Profil utilisateur indisponible. Reconnectez-vous puis réessayez.',
           ),
-          currency: selectedCurrency,
-        );
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
 
-        await tontineProvider.createTontine(tontineDto);
-        if (!context.mounted) return;
-        Navigator.pop(context);
-      } catch (e) {
-        if (!context.mounted) return;
-        final message = e == ErrorCatchable.TONTINE_TITLE_ALREADY_EXISTS
-            ? 'Une tontine avec ce nom existe déjà'
-            : 'Erreur lors de la création';
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(message),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+    final tontineProvider =
+        Provider.of<TontineProvider>(context, listen: false);
+    if (tontineProvider.hasDuplicateTitle(titleController.text)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Une tontine avec ce nom existe déjà'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    try {
+      final memberDto = CreateMemberDto(
+        username: currentUser!.user!.username,
+        firstname: currentUser.firstname ?? '',
+        lastname: currentUser.lastname ?? '',
+        phone: currentUser.phone ?? '',
+        country: currentUser.country ?? '',
+      );
+
+      final tontineDto = CreateTontineDto(
+        title: titleController.text.trim(),
+        memberDtos: [memberDto],
+        config: CreateConfigTontineDto(
+          defaultLoanRate: double.parse(loanRateController.text),
+          defaultLoanDuration: int.parse(loanDurationController.text),
+          loopPeriod: selectedPeriod,
+          minLoanAmount: double.parse(minLoanAmountController.text),
+          countPersonPerMovement:
+              int.parse(countPersonPerMovementController.text),
+          movementType: selectedMovementType,
+          countMaxMember: int.parse(maxMembersController.text),
+        ),
+        currency: selectedCurrency,
+      );
+
+      await tontineProvider.createTontine(tontineDto);
+      if (!context.mounted) return;
+      Navigator.pop(context);
+    } catch (e) {
+      if (!context.mounted) return;
+      final message = e == ErrorCatchable.TONTINE_TITLE_ALREADY_EXISTS
+          ? 'Une tontine avec ce nom existe déjà'
+          : 'Erreur lors de la création';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -448,6 +511,13 @@ class _SelectTontineViewState extends State<SelectTontineView> {
         title: const Text('Sélectionner une tontine'),
         backgroundColor: Colors.transparent,
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            tooltip: 'Se déconnecter',
+            onPressed: () => _showLogoutConfirmation(context),
+          ),
+        ],
       ),
       body: Consumer<TontineProvider>(
         builder: (context, tontineProvider, child) {
@@ -514,6 +584,15 @@ class _SelectTontineViewState extends State<SelectTontineView> {
                             ),
                             child: const Text('Créer une tontine'),
                           ),
+                          const SizedBox(height: 12),
+                          TextButton.icon(
+                            onPressed: () => _showLogoutConfirmation(context),
+                            icon: const Icon(Icons.logout, color: Colors.white),
+                            label: const Text(
+                              'Se déconnecter',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -569,7 +648,7 @@ class _SelectTontineViewState extends State<SelectTontineView> {
                         ),
                     ],
                   ),
-                  trailing: tontine.isSelected
+                  trailing: tontine.id == tontineProvider.currentTontine?.id
                       ? const Icon(Icons.check_circle, color: Colors.green)
                       : null,
                   onTap: () async {

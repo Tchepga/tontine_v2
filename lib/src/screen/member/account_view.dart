@@ -1,9 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:tontine_v2/src/providers/event_provider.dart';
+import 'package:tontine_v2/src/providers/loan_provider.dart';
 import 'package:tontine_v2/src/providers/models/enum/role.dart';
+import 'package:tontine_v2/src/providers/models/enum/tontine_status.dart';
 import 'package:tontine_v2/src/providers/models/member.dart';
+import 'package:tontine_v2/src/providers/models/tontine.dart';
 import 'package:tontine_v2/src/providers/auth_provider.dart';
+import 'package:tontine_v2/src/providers/notification_provider.dart';
+import 'package:tontine_v2/src/providers/tontine_provider.dart';
 import 'package:tontine_v2/src/widgets/menu_widget.dart';
+import 'package:tontine_v2/src/widgets/status_badge.dart';
+import '../tontine/select_tontine_view.dart';
 import '../../widgets/responsive_padding.dart';
 import '../../utils/responsive_helper.dart';
 import '../../theme/app_theme.dart';
@@ -85,6 +93,8 @@ class _AccountViewState extends State<AccountView> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildUserInfoSection(context, member, isPresident),
+                ResponsiveSpacing(height: 16),
+                _buildActiveTontineSection(context),
                 ResponsiveSpacing(height: 16),
                 _buildPasswordSection(context),
                 ResponsiveSpacing(height: 16),
@@ -289,6 +299,209 @@ class _AccountViewState extends State<AccountView> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildActiveTontineSection(BuildContext context) {
+    final cardPadding = ResponsiveHelper.getAdaptivePadding(context, all: 20.0);
+    final iconPadding = ResponsiveHelper.getAdaptivePadding(context, all: 8.0);
+    final iconSize = ResponsiveHelper.getAdaptiveIconSize(context, base: 20.0);
+    final spacing = ResponsiveHelper.getAdaptiveSpacing(context, base: 12.0);
+    final fontSize = ResponsiveHelper.getAdaptiveValue(
+      context,
+      small: 16.0,
+      medium: 17.0,
+      large: 18.0,
+    );
+
+    return Consumer<TontineProvider>(
+      builder: (context, tontineProvider, child) {
+        final currentTontine = tontineProvider.currentTontine;
+
+        return Card(
+          elevation: 3,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Colors.white,
+                  Colors.grey.shade50,
+                ],
+              ),
+            ),
+            child: Padding(
+              padding: cardPadding,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: iconPadding,
+                        decoration: BoxDecoration(
+                          color: AppColors.tertiary.withAlpha(20),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(
+                          Icons.groups,
+                          color: AppColors.tertiary,
+                          size: iconSize,
+                        ),
+                      ),
+                      SizedBox(width: spacing),
+                      Text(
+                        'Tontine active',
+                        style: TextStyle(
+                          fontSize: fontSize,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                  ResponsiveSpacing(height: 16),
+                  if (currentTontine != null) ...[
+                    Text(
+                      currentTontine.title,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        StatusBadge(
+                          text: currentTontine.status == TontineStatus.CLOSED
+                              ? 'Clôturée'
+                              : 'Active',
+                          color: currentTontine.status == TontineStatus.CLOSED
+                              ? AppColors.textSecondary
+                              : AppColors.success,
+                          icon: currentTontine.status == TontineStatus.CLOSED
+                              ? Icons.archive_outlined
+                              : Icons.check_circle_outline,
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          '${currentTontine.members.length} membres',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ] else
+                    Text(
+                      'Aucune tontine sélectionnée',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: AppColors.textSecondary,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  ResponsiveSpacing(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        if (currentTontine != null) {
+                          _showChangeTontineConfirmation(
+                            context,
+                            tontineProvider,
+                            currentTontine,
+                          );
+                        } else {
+                          _handleChangeTontine(context, tontineProvider);
+                        }
+                      },
+                      icon: Icon(Icons.swap_horiz, color: AppColors.primary),
+                      label: const Text('Changer de tontine'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.primary,
+                        side:
+                            BorderSide(color: AppColors.primary.withAlpha(180)),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showChangeTontineConfirmation(
+    BuildContext context,
+    TontineProvider tontineProvider,
+    Tontine currentTontine,
+  ) {
+    showDialog<void>(
+      context: context,
+      builder: (BuildContext dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: Row(
+          children: [
+            Icon(Icons.help_outline, color: AppColors.primary, size: 26),
+            const SizedBox(width: 8),
+            const Expanded(
+              child: Text('Changer de tontine ?'),
+            ),
+          ],
+        ),
+        content: Text(
+          'Vous allez quitter « ${currentTontine.title} » et choisir une autre tontine. '
+          'Confirmez-vous ?',
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text(
+              'Annuler',
+              style: TextStyle(color: AppColors.textSecondary),
+            ),
+          ),
+          FilledButton(
+            onPressed: () {
+              Navigator.of(dialogContext).pop();
+              _handleChangeTontine(context, tontineProvider);
+            },
+            child: const Text('Confirmer'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _handleChangeTontine(
+      BuildContext context, TontineProvider tontineProvider) {
+    tontineProvider.clearCurrentTontineSelection(
+      eventProvider: context.read<EventProvider>(),
+      loanProvider: context.read<LoanProvider>(),
+      notificationProvider: context.read<NotificationProvider>(),
+    );
+    Navigator.of(context).pushNamedAndRemoveUntil(
+      SelectTontineView.routeName,
+      (route) => false,
     );
   }
 
@@ -715,6 +928,13 @@ class _AccountViewState extends State<AccountView> {
           FilledButton(
             onPressed: () {
               Navigator.of(context).pop();
+              final tontineProvider =
+                  Provider.of<TontineProvider>(context, listen: false);
+              tontineProvider.clearCurrentTontineSelection(
+                eventProvider: context.read<EventProvider>(),
+                loanProvider: context.read<LoanProvider>(),
+                notificationProvider: context.read<NotificationProvider>(),
+              );
               Provider.of<AuthProvider>(context, listen: false).logout();
               Navigator.of(context).pushNamedAndRemoveUntil(
                 '/login',
