@@ -64,6 +64,7 @@ class _SelectTontineViewState extends State<SelectTontineView> {
         }
         return;
       }
+      if (!mounted) return;
       await Provider.of<AuthProvider>(context, listen: false).getCurrentUser();
       if (!mounted) return;
       await Provider.of<TontineProvider>(context, listen: false).loadTontines();
