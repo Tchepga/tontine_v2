@@ -109,21 +109,21 @@ jobs:
           echo "GitHub Actions ne build / ne publie **pas** Android." >> "$GITHUB_STEP_SUMMARY"
 
 # ══════════════════════════════════════════════════════════════════════════════
-# JOB 3 — iOS (GitHub Actions, après ces tests)
-# TestFlight = .github/workflows/ios-deploy.yml (workflow_run sur ce workflow).
+# JOB 3 — iOS après le Play Store
+# Codemagic publie Android, puis appelle ios-deploy.yml.
 # ══════════════════════════════════════════════════════════════════════════════
   ios-status:
-    name: 🍎 iOS → GitHub Actions (TestFlight)
+    name: 🍎 iOS → après Play Store
     runs-on: ubuntu-latest
     needs: test
     if: github.ref == 'refs/heads/master' && github.event_name == 'push'
     steps:
       - name: Rappel déploiement iOS
         run: |
-          echo "::notice::iOS / TestFlight part automatiquement via .github/workflows/ios-deploy.yml si ce workflow réussit."
+          echo "::notice::TestFlight part seulement après une publication Play réussie (Codemagic → ios-deploy.yml)."
           echo "## iOS" >> "$GITHUB_STEP_SUMMARY"
-          echo "TestFlight via **GitHub Actions** (\`ios-deploy.yml\`), bundle \`fr.devcoorp.thoua\`." >> "$GITHUB_STEP_SUMMARY"
-          echo "Le build iOS démarre quand ce workflow se termine avec succès." >> "$GITHUB_STEP_SUMMARY"
+          echo "TestFlight via **GitHub Actions**, déclenché par Codemagic une fois le Play Store internal publié." >> "$GITHUB_STEP_SUMMARY"
+          echo "Secrets encore à poser : \`GITHUB_DISPATCH_TOKEN\` (Codemagic) et \`APP_STORE_CONNECT_*\` (GitHub)." >> "$GITHUB_STEP_SUMMARY"
 
 # ══════════════════════════════════════════════════════════════════════════════
 # JOB 4 — RAPPORT FINAL
@@ -145,7 +145,7 @@ jobs:
             echo "⚠️ **Android** → Job statut: ${{ needs.android-status.result }}" >> $GITHUB_STEP_SUMMARY
           fi
           if [ "${{ needs.ios-status.result }}" = "success" ]; then
-            echo "ℹ️ **iOS** → TestFlight lancé par \`ios-deploy.yml\` après ces tests" >> $GITHUB_STEP_SUMMARY
+            echo "ℹ️ **iOS** → TestFlight après le Play Store, si \`GITHUB_DISPATCH_TOKEN\` est posé" >> $GITHUB_STEP_SUMMARY
           else
             echo "⚠️ **iOS** → Job statut: ${{ needs.ios-status.result }} (TestFlight non lancé)" >> $GITHUB_STEP_SUMMARY
           fi

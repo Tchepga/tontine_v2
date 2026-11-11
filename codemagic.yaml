@@ -134,6 +134,40 @@ workflows:
             --bundle "$CM_BUILD_DIR/build/app/outputs/bundle/release/app-release.aab" \
             --track internal
 
+      # Play réussi → GitHub lance TestFlight (ios-deploy.yml).
+      # Sans ce token, la publication Play reste verte et iOS ne part pas.
+      # Codemagic → groupe basic-env → variable Secure :
+      #   GITHUB_DISPATCH_TOKEN = PAT fine-grained sur Tchepga/tontine_v2
+      #   permission Contents : Read and write
+      - name: Lancer TestFlight sur GitHub
+        script: |
+          set -uo pipefail
+          if [ -z "${GITHUB_DISPATCH_TOKEN:-}" ]; then
+            echo "============================================================"
+            echo "Play publié. TestFlight non lancé : GITHUB_DISPATCH_TOKEN absent."
+            echo "À ajouter dans Codemagic, groupe basic-env, puis relancer android-deploy."
+            echo "============================================================"
+            exit 0
+          fi
+          BODY=$(jq -n \
+            --arg branch "${CM_BRANCH:-master}" \
+            --arg commit "${CM_COMMIT:-}" \
+            --arg build_number "${PROJECT_BUILD_NUMBER:-${BUILD_NUMBER:-}}" \
+            --arg build_url "https://codemagic.io/app/${CM_PROJECT_ID:-}/build/${CM_BUILD_ID:-}" \
+            '{event_type: "android-deployed", client_payload: {branch: $branch, commit: $commit, build_number: $build_number, build_url: $build_url}}')
+          STATUS=$(curl -sS -o /tmp/gh_dispatch.json -w '%{http_code}' -X POST \
+            https://api.github.com/repos/Tchepga/tontine_v2/dispatches \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer $GITHUB_DISPATCH_TOKEN" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            -d "$BODY")
+          if [ "$STATUS" != "204" ]; then
+            echo "GitHub a refusé le lancement TestFlight (HTTP $STATUS)"
+            cat /tmp/gh_dispatch.json || true
+            exit 1
+          fi
+          echo "TestFlight lancé pour ${CM_COMMIT:-master}"
+
     artifacts:
       - build/app/outputs/bundle/release/*.aab
 
@@ -159,7 +193,7 @@ workflows:
     name: 🍎 iOS → TestFlight
     max_build_duration: 90
     # Pas de triggering auto. TestFlight part de GitHub Actions
-    # (.github/workflows/ios-deploy.yml) après les tests sur master.
+    # seulement après la publication Play (étape « Lancer TestFlight sur GitHub »).
     # Garder celui-ci manuel évite un second upload du même commit.
     environment:
       groups:

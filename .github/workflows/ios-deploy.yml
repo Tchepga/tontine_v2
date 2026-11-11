@@ -1,21 +1,22 @@
 name: 🍎 iOS → TestFlight
 
-# Démarre tout seul quand les tests de « CI/CD — Tests & Déploiement Stores »
-# réussissent sur master. Aucune approbation.
+# Démarre uniquement après une publication Play réussie
+# (codemagic.yaml → android-deploy → « Lancer TestFlight sur GitHub »).
 # Relance manuelle : Actions → ce workflow → Run workflow.
 #
-# Secrets du dépôt (Settings → Secrets and variables → Actions) :
+# Secrets à créer sur l'autre ordinateur.
+# GitHub → Settings → Secrets and variables → Actions :
 #   APP_STORE_CONNECT_KEY_ID       ID de la clé API App Store Connect
 #   APP_STORE_CONNECT_ISSUER_ID    Issuer ID
 #   APP_STORE_CONNECT_PRIVATE_KEY  contenu du fichier AuthKey_XXXX.p8
 #   SENTRY_DSN                     optionnel
-# La clé API doit avoir le rôle Admin ou App Manager.
+# Codemagic → groupe basic-env :
+#   GITHUB_DISPATCH_TOKEN          PAT fine-grained, Contents Read and write
+# La clé API Apple doit avoir le rôle Admin ou App Manager.
 # L'app fr.devcoorp.thoua (équipe 8242X8X39V) doit déjà exister dans App Store Connect.
 on:
-  workflow_run:
-    workflows: ["CI/CD — Tests & Déploiement Stores"]
-    types: [completed]
-    branches: [master]
+  repository_dispatch:
+    types: [android-deployed]
   workflow_dispatch:
 
 env:
@@ -33,13 +34,12 @@ jobs:
   ios-build:
     name: 🍎 Build iOS + TestFlight
     runs-on: macos-latest
-    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     timeout-minutes: 60
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          ref: ${{ github.event.client_payload.commit || github.sha }}
 
       - name: Clé API App Store Connect
         env:
