@@ -9,6 +9,9 @@ name: 🍎 iOS → TestFlight
 #   APP_STORE_CONNECT_KEY_ID       ID de la clé API App Store Connect
 #   APP_STORE_CONNECT_ISSUER_ID    Issuer ID
 #   APP_STORE_CONNECT_PRIVATE_KEY  contenu du fichier AuthKey_XXXX.p8
+#   IOS_DISTRIBUTION_CERT_P12      certificat iOS Distribution (.p12) en base64
+#   IOS_DISTRIBUTION_CERT_PASSWORD mot de passe du .p12
+#   IOS_PROVISIONING_PROFILE       profil App Store pour fr.devcoorp.thoua, en base64
 #   SENTRY_DSN                     optionnel
 # Codemagic → groupe basic-env :
 #   GITHUB_DISPATCH_TOKEN          PAT fine-grained, Contents Read and write
@@ -91,7 +94,35 @@ jobs:
             --dart-define=SENTRY_DSN="${{ secrets.SENTRY_DSN }}" \
             --build-number="$BUILD_NO"
 
-      - name: Archive (signature automatique)
+      - name: Certificat et profil de distribution
+        env:
+          P12_BASE64: ${{ secrets.IOS_DISTRIBUTION_CERT_P12 }}
+          P12_PASSWORD: ${{ secrets.IOS_DISTRIBUTION_CERT_PASSWORD }}
+          PROFILE_BASE64: ${{ secrets.IOS_PROVISIONING_PROFILE }}
+        run: |
+          set -euo pipefail
+          if [ -z "${P12_BASE64:-}" ] || [ -z "${P12_PASSWORD:-}" ] || [ -z "${PROFILE_BASE64:-}" ]; then
+            echo "::error::Apple Cloud n'a pas de certificat iOS Distribution ni de profil pour fr.devcoorp.thoua, et la clé API ne peut pas les créer. Ajoute IOS_DISTRIBUTION_CERT_P12 (base64), IOS_DISTRIBUTION_CERT_PASSWORD et IOS_PROVISIONING_PROFILE (profil App Store, base64)."
+            exit 1
+          fi
+          KEYCHAIN="$RUNNER_TEMP/app-signing.keychain-db"
+          security create-keychain -p "" "$KEYCHAIN"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN"
+          security unlock-keychain -p "" "$KEYCHAIN"
+          echo "$P12_BASE64" | base64 --decode > "$RUNNER_TEMP/dist.p12"
+          security import "$RUNNER_TEMP/dist.p12" -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN"
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "" "$KEYCHAIN"
+          security list-keychains -d user -s "$KEYCHAIN" $(security list-keychains -d user | tr -d '"')
+          mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
+          echo "$PROFILE_BASE64" | base64 --decode > "$RUNNER_TEMP/thoua.mobileprovision"
+          PROFILE_PLIST="$RUNNER_TEMP/profile.plist"
+          security cms -D -i "$RUNNER_TEMP/thoua.mobileprovision" > "$PROFILE_PLIST"
+          PROFILE_UUID=$(plutil -extract UUID raw "$PROFILE_PLIST")
+          PROFILE_NAME=$(plutil -extract Name raw "$PROFILE_PLIST")
+          cp "$RUNNER_TEMP/thoua.mobileprovision" "$HOME/Library/MobileDevice/Provisioning Profiles/$PROFILE_UUID.mobileprovision"
+          echo "PROFILE_NAME=$PROFILE_NAME" >> "$GITHUB_ENV"
+
+      - name: Archive (signature manuelle)
         run: |
           set -euo pipefail
           xcodebuild archive \
@@ -100,12 +131,10 @@ jobs:
             -configuration Release \
             -destination 'generic/platform=iOS' \
             -archivePath "$RUNNER_TEMP/Runner.xcarchive" \
-            -allowProvisioningUpdates \
-            -authenticationKeyPath "$ASC_KEY_PATH" \
-            -authenticationKeyID "$ASC_KEY_ID" \
-            -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
             DEVELOPMENT_TEAM="$TEAM_ID" \
-            CODE_SIGN_STYLE=Automatic
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY="Apple Distribution" \
+            PROVISIONING_PROFILE_SPECIFIER="$PROFILE_NAME"
 
       - name: Export + upload TestFlight
         run: |
@@ -118,7 +147,13 @@ jobs:
             <key>method</key><string>app-store-connect</string>
             <key>destination</key><string>upload</string>
             <key>teamID</key><string>$TEAM_ID</string>
-            <key>signingStyle</key><string>automatic</string>
+            <key>signingStyle</key><string>manual</string>
+            <key>signingCertificate</key><string>Apple Distribution</string>
+            <key>provisioningProfiles</key>
+            <dict>
+              <key>fr.devcoorp.thoua</key>
+              <string>$PROFILE_NAME</string>
+            </dict>
             <key>uploadSymbols</key><true/>
           </dict>
           </plist>
@@ -127,7 +162,6 @@ jobs:
             -archivePath "$RUNNER_TEMP/Runner.xcarchive" \
             -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" \
             -exportPath "$RUNNER_TEMP/export" \
-            -allowProvisioningUpdates \
             -authenticationKeyPath "$ASC_KEY_PATH" \
             -authenticationKeyID "$ASC_KEY_ID" \
             -authenticationKeyIssuerID "$ASC_ISSUER_ID"
