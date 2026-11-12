@@ -1,8 +1,8 @@
 name: 🍎 iOS → TestFlight
 
-# Démarre uniquement après une publication Play réussie
-# (codemagic.yaml → android-deploy → « Lancer TestFlight sur GitHub »).
-# Relance manuelle : Actions → ce workflow → Run workflow.
+# Démarre sur un push vers master, après une publication Play réussie
+# (codemagic.yaml → android-deploy → « Lancer TestFlight sur GitHub »),
+# ou à la main : Actions → ce workflow → Run workflow.
 #
 # Secrets à créer sur l'autre ordinateur.
 # GitHub → Settings → Secrets and variables → Actions :
@@ -15,6 +15,9 @@ name: 🍎 iOS → TestFlight
 # La clé API Apple doit avoir le rôle Admin ou App Manager.
 # L'app fr.devcoorp.thoua (équipe 8242X8X39V) doit déjà exister dans App Store Connect.
 on:
+  push:
+    branches:
+      - master
   repository_dispatch:
     types: [android-deployed]
   workflow_dispatch:
